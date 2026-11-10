@@ -71,10 +71,12 @@ public final class BridgeMain {
         // Connect in the background so the MCP initialize handshake is never
         // delayed by the game.
         Thread connector = new Thread(() -> {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    connection.connect();
-                    return;
+                    if (!connection.isAuthenticated()) {
+                        connection.connect();
+                    }
+                    Thread.sleep(2000L);
                 } catch (IOException e) {
                     try {
                         Thread.sleep(2000L);

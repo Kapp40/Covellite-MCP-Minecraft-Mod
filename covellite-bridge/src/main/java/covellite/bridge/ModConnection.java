@@ -39,7 +39,8 @@ public final class ModConnection implements AutoCloseable {
     }
 
     public synchronized void connect() throws IOException, InterruptedException {
-        if (authenticated) return;
+        if (isAuthenticated()) return;
+        authenticated = false;
         BridgeClient previous = client;
         if (previous != null) {
             try { previous.close(); } catch (Exception ignored) {}
@@ -74,8 +75,17 @@ public final class ModConnection implements AutoCloseable {
 
     public Object call(String method, Map<String, Object> params, long timeoutMs) {
         if (!isAuthenticated()) {
-            throw new ModException("mod_not_connected",
-                    "CovelliteAI mod is not connected yet; start the Minecraft client with the mod");
+            // Minecraft may have been restarted after the bridge started. Try a
+            // short reconnect before failing the call.
+            try {
+                connect();
+            } catch (IOException | InterruptedException e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                throw new ModException("mod_not_connected",
+                        "CovelliteAI mod is not connected; start Minecraft with the mod and load a world");
+            }
         }
         String id = "bridge-" + counter.incrementAndGet();
         CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();

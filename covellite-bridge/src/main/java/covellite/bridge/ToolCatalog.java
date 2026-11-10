@@ -128,6 +128,17 @@ public final class ToolCatalog {
                 props("message", string("Message text, or a command starting with '/'.")),
                 List.of("message"));
 
+        // Lifecycle
+        add(tools, connection, "spawn",
+                "Spawns the AI companion if it is not present. Requires a loaded singleplayer world.",
+                Map.of(), List.of());
+        add(tools, connection, "despawn",
+                "Removes the AI companion (saves its playerdata) and cancels auto-respawn.",
+                Map.of(), List.of());
+        add(tools, connection, "respawn",
+                "Immediately respawns the AI companion, e.g. after it died in game.",
+                Map.of(), List.of());
+
         return tools;
     }
 
