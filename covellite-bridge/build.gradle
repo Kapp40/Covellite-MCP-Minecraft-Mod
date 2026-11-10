@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'covellite.bridge.BridgeMain'
+}
+
+dependencies {
+    implementation project(':covellite-core')
+    implementation 'io.modelcontextprotocol.sdk:mcp:1.1.5'
+}
+
+// End-to-end verification: launches the installed bridge distribution and
+// drives it over MCP STDIO against an in-process fake mod.
+tasks.register('bridgeTest', JavaExec) {
+    group = 'verification'
+    description = 'Run the bridge end-to-end integration test (direct TCP + MCP STDIO)'
+    dependsOn 'installDist'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    mainClass = 'covellite.bridge.BridgeIntegrationTest'
+}

@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'covellite.core.AllTests'
+}
+
+tasks.register('selfTest', JavaExec) {
+    group = 'verification'
+    description = 'Run the built-in test suite without JUnit'
+    classpath = sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    mainClass = 'covellite.core.AllTests'
+}

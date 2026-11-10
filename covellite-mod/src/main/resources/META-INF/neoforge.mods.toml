@@ -1,0 +1,17 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "covelliteai"
+version = "${version}"
+displayName = "CovelliteAI"
+description = "Autonomous AI-controlled Minecraft companion player."
+authors = "CovelliteAI Project"
+
+[[dependencies.covelliteai]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.0,)"
+ordering = "NONE"
+side = "CLIENT"
