@@ -3574,7 +3574,6 @@ public final class BridgeApi {
             // Ignore everything said before the mod started: only react to
             // messages that arrive while the companion is live.
             this.lastChatSequence = this.chatLog.latestSequence();
-            welcomeTick(player);
         }
         if (this.reflexChat) {
             readChatReflexes(player);
@@ -3604,6 +3603,9 @@ public final class BridgeApi {
             }
         }
         idleChatTick(player);
+        if (!this.welcomed) {
+            welcomeTick(player);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -3911,7 +3913,8 @@ public final class BridgeApi {
 
     /** One greeting per spawn / respawn, never on every mod rebuild. */
     private void welcomeTick(CompanionPlayer player) {
-        if (this.welcomed || this.autopilotTicks - this.lastWelcomeTick < 200L) {
+        if (this.welcomed || this.autopilotTicks % 20L != 0L
+                || this.autopilotTicks - this.lastWelcomeTick < 200L) {
             return;
         }
         ServerPlayer human = nearestHuman(player, 32.0D);
@@ -3930,6 +3933,7 @@ public final class BridgeApi {
             return;
         }
         this.lastWelcomeTick = this.autopilotTicks;
+        this.welcomed = true;
         ServerPlayer human = nearestHuman(player, 32.0D);
         reply(human == null ? "ya volvi" : "ya volvi, " + human.getGameProfile().getName());
     }
