@@ -94,6 +94,13 @@ public final class ToolCatalog {
                 props("since", integer("Only events after this sequence."),
                         "limit", integer("1-256, default 32.")),
                 List.of());
+        add(tools, connection, "get_durability_report",
+                "Durability of every damageable item carried or worn, with low-warning flag.",
+                Map.of(), List.of());
+        add(tools, connection, "get_threat_assessment",
+                "Hostiles around the companion and nearest human, with fight/retreat recommendation.",
+                props("radius", number("4-64, default 24.")),
+                List.of());
 
         // Movement / control
         add(tools, connection, "move",
