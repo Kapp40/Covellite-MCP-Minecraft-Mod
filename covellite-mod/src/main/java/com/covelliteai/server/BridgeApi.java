@@ -829,11 +829,12 @@ public final class BridgeApi {
         out.put("inventory", inv);
 
         Map<String, Object> threats = threatAssessment(Map.of("radius", 16.0D));
-        out.put("threats", Map.of(
-                "count", threats.get("count"),
-                "recommendation", threats.get("recommendation"),
-                "nearest", threats.get("threats") instanceof List<?> list && !list.isEmpty()
-                        ? list.get(0) : null));
+        Map<String, Object> threatSummary = new LinkedHashMap<>();
+        threatSummary.put("count", threats.get("count"));
+        threatSummary.put("recommendation", threats.get("recommendation"));
+        threatSummary.put("nearest", threats.get("threats") instanceof List<?> list && !list.isEmpty()
+                ? list.get(0) : null);
+        out.put("threats", threatSummary);
 
         out.put("last_reflex", this.lastReflex);
         out.put("last_interrupt", this.lastInterruptReason);
