@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
 /**
  * The artificial player.
@@ -20,5 +21,17 @@ public final class CompanionPlayer extends ServerPlayer {
 
     public CompanionPlayer(MinecraftServer server, ServerLevel level, GameProfile profile) {
         super(server, level, profile, ClientInformation.createDefault());
+    }
+
+    /**
+     * Attacks with a fully charged swing.
+     *
+     * <p>{@code attackStrengthTicker} is protected in {@code LivingEntity}, so
+     * the bridge cannot set it from outside. Charging it here makes melee
+     * damage identical to a player who waited for the cooldown.</p>
+     */
+    public void attackWithFullStrength(Entity target) {
+        this.attackStrengthTicker = (int) Math.max(this.getCurrentItemAttackStrengthDelay(), 1.0F);
+        this.attack(target);
     }
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.covelliteai.server.BridgeApi;
+import com.covelliteai.server.ChatLog;
 import com.covelliteai.server.CompanionManager;
 import com.covelliteai.server.CompanionCommands;
 import com.covelliteai.server.PrototypeScenario;
@@ -23,11 +24,14 @@ import covellite.core.net.Handshake;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -37,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CovelliteAI entry point.
+ * CoveMCP entry point.
  *
  * <p>The mod runs inside the player's own Minecraft process. When the
  * integrated server starts, it creates an artificial {@code ServerPlayer} in
@@ -51,17 +55,20 @@ import org.slf4j.LoggerFactory;
  */
 @Mod(CovelliteAI.MODID)
 public final class CovelliteAI {
-    public static final String MODID = "covelliteai";
-    public static final Logger LOGGER = LoggerFactory.getLogger("CovelliteAI");
+    public static final String MODID = "covemcp";
+    public static final Logger LOGGER = LoggerFactory.getLogger("CoveMCP");
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Path TOKEN_FILE = Path.of(System.getProperty("user.home"),
+            ".covemcp", "covemcp_token.txt");
+    private static final Path LEGACY_TOKEN_FILE = Path.of(System.getProperty("user.home"),
             ".covelliteai", "covelliteai_token.txt");
     private static volatile CovelliteAI instance;
 
     private final CovelliteConfig config;
     private final ActionQueue actions;
     private final EventLog events;
+    private final ChatLog chatLog;
     private final Dispatcher dispatcher = new Dispatcher();
     private final ConcurrentLinkedQueue<Map<String, Object>> inbound = new ConcurrentLinkedQueue<>();
     private final CompanionManager companion;
@@ -77,12 +84,13 @@ public final class CovelliteAI {
         instance = this;
         this.config = CovelliteConfig.load(FMLPaths.CONFIGDIR.get());
         this.events = new EventLog(config.maxChatHistory);
+        this.chatLog = new ChatLog(config.maxChatHistory);
         this.companion = new CompanionManager(config);
-        this.bridgeApi = new BridgeApi(this.companion);
+        this.bridgeApi = new BridgeApi(this.companion, this.chatLog, this.events);
         this.actions = new ActionQueue(config.maxActions, config.maxActionHistory,
                 status -> { }, () -> this.companion.controller().stop());
 
-        Path prototypeMarker = FMLPaths.CONFIGDIR.get().resolve("covelliteai-prototype-test.flag");
+        Path prototypeMarker = FMLPaths.CONFIGDIR.get().resolve("covemcp-prototype-test.flag");
         this.prototype = Files.exists(prototypeMarker) ? new PrototypeScenario(this.companion) : null;
         if (this.prototype != null) {
             LOGGER.info("Prototype verification scenario enabled by {}", prototypeMarker);
@@ -95,10 +103,17 @@ public final class CovelliteAI {
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown, "CovelliteAI-shutdown"));
+        NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedOut);
+        NeoForge.EVENT_BUS.addListener(this::onServerChat);
+        NeoForge.EVENT_BUS.addListener(this::onLivingDeath);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            // Client-only: provides real POV screenshots through the renderer.
+            com.covelliteai.client.PovCapture.register();
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown, "CoveMCP-shutdown"));
 
         ensureBridge();
-        LOGGER.info("CovelliteAI server-side companion configured: playerName={}, bridgePort={}",
+        LOGGER.info("CoveMCP server-side companion configured: playerName={}, bridgePort={}",
                 config.playerName, config.port);
     }
 
@@ -134,11 +149,44 @@ public final class CovelliteAI {
     }
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (this.prototype != null
-                && this.server != null
-                && event.getEntity() instanceof ServerPlayer player) {
-            this.prototype.onPlayerLogin(player, this.server);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            this.events.add("player_joined",
+                    Map.of("name", player.getGameProfile().getName()));
+            if (this.prototype != null && this.server != null) {
+                this.prototype.onPlayerLogin(player, this.server);
+            }
         }
+    }
+
+    private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            this.events.add("player_left",
+                    Map.of("name", player.getGameProfile().getName()));
+        }
+    }
+
+    /**
+     * Reads what players actually type. This is what makes the companion able
+     * to answer the human player instead of only writing into the chat.
+     */
+    private void onServerChat(ServerChatEvent event) {
+        ServerPlayer player = event.getPlayer();
+        String name = player.getGameProfile().getName();
+        String text = event.getRawText();
+        boolean fromCompanion = this.companion.player() == player;
+        this.chatLog.add(name, text, "chat", fromCompanion);
+        this.events.add("chat", Map.of("sender", name, "message", text));
+    }
+
+    private void onLivingDeath(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        String cause = event.getSource().getLocalizedDeathMessage(player).getString();
+        boolean fromCompanion = this.companion.player() == player;
+        this.chatLog.add("server", cause, "system", fromCompanion);
+        this.events.add("death",
+                Map.of("name", player.getGameProfile().getName(), "message", cause));
     }
 
     private void onServerStopping(ServerStoppingEvent event) {
@@ -171,7 +219,7 @@ public final class CovelliteAI {
                     error -> LOGGER.warn("Bridge TCP error: {}", error.getMessage()));
             server.start();
             bridge = server;
-            LOGGER.info("CovelliteAI bridge listening on 127.0.0.1:{}", config.port);
+            LOGGER.info("CoveMCP bridge listening on 127.0.0.1:{}", config.port);
         } catch (IOException e) {
             LOGGER.warn("Could not start bridge on 127.0.0.1:{} (will retry): {}", config.port, e.getMessage());
         }
@@ -183,6 +231,11 @@ public final class CovelliteAI {
     }
 
     private static String loadOrCreateToken() throws IOException {
+        if (!Files.exists(TOKEN_FILE) && Files.exists(LEGACY_TOKEN_FILE)) {
+            // Keep the existing bridge secret when upgrading from CovelliteAI.
+            Files.createDirectories(TOKEN_FILE.getParent());
+            Files.copy(LEGACY_TOKEN_FILE, TOKEN_FILE);
+        }
         if (Files.exists(TOKEN_FILE)) {
             String token = Files.readString(TOKEN_FILE, StandardCharsets.UTF_8).trim();
             if (!token.isEmpty()) return token;
@@ -227,7 +280,7 @@ public final class CovelliteAI {
     private Map<String, Object> status() {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("mod", MODID);
-        map.put("version", "0.1.0-SNAPSHOT");
+        map.put("version", "1.0.0-BetaReview3");
         map.put("architecture", "in_server_companion");
         map.put("side", FMLEnvironment.dist.name());
         map.put("server_running", this.server != null && this.server.isRunning());
@@ -236,7 +289,9 @@ public final class CovelliteAI {
         map.put("emergency_stop_active", this.actions.isEmergencyStopped());
         map.put("live_actions", this.actions.liveStatuses().size());
         map.put("companion", this.companion.state());
+        map.put("autopilot", this.bridgeApi.autopilotState());
         map.put("recent_events", this.events.recent(10).size());
+        map.put("chat_messages", this.chatLog.size());
         return map;
     }
 }

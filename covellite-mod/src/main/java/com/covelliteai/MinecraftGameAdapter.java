@@ -606,7 +606,7 @@ public final class MinecraftGameAdapter implements GameAdapter {
     private void requireAiPlayer() {
         LocalPlayer p = player();
         if (!isAiPlayer(p)) {
-            throw new IllegalStateException("local player is not the configured CovelliteAI player");
+            throw new IllegalStateException("local player is not the configured CoveMCP player");
         }
     }
 

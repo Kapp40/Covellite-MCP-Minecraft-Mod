@@ -3,13 +3,13 @@ loaderVersion = "[4,)"
 license = "MIT"
 
 [[mods]]
-modId = "covelliteai"
+modId = "covemcp"
 version = "${version}"
-displayName = "CovelliteAI"
+displayName = "CoveMCP's"
 description = "Autonomous AI-controlled Minecraft companion player."
-authors = "CovelliteAI Project"
+authors = "CoveMCP's"
 
-[[dependencies.covelliteai]]
+[[dependencies.covemcp]]
 modId = "neoforge"
 type = "required"
 versionRange = "[21.1.0,)"

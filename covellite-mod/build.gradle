@@ -30,6 +30,8 @@ sourceSets.main.java.srcDir project(':covellite-core').file('src/main/java')
 
 tasks.named('jar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveBaseName = 'Cove_MCP_AI_BetaReview3'
+    archiveVersion = ''
 }
 
 tasks.withType(ProcessResources).configureEach {

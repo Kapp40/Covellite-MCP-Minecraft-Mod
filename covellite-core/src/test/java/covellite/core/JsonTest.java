@@ -56,7 +56,7 @@ public final class JsonTest {
     }
 
     private static void testRoundTrip() {
-        String original = "{\"name\":\"CovelliteAI\",\"pos\":[1.5,2.0,3.5],\"active\":true,\"inventory\":null}";
+        String original = "{\"name\":\"CoveMCP\",\"pos\":[1.5,2.0,3.5],\"active\":true,\"inventory\":null}";
         Object parsed = Json.parse(original);
         String serialized = Json.stringify(parsed);
         Object reparsed = Json.parse(serialized);

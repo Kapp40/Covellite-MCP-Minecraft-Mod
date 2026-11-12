@@ -1,6 +1,6 @@
-# CovelliteAI Assets
+# CoveMCP's Assets
 
-## `covelliteai_skin.png`
+## `covemcp_skin.png`
 
 Provided player skin.
 

@@ -6,7 +6,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'covelliteai'
+rootProject.name = 'covemcp'
 include 'covellite-core'
 include 'covellite-mod'
 include 'covellite-bridge'

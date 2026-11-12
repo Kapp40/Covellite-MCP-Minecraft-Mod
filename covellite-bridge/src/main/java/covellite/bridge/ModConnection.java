@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Correlated request/response channel from the MCP bridge process to the
- * CovelliteAI mod over the authenticated localhost TCP connection.
+ * CoveMCP mod over the authenticated localhost TCP connection.
  *
  * <p>The mod may also emit unsolicited {@code state}/{@code event} messages.
  * Those are logged to stderr and never written to stdout, so stdout stays a
@@ -57,7 +57,7 @@ public final class ModConnection implements AutoCloseable {
         }
         if (!c.isAuthenticated()) {
             c.close();
-            throw new IOException("Could not authenticate to CovelliteAI mod on 127.0.0.1:" + port
+            throw new IOException("Could not authenticate to CoveMCP mod on 127.0.0.1:" + port
                     + " (is the client with the mod running and logged in?)");
         }
         authenticated = true;
@@ -84,7 +84,7 @@ public final class ModConnection implements AutoCloseable {
                     Thread.currentThread().interrupt();
                 }
                 throw new ModException("mod_not_connected",
-                        "CovelliteAI mod is not connected; start Minecraft with the mod and load a world");
+                        "CoveMCP mod is not connected; start Minecraft with the mod and load a world");
             }
         }
         String id = "bridge-" + counter.incrementAndGet();
@@ -116,6 +116,85 @@ public final class ModConnection implements AutoCloseable {
         } finally {
             pending.remove(id);
         }
+    }
+
+    /**
+     * Calls a tool and, when it starts an asynchronous action (move/goto or the
+     * last step of a batch), polls the mod locally until the action finishes.
+     * The model gets the final outcome in a single tool call instead of having
+     * to poll {@code get_action_status} itself.
+     */
+    @SuppressWarnings("unchecked")
+    public Object callAndWait(String method, Map<String, Object> params, long maxWaitMs) {
+        Object first = call(method, params);
+        if (!(first instanceof Map<?, ?> firstMap)) {
+            return first;
+        }
+        Map<String, Object> target = (Map<String, Object>) firstMap;
+        Map<String, Object> holder = null;
+        if ("batch".equals(method)) {
+            if (target.get("results") instanceof java.util.List<?> results && !results.isEmpty()) {
+                Object last = results.get(results.size() - 1);
+                if (last instanceof Map<?, ?> lastEntry
+                        && lastEntry.get("result") instanceof Map<?, ?> lastResult) {
+                    holder = (Map<String, Object>) lastResult;
+                }
+            }
+        } else {
+            holder = target;
+        }
+        if (holder == null || !"running".equals(holder.get("state"))
+                || !(holder.get("action_id") instanceof String actionId)) {
+            return first;
+        }
+
+        long deadline = System.currentTimeMillis() + maxWaitMs;
+        Map<String, Object> status = null;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                Thread.sleep(20L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            Object polled = call("get_action_status", Map.of("id", actionId));
+            if (polled instanceof Map<?, ?> polledMap) {
+                status = (Map<String, Object>) polledMap;
+                if (!"running".equals(status.get("state"))) {
+                    break;
+                }
+            }
+        }
+
+        Map<String, Object> compact = new LinkedHashMap<>();
+        if (!"batch".equals(method) && firstMap.get("new_chat") != null) {
+            compact.put("new_chat", firstMap.get("new_chat"));
+        }
+        // Context the mod attached to the start of the action (e.g. 'go' -> place, 'craft' -> note).
+        if (!"batch".equals(method)) {
+            for (String key : new String[] {"place", "note"}) {
+                if (firstMap.get(key) != null) {
+                    compact.put(key, firstMap.get(key));
+                }
+            }
+        }
+        if (status != null) {
+            for (Map.Entry<String, Object> entry : status.entrySet()) {
+                if (!"id".equals(entry.getKey()) && !"method".equals(entry.getKey())) {
+                    compact.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        if (status == null || "running".equals(status.get("state"))) {
+            compact.put("state", "running");
+            compact.put("note", "still running after " + (maxWaitMs / 1000) + "s; call stop to cancel");
+        }
+        if ("batch".equals(method)) {
+            Map<String, Object> merged = new LinkedHashMap<>(target);
+            merged.put("final", compact);
+            return merged;
+        }
+        return compact;
     }
 
     private void onMessage(Map<String, Object> message) {

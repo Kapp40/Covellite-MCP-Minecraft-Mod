@@ -27,6 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class Dispatcher {
     private final Map<String, Handler> handlers = new ConcurrentHashMap<>();
+    private volatile Decorator decorator;
+
+    /** Optional hook that can enrich every successful result (e.g. piggyback new chat). */
+    public void setDecorator(Decorator decorator) {
+        this.decorator = decorator;
+    }
 
     public void register(String method, Handler handler) {
         handlers.put(Objects.requireNonNull(method), Objects.requireNonNull(handler));
@@ -52,6 +58,10 @@ public final class Dispatcher {
 
         try {
             Object result = handler.handle(params);
+            Decorator hook = this.decorator;
+            if (hook != null && result != null) {
+                result = hook.decorate(method, result);
+            }
             Map<String, Object> response = new java.util.HashMap<>();
             if (id != null) response.put("id", id);
             response.put("result", result == null ? Map.of() : result);
@@ -72,5 +82,9 @@ public final class Dispatcher {
 
     public interface Handler {
         Object handle(Map<String, Object> params) throws Exception;
+    }
+
+    public interface Decorator {
+        Object decorate(String method, Object result);
     }
 }

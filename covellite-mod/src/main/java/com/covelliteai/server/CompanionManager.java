@@ -59,7 +59,7 @@ public final class CompanionManager {
             return false;
         }
         if (!isIntegratedServer(server)) {
-            // Hard architectural guard: CovelliteAI only lives inside the
+            // Hard architectural guard: CoveMCP only lives inside the
             // singleplayer integrated server. It must never create a presence
             // on a dedicated or otherwise separate server.
             CovelliteAI.LOGGER.info(

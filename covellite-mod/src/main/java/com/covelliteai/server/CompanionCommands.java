@@ -100,12 +100,12 @@ public final class CompanionCommands {
     }
 
     private static int feedback(CommandSourceStack source, String message) {
-        source.sendSuccess(() -> Component.literal("[CovelliteAI] " + message), false);
+        source.sendSuccess(() -> Component.literal("[CoveMCP] " + message), false);
         return 1;
     }
 
     private static int failure(CommandSourceStack source, String message) {
-        source.sendFailure(Component.literal("[CovelliteAI] " + message));
+        source.sendFailure(Component.literal("[CoveMCP] " + message));
         return 0;
     }
 }

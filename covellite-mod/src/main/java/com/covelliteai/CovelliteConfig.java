@@ -9,11 +9,11 @@ import java.util.Properties;
 
 /**
  * Small, dependency-free configuration for the client mod. Values live in
- * {@code config/covelliteai.properties} inside the Minecraft instance.
+ * {@code config/covemcp.properties} inside the Minecraft instance.
  */
 public final class CovelliteConfig {
     public static final int DEFAULT_PORT = 17452;
-    public static final String DEFAULT_PLAYER_NAME = "CovelliteAI";
+    public static final String DEFAULT_PLAYER_NAME = "AIPlayer65";
 
     public final String playerName;
     public final int port;
@@ -39,7 +39,18 @@ public final class CovelliteConfig {
     }
 
     public static CovelliteConfig load(Path configDir) {
-        Path file = configDir.resolve("covelliteai.properties");
+        Path file = configDir.resolve("covemcp.properties");
+        Path legacy = configDir.resolve("covelliteai.properties");
+        if (!Files.exists(file) && Files.exists(legacy)) {
+            // Migrate the previous install without losing port or other settings.
+            try {
+                Files.createDirectories(configDir);
+                Files.copy(legacy, file);
+            } catch (IOException e) {
+                CovelliteAI.LOGGER.warn("Could not migrate {} to {}: {}",
+                        legacy, file, e.getMessage());
+            }
+        }
         Properties p = new Properties();
         if (Files.exists(file)) {
             try (InputStream in = Files.newInputStream(file)) {
@@ -59,7 +70,7 @@ public final class CovelliteConfig {
             try {
                 Files.createDirectories(configDir);
                 try (OutputStream out = Files.newOutputStream(file)) {
-                    p.store(out, "CovelliteAI client configuration");
+                    p.store(out, "CoveMCP client configuration");
                 }
             } catch (IOException e) {
                 CovelliteAI.LOGGER.warn("Could not create {}; using defaults", file, e);
@@ -67,6 +78,16 @@ public final class CovelliteConfig {
         }
 
         String name = p.getProperty("playerName", DEFAULT_PLAYER_NAME).trim();
+        if (name.isEmpty() || "CovelliteAI".equals(name)) {
+            // Branding rename: keep the same identity slot but expose the new name.
+            name = DEFAULT_PLAYER_NAME;
+            p.setProperty("playerName", name);
+            try (OutputStream out = Files.newOutputStream(file)) {
+                p.store(out, "CoveMCP client configuration");
+            } catch (IOException e) {
+                CovelliteAI.LOGGER.warn("Could not update {} with the new player name", file);
+            }
+        }
         int port = clampInt(p.getProperty("port"), DEFAULT_PORT, 1024, 65535);
         int maxActions = clampInt(p.getProperty("maxActions"), 32, 1, 256);
         int maxHistory = clampInt(p.getProperty("maxActionHistory"), 256, 1, 4096);

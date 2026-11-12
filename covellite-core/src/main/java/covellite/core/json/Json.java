@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tiny pure-JDK JSON codec. Supports the value types needed by CovelliteAI:
+ * Tiny pure-JDK JSON codec. Supports the value types needed by CoveMCP:
  * null, boolean, Number (BigDecimal for decimals, Long for integers), String,
  * List<Object>, and Map<String, Object>.
  */

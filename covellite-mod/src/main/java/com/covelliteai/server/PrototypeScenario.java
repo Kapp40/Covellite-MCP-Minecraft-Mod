@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Opt-in, single-run verification scenario for the integrated server.
  *
- * <p>It only activates when the file {@code config/covelliteai-prototype-test.flag}
+ * <p>It only activates when the file {@code config/covemcp-prototype-test.flag}
  * exists. On the host's first login it teleports the companion next to the
  * player, tries to walk it in several directions until one is not blocked,
  * rotates it, jumps, despawns and respawns it, logging every step. This exists

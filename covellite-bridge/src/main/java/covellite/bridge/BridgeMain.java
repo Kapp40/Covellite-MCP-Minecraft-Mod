@@ -22,8 +22,10 @@ import java.util.List;
 public final class BridgeMain {
     public static void main(String[] args) {
         Path tokenFile = Path.of(System.getProperty("user.home"),
+                ".covemcp", "covemcp_token.txt");
+        Path legacyTokenFile = Path.of(System.getProperty("user.home"),
                 ".covelliteai", "covelliteai_token.txt");
-        int port = Integer.getInteger("covelliteai.port", 17452);
+        int port = Integer.getInteger("covemcp.port", 17452);
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -40,8 +42,8 @@ public final class BridgeMain {
                     }
                 }
                 case "--help", "-h" -> {
-                    System.out.println("CovelliteAI MCP bridge");
-                    System.out.println("  --token-file <path>  shared HMAC token (default ~/.covelliteai/covelliteai_token.txt)");
+                    System.out.println("CoveMCP's MCP bridge");
+                    System.out.println("  --token-file <path>  shared HMAC token (default ~/.covemcp/covemcp_token.txt)");
                     System.out.println("  --port <n>           mod TCP port (default 17452)");
                     return;
                 }
@@ -51,10 +53,12 @@ public final class BridgeMain {
 
         String token;
         try {
-            token = Files.readString(tokenFile, StandardCharsets.UTF_8).trim();
+            Path readable = Files.exists(tokenFile) ? tokenFile
+                    : (Files.exists(legacyTokenFile) ? legacyTokenFile : tokenFile);
+            token = Files.readString(readable, StandardCharsets.UTF_8).trim();
         } catch (IOException e) {
             System.err.println("[bridge] cannot read token file " + tokenFile + ": " + e.getMessage());
-            System.err.println("[bridge] start the Minecraft client with CovelliteAI once to generate it");
+            System.err.println("[bridge] start the Minecraft client with CoveMCP once to generate it");
             System.exit(1);
             return;
         }
@@ -100,7 +104,7 @@ public final class BridgeMain {
                 new StdioServerTransportProvider(McpJsonDefaults.getMapper());
 
         McpSyncServer server = McpServer.sync(transport)
-                .serverInfo("covelliteai", "0.1.0")
+                .serverInfo("covemcp", "1.0.0-BetaReview3")
                 .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build())
                 .tools(tools)
                 .build();

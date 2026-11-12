@@ -98,6 +98,15 @@ public final class BridgeIntegrationTest {
             pool.shutdownNow();
             check("direct: 40 concurrent calls correlated", true);
 
+            // Async actions: callAndWait must poll locally until the action ends.
+            Map<?, ?> waited = (Map<?, ?>) connection.callAndWait("goto", Map.of("x", 1), 5_000L);
+            check("direct: callAndWait completes", "completed".equals(waited.get("state")));
+            check("direct: callAndWait drops id/method",
+                    !waited.containsKey("id") && !waited.containsKey("method"));
+            check("direct: callAndWait keeps final position", waited.get("at") != null);
+            Map<?, ?> instant = (Map<?, ?>) connection.callAndWait("echo", Map.of("v", 1), 5_000L);
+            check("direct: callAndWait passes instant results through", instant.get("echo") != null);
+
             // Dispatcher error mapping.
             try {
                 connection.call("fail", Map.of());
@@ -201,7 +210,7 @@ public final class BridgeIntegrationTest {
             Map<?, ?> initResult = (Map<?, ?>) init.get("result");
             Map<?, ?> serverInfo = initResult == null ? null : (Map<?, ?>) initResult.get("serverInfo");
             check("mcp: initialize returns serverInfo",
-                    serverInfo != null && "covelliteai".equals(serverInfo.get("name")));
+                    serverInfo != null && "covemcp".equals(serverInfo.get("name")));
 
             send(stdin, Map.of("jsonrpc", "2.0", "method", "notifications/initialized"));
 
@@ -279,7 +288,7 @@ public final class BridgeIntegrationTest {
         Dispatcher dispatcher = new Dispatcher();
         dispatcher.register("get_status", p -> {
             Map<String, Object> status = new LinkedHashMap<>();
-            status.put("mod", "covelliteai");
+            status.put("mod", "covemcp");
             status.put("ai_player", true);
             status.put("connected", true);
             status.put("bridge_authenticated", true);
@@ -292,6 +301,19 @@ public final class BridgeIntegrationTest {
         dispatcher.register("get_block_info", p -> Map.of("echo", p));
         dispatcher.register("get_targeted_object", p -> {
             throw new IllegalArgumentException("bad params");
+        });
+        java.util.concurrent.atomic.AtomicInteger polls = new java.util.concurrent.atomic.AtomicInteger();
+        dispatcher.register("goto", p -> {
+            polls.set(0);
+            return Map.of("action_id", "act-1", "state", "running");
+        });
+        dispatcher.register("get_action_status", p -> {
+            Map<String, Object> status = new LinkedHashMap<>();
+            status.put("id", "act-1");
+            status.put("method", "goto");
+            status.put("state", polls.incrementAndGet() < 4 ? "running" : "completed");
+            status.put("at", List.of(1.0D, 2.0D, 3.0D));
+            return status;
         });
         dispatcher.register("slow", p -> {
             Thread.sleep(400);
