@@ -144,6 +144,25 @@ public final class BridgeApi {
     private boolean followResume = false;
     private long followResumeAt = 0L;
 
+    // Distinct role states: staying still is NOT guarding a place.
+    private boolean staying = false;
+    private Vec3 stayAnchor = null;
+    private Vec3 guardAnchor = null;
+    private String guardDim = null;
+    private double guardRadius = 8.0D;
+    private double defendRadius = 16.0D;
+    private String protectAggressiveness = "normal";
+    private long lastProtectWarn = -10000L;
+    private long recoveringUntil = -10000L;
+
+    // Observability for get_companion_state.
+    private String lastReflex = null;
+    private String lastInterruptReason = null;
+
+    // Container permissions, persisted per world.
+    private ContainerPermissions containerPermissions;
+    private MinecraftServer permissionsServer;
+
     // Idle chatter: keeps the companion alive on screen instead of going silent.
     private long lastIdleChatTick = 0L;
     private long lastDefendReply = -10000L;
@@ -200,6 +219,11 @@ public final class BridgeApi {
         dispatcher.register("get_nearby_entities", this::nearbyEntities);
         dispatcher.register("get_durability_report", this::durabilityReport);
         dispatcher.register("get_threat_assessment", this::threatAssessment);
+        dispatcher.register("get_companion_state", this::companionState);
+        dispatcher.register("protect_player", this::protectPlayer);
+        dispatcher.register("stay", this::stay);
+        dispatcher.register("guard_position", this::guardPosition);
+        dispatcher.register("leave_position", this::leavePosition);
         dispatcher.register("get_nearby_blocks", this::nearbyBlocks);
         dispatcher.register("get_block_info", this::blockInfo);
         dispatcher.register("get_entity_info", this::entityInfo);
@@ -241,6 +265,12 @@ public final class BridgeApi {
         dispatcher.register("container_list", this::containerList);
         dispatcher.register("container_take", this::containerTake);
         dispatcher.register("container_put", this::containerPut);
+        dispatcher.register("authorize_container", this::authorizeContainer);
+        dispatcher.register("list_container_permissions", this::listContainerPermissions);
+        dispatcher.register("revoke_container", this::revokeContainer);
+        dispatcher.register("find_container", this::findContainer);
+        dispatcher.register("deposit_items", this::depositItems);
+        dispatcher.register("restock", this::restock);
         dispatcher.register("use_on_entity", this::useOnEntity);
         dispatcher.register("take_screenshot", this::takeScreenshot);
         dispatcher.register("batch", this::batch);
@@ -734,7 +764,250 @@ public final class BridgeApi {
         items.add(entry);
     }
 
-    /** Hostiles near the companion and the nearest human, with a recommendation. */
+    /** Consolidated read-only snapshot of what Cove is doing and why. */
+    private Map<String, Object> companionState(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("activity", activityName());
+        out.put("busy", this.activeTask != null);
+        if (this.activeTask != null) {
+            Map<String, Object> task = new LinkedHashMap<>();
+            task.put("method", taskName(this.activeTask));
+            task.put("id", taskId(this.activeTask));
+            out.put("active_task", task);
+        } else {
+            out.put("active_task", null);
+        }
+        Map<String, Object> target = new LinkedHashMap<>();
+        if (this.combatTarget != null && this.combatTarget.isAlive()) {
+            target.put("kind", "combat");
+            target.put("entity", this.combatTarget.getName().getString());
+            target.put("distance", round1(Math.sqrt(player.distanceToSqr(this.combatTarget))));
+        } else if (this.defendPlayer != null) {
+            target.put("kind", "protect_player");
+            target.put("player", this.defendPlayer);
+        } else if (this.guardAnchor != null) {
+            target.put("kind", "guard_position");
+            target.put("at", List.of(round1(this.guardAnchor.x), round1(this.guardAnchor.y),
+                    round1(this.guardAnchor.z)));
+            target.put("radius", round1(this.guardRadius));
+        } else if (this.staying) {
+            target.put("kind", "stay");
+        } else if (this.followTarget != null) {
+            target.put("kind", "follow");
+            target.put("player", this.followTarget);
+        } else {
+            target.put("kind", "none");
+        }
+        out.put("target", target);
+
+        Map<String, Object> autonomy = new LinkedHashMap<>();
+        autonomy.put("stance", this.stance.name());
+        autonomy.put("lively", this.lively);
+        autonomy.put("chat_reflexes", this.reflexChat);
+        autonomy.put("auto_eat", this.autoEat);
+        autonomy.put("auto_defend", this.autoDefend);
+        autonomy.put("protect_aggressiveness", this.protectAggressiveness);
+        out.put("autonomy", autonomy);
+
+        Map<String, Object> inv = new LinkedHashMap<>();
+        int used = 0;
+        int low = 0;
+        for (int slot = 0; slot < 36; slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (!stack.isEmpty()) {
+                used++;
+            }
+            if (stack.isDamageableItem() && stack.getMaxDamage() > 0
+                    && stack.getMaxDamage() - stack.getDamageValue() <= stack.getMaxDamage() * 0.15D) {
+                low++;
+            }
+        }
+        inv.put("used", used);
+        inv.put("empty", 36 - used);
+        inv.put("low_durability", low);
+        out.put("inventory", inv);
+
+        Map<String, Object> threats = threatAssessment(Map.of("radius", 16.0D));
+        out.put("threats", Map.of(
+                "count", threats.get("count"),
+                "recommendation", threats.get("recommendation"),
+                "nearest", threats.get("threats") instanceof List<?> list && !list.isEmpty()
+                        ? list.get(0) : null));
+
+        out.put("last_reflex", this.lastReflex);
+        out.put("last_interrupt", this.lastInterruptReason);
+        out.put("recovering", this.autopilotTicks < this.recoveringUntil);
+        return out;
+    }
+
+    private String activityName() {
+        if (this.autopilotTicks < this.recoveringUntil) {
+            return "recovering";
+        }
+        if (this.activeTask != null) {
+            if (this.defendPlayer != null && this.activeTask instanceof FollowTask) {
+                return "guarding";
+            }
+            return "working";
+        }
+        if (this.staying) {
+            return "staying";
+        }
+        if (this.guardAnchor != null || this.defendPlayer != null) {
+            return "guarding";
+        }
+        if (this.followTarget != null) {
+            return "following";
+        }
+        return "idle";
+    }
+
+    private static String taskName(Task task) {
+        if (task instanceof MoveTask) return "move";
+        if (task instanceof GotoTask) return "goto";
+        if (task instanceof FollowTask) return "follow";
+        if (task instanceof GatherTask gather) return "gather:" + gather.what;
+        if (task instanceof CraftTask) return "craft";
+        if (task instanceof SleepTask) return "sleep";
+        return "task";
+    }
+
+    private static String taskId(Task task) {
+        if (task instanceof MoveTask move) return move.id;
+        if (task instanceof GotoTask gotoTask) return gotoTask.id;
+        if (task instanceof FollowTask follow) return follow.id;
+        if (task instanceof GatherTask gather) return gather.id;
+        if (task instanceof CraftTask craft) return craft.id;
+        return null;
+    }
+
+    /** Protect a human from their perspective, not just "attack the nearest mob". */
+    private Map<String, Object> protectPlayer(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        boolean enabled = bool(params, "enabled", true);
+        Map<String, Object> out = new LinkedHashMap<>();
+        if (!enabled) {
+            this.defendPlayer = null;
+            out.put("ok", true);
+            out.put("enabled", false);
+            return out;
+        }
+        String name = str(params, "player");
+        ServerPlayer target = name == null || name.isBlank()
+                ? nearestHuman(player, 64.0D)
+                : player.server.getPlayerList().getPlayerByName(name);
+        if (target == null) {
+            throw new IllegalArgumentException("player not found");
+        }
+        this.defendPlayer = target.getGameProfile().getName();
+        this.defendRadius = clamp(num(params, "radius", 16.0D), 4.0D, 32.0D);
+        String aggressiveness = str(params, "aggressiveness");
+        if (aggressiveness != null) {
+            String mode = normalizeCommand(aggressiveness);
+            this.protectAggressiveness = mode.contains("agres") ? "agresivo"
+                    : mode.contains("defens") ? "defensivo" : "normal";
+        }
+        // Guarding a person means staying near them unless a chore is running.
+        this.staying = false;
+        this.stayAnchor = null;
+        this.guardAnchor = null;
+        if (this.followTarget == null) {
+            this.followTarget = this.defendPlayer;
+            this.followDistance = Math.min(3.0D, this.defendRadius / 3.0D);
+        }
+        if (this.activeTask == null) {
+            startTask(new FollowTask(newAction("follow", "running"),
+                    this.defendPlayer, this.followDistance), player);
+        }
+        out.put("ok", true);
+        out.put("enabled", true);
+        out.put("player", this.defendPlayer);
+        out.put("radius", round1(this.defendRadius));
+        out.put("aggressiveness", this.protectAggressiveness);
+        return out;
+    }
+
+    /** Stay here until another order: no territory, no chasing. */
+    private Map<String, Object> stay(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        double x = params.containsKey("x") ? num(params, "x", player.getX()) : player.getX();
+        double y = params.containsKey("y") ? num(params, "y", player.getY()) : player.getY();
+        double z = params.containsKey("z") ? num(params, "z", player.getZ()) : player.getZ();
+        this.staying = true;
+        this.stayAnchor = new Vec3(x, y, z);
+        this.guardAnchor = null;
+        this.defendPlayer = null;
+        this.followTarget = null;
+        this.followResume = false;
+        cancelActive("stay");
+        this.companion.controller().stop();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("state", "staying");
+        out.put("at", List.of(round1(x), round1(y), round1(z)));
+        return out;
+    }
+
+    /** Guard an area: threats inside the radius are engaged, but no cross-map chases. */
+    private Map<String, Object> guardPosition(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        double x = params.containsKey("x") ? num(params, "x", player.getX()) : player.getX();
+        double y = params.containsKey("y") ? num(params, "y", player.getY()) : player.getY();
+        double z = params.containsKey("z") ? num(params, "z", player.getZ()) : player.getZ();
+        this.guardAnchor = new Vec3(x, y, z);
+        this.guardDim = dimName(player.serverLevel());
+        this.guardRadius = clamp(num(params, "radius", 8.0D), 4.0D, 32.0D);
+        this.staying = false;
+        this.stayAnchor = null;
+        this.defendPlayer = null;
+        this.followTarget = null;
+        this.followResume = false;
+        cancelActive("guard_position");
+        this.companion.controller().stop();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("state", "guarding");
+        out.put("at", List.of(round1(x), round1(y), round1(z)));
+        out.put("radius", round1(this.guardRadius));
+        return out;
+    }
+
+    private Map<String, Object> leavePosition(Map<String, Object> params) {
+        this.staying = false;
+        this.stayAnchor = null;
+        this.guardAnchor = null;
+        this.guardDim = null;
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("state", activityName());
+        return out;
+    }
+
+    /** Walks back to the guarded point when idle and not fighting. */
+    private void guardTick(CompanionPlayer player) {
+        if (this.guardAnchor == null || this.emergency || this.staying
+                || this.activeTask != null || this.combatTarget != null) {
+            return;
+        }
+        if (this.guardDim != null && !this.guardDim.equals(dimName(player.serverLevel()))) {
+            return;
+        }
+        double dx = this.guardAnchor.x - player.getX();
+        double dz = this.guardAnchor.z - player.getZ();
+        double distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance <= Math.max(2.0D, this.guardRadius * 0.5D)) {
+            return;
+        }
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        this.companion.controller().look(yaw, 0.0F);
+        this.companion.controller().move(1.0D, 0.0D, distance > 6.0D, 4);
+        if (player.onGround() && player.horizontalCollision) {
+            this.companion.controller().jump();
+        }
+    }
+
+
     private Map<String, Object> threatAssessment(Map<String, Object> params) {
         CompanionPlayer player = requirePlayer();
         double radius = clamp(num(params, "radius", 24.0D), 4.0D, 64.0D);
@@ -1032,6 +1305,11 @@ public final class BridgeApi {
         this.followTarget = name;
         this.followDistance = distance;
         this.followResume = false;
+        // An explicit follow replaces any stay/guard role.
+        this.staying = false;
+        this.stayAnchor = null;
+        this.guardAnchor = null;
+        this.guardDim = null;
         String id = newAction("follow", "running");
         startTask(new FollowTask(id, name, distance), player);
         return actionResult(id, "running");
@@ -3327,6 +3605,261 @@ public final class BridgeApi {
         return out;
     }
 
+    // ------------------------------------------------------------------
+    // Container permissions and high-level logistics
+    // ------------------------------------------------------------------
+
+    private ContainerPermissions permissions() {
+        MinecraftServer server = requireServer();
+        if (this.containerPermissions == null || this.permissionsServer != server) {
+            this.containerPermissions = ContainerPermissions.forWorld(server);
+            this.permissionsServer = server;
+        }
+        return this.containerPermissions;
+    }
+
+    /** Authorizes one container with optional take/put item lists. */
+    private Map<String, Object> authorizeContainer(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        int x = intParam(params, "x");
+        int y = intParam(params, "y");
+        int z = intParam(params, "z");
+        List<String> take = stringList(params.get("take"));
+        List<String> put = stringList(params.get("put"));
+        boolean all = bool(params, "all", take.isEmpty() && put.isEmpty());
+        String dim = dimName(player.serverLevel());
+        boolean updated = permissions().authorize(x, y, z, dim,
+                str(params, "name"), take, put, all);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("updated", updated);
+        out.put("dim", dim);
+        out.put("at", List.of(x, y, z));
+        out.put("all", all);
+        out.put("take", take);
+        out.put("put", put);
+        out.put("total", permissions().all().size());
+        return out;
+    }
+
+    private Map<String, Object> listContainerPermissions(Map<String, Object> params) {
+        List<Map<String, Object>> rules = new ArrayList<>();
+        for (ContainerPermissions.Rule rule : permissions().all()) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("at", List.of(rule.x(), rule.y(), rule.z()));
+            entry.put("dim", rule.dim());
+            if (rule.name() != null) {
+                entry.put("name", rule.name());
+            }
+            entry.put("all", rule.all());
+            entry.put("take", new ArrayList<>(rule.take()));
+            entry.put("put", new ArrayList<>(rule.put()));
+            rules.add(entry);
+        }
+        return Map.of("containers", rules, "count", rules.size());
+    }
+
+    private Map<String, Object> revokeContainer(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        boolean removed = permissions().revoke(dimName(player.serverLevel()),
+                intParam(params, "x"), intParam(params, "y"), intParam(params, "z"));
+        return Map.of("ok", true, "removed", removed, "total", permissions().all().size());
+    }
+
+    /** Nearby containers with their authorization state. Read-only. */
+    private Map<String, Object> findContainer(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        int radius = (int) clamp(num(params, "radius", 12.0D), 1.0D, 32.0D);
+        String wanted = str(params, "item");
+        String needle = wanted == null || wanted.isBlank() ? null : wanted.toLowerCase(Locale.ROOT).trim();
+        String dim = dimName(player.serverLevel());
+        BlockPos origin = player.blockPosition();
+        List<Map<String, Object>> found = new ArrayList<>();
+        for (BlockPos pos : BlockPos.betweenClosed(
+                origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
+            if (!(player.serverLevel().getBlockEntity(pos) instanceof Container container)) {
+                continue;
+            }
+            if (needle != null && !containerHas(container, needle)) {
+                continue;
+            }
+            double distance = Math.sqrt(player.distanceToSqr(
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D));
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("at", List.of(pos.getX(), pos.getY(), pos.getZ()));
+            entry.put("distance", round1(distance));
+            entry.put("block", shortName(BuiltInRegistries.BLOCK.getKey(
+                    player.serverLevel().getBlockState(pos).getBlock()).toString()));
+            ContainerPermissions.Rule rule = permissions().find(dim, pos.getX(), pos.getY(), pos.getZ());
+            entry.put("authorized", rule != null);
+            if (rule != null) {
+                if (rule.name() != null) {
+                    entry.put("name", rule.name());
+                }
+                entry.put("all", rule.all());
+                entry.put("take", new ArrayList<>(rule.take()));
+                entry.put("put", new ArrayList<>(rule.put()));
+            }
+            found.add(entry);
+        }
+        found.sort((a, b) -> Double.compare(
+                ((Number) a.get("distance")).doubleValue(),
+                ((Number) b.get("distance")).doubleValue()));
+        if (found.size() > 24) {
+            found = new ArrayList<>(found.subList(0, 24));
+        }
+        return Map.of("containers", found, "count", found.size());
+    }
+
+    private static boolean containerHas(Container container, String needle) {
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+            if (id.contains(needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Deposits one item type only into a container that explicitly allows it. */
+    private Map<String, Object> depositItems(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String wanted = str(params, "item");
+        if (wanted == null || wanted.isBlank()) {
+            throw new IllegalArgumentException("item is required");
+        }
+        String needle = wanted.toLowerCase(Locale.ROOT).trim();
+        int source = findInventorySlot(player, needle);
+        if (source < 0) {
+            throw new IllegalArgumentException("no matching item in the inventory");
+        }
+        String itemId = BuiltInRegistries.ITEM.getKey(
+                player.getInventory().getItem(source).getItem()).toString();
+        String dim = dimName(player.serverLevel());
+        BlockPos target;
+        if (params.containsKey("x") && params.containsKey("y") && params.containsKey("z")) {
+            target = new BlockPos(intParam(params, "x"), intParam(params, "y"), intParam(params, "z"));
+        } else {
+            int radius = (int) clamp(num(params, "radius", 16.0D), 4.0D, 32.0D);
+            target = nearestAuthorizedContainer(player, dim, radius,
+                    rule -> rule.canPut(itemId), null);
+        }
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "no authorized container allows putting " + itemId);
+        }
+        ContainerPermissions.Rule rule = permissions().find(dim, target.getX(), target.getY(), target.getZ());
+        if (rule == null || !rule.canPut(itemId)) {
+            throw new IllegalArgumentException("that container is not authorized for " + itemId);
+        }
+        Map<String, Object> call = new LinkedHashMap<>();
+        call.put("x", target.getX());
+        call.put("y", target.getY());
+        call.put("z", target.getZ());
+        call.put("item", itemId);
+        if (params.containsKey("count")) {
+            call.put("count", num(params, "count", 0.0D));
+        }
+        return containerPut(call);
+    }
+
+    /** Pulls one item type from an authorized container, nearest first. */
+    private Map<String, Object> restock(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String wanted = str(params, "item");
+        if (wanted == null || wanted.isBlank()) {
+            throw new IllegalArgumentException("item is required");
+        }
+        String needle = wanted.toLowerCase(Locale.ROOT).trim();
+        int requested = (int) clamp(num(params, "count", 64.0D), 1.0D, 2304.0D);
+        int radius = (int) clamp(num(params, "radius", 16.0D), 4.0D, 32.0D);
+        String dim = dimName(player.serverLevel());
+        List<BlockPos> candidates = new ArrayList<>();
+        BlockPos origin = player.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(
+                origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
+            ContainerPermissions.Rule rule = permissions().find(dim, pos.getX(), pos.getY(), pos.getZ());
+            if (rule == null || !rule.canTake(needle)) {
+                continue;
+            }
+            if (!(player.serverLevel().getBlockEntity(pos) instanceof Container container)
+                    || !containerHas(container, needle)) {
+                continue;
+            }
+            candidates.add(pos.immutable());
+        }
+        candidates.sort((a, b) -> Double.compare(
+                player.distanceToSqr(a.getX() + 0.5D, a.getY() + 0.5D, a.getZ() + 0.5D),
+                player.distanceToSqr(b.getX() + 0.5D, b.getY() + 0.5D, b.getZ() + 0.5D)));
+        if (candidates.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "no authorized container offers items matching " + needle);
+        }
+        int remaining = requested;
+        int taken = 0;
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (BlockPos pos : candidates) {
+            if (remaining <= 0) {
+                break;
+            }
+            Map<String, Object> call = new LinkedHashMap<>();
+            call.put("x", pos.getX());
+            call.put("y", pos.getY());
+            call.put("z", pos.getZ());
+            call.put("item", needle);
+            call.put("count", remaining);
+            try {
+                Map<String, Object> result = containerTake(call);
+                results.add(result);
+                taken += ((Number) result.get("count")).intValue();
+                remaining = requested - taken;
+            } catch (RuntimeException e) {
+                if (remaining > 0 && candidates.indexOf(pos) == candidates.size() - 1) {
+                    throw e;
+                }
+            }
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("taken", taken);
+        out.put("requested", requested);
+        out.put("containers", results.size());
+        out.put("details", results);
+        return out;
+    }
+
+    /** Nearest container matching a permission rule and optional content filter. */
+    private BlockPos nearestAuthorizedContainer(CompanionPlayer player, String dim, int radius,
+                                                java.util.function.Predicate<ContainerPermissions.Rule> allow,
+                                                String containsItem) {
+        BlockPos origin = player.blockPosition();
+        BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BlockPos pos : BlockPos.betweenClosed(
+                origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
+            ContainerPermissions.Rule rule = permissions().find(dim, pos.getX(), pos.getY(), pos.getZ());
+            if (rule == null || !allow.test(rule)) {
+                continue;
+            }
+            if (!(player.serverLevel().getBlockEntity(pos) instanceof Container container)) {
+                continue;
+            }
+            if (containsItem != null && !containerHas(container, containsItem)) {
+                continue;
+            }
+            double distance = player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = pos.immutable();
+            }
+        }
+        return best;
+    }
+
     /** Uses the held item on an entity (shears, bucket, name tag, breeding...). */
     private Map<String, Object> useOnEntity(Map<String, Object> params) {
         CompanionPlayer player = requireControl();
@@ -3582,6 +4115,7 @@ public final class BridgeApi {
             livelyTick(player);
         }
         combatTick(player);
+        guardTick(player);
         stuckTick(player);
         durabilityTick(player);
         inventoryTick(player);
@@ -3627,15 +4161,49 @@ public final class BridgeApi {
         }
         this.lastHpSeen = hp;
 
+        if (this.defendPlayer != null) {
+            ServerPlayer guarded = player.server.getPlayerList().getPlayerByName(this.defendPlayer);
+            if (guarded != null && guarded.level() == player.level()) {
+                Entity creeper = nearestCreeper(guarded, 5.0D);
+                if (creeper != null && this.autopilotTicks - this.lastProtectWarn > 200L) {
+                    this.lastProtectWarn = this.autopilotTicks;
+                    reply("cuidado, hay un creeper al lado tuyo");
+                }
+                if (guarded.getHealth() <= 8.0F
+                        && countHostiles(guarded, this.defendRadius) >= 2
+                        && this.autopilotTicks - this.lastProtectWarn > 400L) {
+                    this.lastProtectWarn = this.autopilotTicks;
+                    reply("estas en peligro, retrocede o curate");
+                }
+            }
+        }
+
         Entity target = pickCombatTarget(player);
         if (target == null || !target.isAlive() || target.level() != player.level()) {
             stopCombatDrive(player);
             this.combatTarget = null;
             return;
         }
-        this.combatTarget = target;
         double distance = Math.sqrt(player.distanceToSqr(target));
         double reach = player.entityInteractionRange() + 0.6D;
+
+        // Staying still means no chasing at all: only hit what is already in reach.
+        if (this.staying && distance > reach) {
+            stopCombatDrive(player);
+            this.combatTarget = null;
+            return;
+        }
+        // Guarding a place forbids cross-map chases.
+        if (this.guardAnchor != null) {
+            double fromAnchor = Math.sqrt(target.distanceToSqr(
+                    this.guardAnchor.x, this.guardAnchor.y, this.guardAnchor.z));
+            if (fromAnchor > this.guardRadius + 4.0D) {
+                stopCombatDrive(player);
+                this.combatTarget = null;
+                return;
+            }
+        }
+        this.combatTarget = target;
 
         if (distance <= reach) {
             stopCombatDrive(player);
@@ -3646,24 +4214,86 @@ public final class BridgeApi {
         // Harmony: never steal movement or the camera from a running task.
         // Follow and other tasks keep their own pathfinding; combat only looks
         // and closes the gap when the companion is idle.
-        if (this.activeTask == null) {
+        if (this.activeTask == null && !this.staying) {
             lookAtPoint(player, target.getEyePosition());
             combatChase(player, target, distance);
         }
     }
 
     private Entity pickCombatTarget(CompanionPlayer player) {
+        if (this.staying) {
+            // Self-defence only inside arm's reach; the stay order wins.
+            return nearestHostile(player, player.entityInteractionRange() + 0.6D);
+        }
+        if (this.guardAnchor != null) {
+            return nearestHostileNear(player, this.guardAnchor, this.guardRadius + 2.0D);
+        }
         ServerPlayer guarded = this.defendPlayer == null ? null
                 : player.server.getPlayerList().getPlayerByName(this.defendPlayer);
         if (guarded != null) {
-            Entity threat = nearestHostile(guarded, 14.0D);
-            if (threat != null) {
-                return threat;
-            }
+            return nearestHostile(guarded, protectSearchRadius());
         }
         boolean hurt = this.autopilotTicks - this.lastHurtTick < 120L;
         double radius = hurt ? 16.0D : Math.max(this.stance.enemyRange(), 8.0D);
         return nearestHostile(player, radius);
+    }
+
+    private double protectSearchRadius() {
+        return switch (this.protectAggressiveness) {
+            case "defensivo" -> this.defendRadius;
+            case "agresivo" -> this.defendRadius * 1.5D;
+            default -> this.defendRadius + 6.0D;
+        };
+    }
+
+    /** Closest non-creeper hostile within {@code radius} of an arbitrary point. */
+    private static Entity nearestHostileNear(CompanionPlayer player, Vec3 point, double radius) {
+        Entity best = null;
+        double bestDistance = radius * radius;
+        AABB box = new AABB(point.x - radius, point.y - radius, point.z - radius,
+                point.x + radius, point.y + radius, point.z + radius);
+        for (Entity entity : player.serverLevel().getEntities(player, box)) {
+            if (!(entity instanceof net.minecraft.world.entity.monster.Monster)
+                    || !entity.isAlive()
+                    || entity instanceof net.minecraft.world.entity.monster.Creeper) {
+                continue;
+            }
+            double distance = entity.distanceToSqr(point);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = entity;
+            }
+        }
+        return best;
+    }
+
+    private static Entity nearestCreeper(ServerPlayer around, double radius) {
+        Entity best = null;
+        double bestDistance = radius * radius;
+        for (Entity entity : around.serverLevel().getEntities(around,
+                around.getBoundingBox().inflate(radius))) {
+            if (!(entity instanceof net.minecraft.world.entity.monster.Creeper)
+                    || !entity.isAlive()) {
+                continue;
+            }
+            double distance = entity.distanceToSqr(around);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = entity;
+            }
+        }
+        return best;
+    }
+
+    private static int countHostiles(ServerPlayer around, double radius) {
+        int count = 0;
+        for (Entity entity : around.serverLevel().getEntities(around,
+                around.getBoundingBox().inflate(radius))) {
+            if (entity instanceof net.minecraft.world.entity.monster.Monster && entity.isAlive()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** Closest monster around {@code around}. Creepers are skipped: meleeing one is suicide. */
@@ -4113,6 +4743,33 @@ public final class BridgeApi {
                 return sleepReflex(player);
             }
 
+            if (isGuardCommand(text)) {
+                ServerPlayer owner = player.server.getPlayerList().getPlayerByName(sender);
+                Map<String, Object> call = new LinkedHashMap<>();
+                if (owner != null) {
+                    call.put("x", owner.getX());
+                    call.put("y", owner.getY());
+                    call.put("z", owner.getZ());
+                }
+                call.put("radius", 8.0D);
+                guardPosition(call);
+                reply("dale, cuido esta zona");
+                return true;
+            }
+
+            if (text.contains("deja la posicion") || text.contains("deja de cuidar la zona")
+                    || text.contains("deja de custodiar") || text.contains("abandona la zona")) {
+                leavePosition(Map.of());
+                reply("listo, dejo la posicion");
+                return true;
+            }
+
+            if (isStayCommand(text, words)) {
+                stay(Map.of());
+                reply("me quedo aca, avisame cuando nos movemos");
+                return true;
+            }
+
             if (text.contains("no me defiendas") || text.contains("deja de defenderme")
                     || text.contains("deja de protegerme") || text.contains("no me protejas")
                     || text.contains("deja de cuidarme") || text.contains("dejame tranquilo")) {
@@ -4130,6 +4787,10 @@ public final class BridgeApi {
                 this.followTarget = null;
                 this.followResume = false;
                 this.combatTarget = null;
+                this.staying = false;
+                this.stayAnchor = null;
+                this.guardAnchor = null;
+                this.guardDim = null;
                 this.companion.controller().stop();
                 reply("listo, me quedo quieto");
                 return true;
@@ -4142,6 +4803,10 @@ public final class BridgeApi {
                     || words.contains("cubrirme") || words.contains("escoltame")) {
                 boolean already = sender.equals(this.defendPlayer);
                 this.defendPlayer = sender;
+                this.staying = false;
+                this.stayAnchor = null;
+                this.guardAnchor = null;
+                this.guardDim = null;
                 // Guarding means staying close: the follow order is persistent
                 // but never replaces a chore that is already running.
                 if (this.followTarget == null) {
@@ -4348,6 +5013,33 @@ public final class BridgeApi {
         }
         // "alto ahí" is an order; a plain "alto" alone too, but not "salto alto".
         return "alto".equals(text) || text.startsWith("alto ahi") || text.contains("alto ahi");
+    }
+
+    /** "quedate aca", "esperame aca": stay in place, distinct from guarding ground. */
+    private static boolean isStayCommand(String text, Set<String> words) {
+        return text.contains("quedate aca") || text.contains("quedate ahi")
+                || text.contains("quedate en el lugar") || text.contains("esperame aca")
+                || text.contains("esperame ahi") || text.contains("espera aca")
+                || text.contains("espera ahi") || text.contains("no te muevas de aca")
+                || text.contains("no te muevas de ahi") || words.contains("stay");
+    }
+
+    /** "defende esta zona", "cuidá este lugar": guard an area, not just a point. */
+    private static boolean isGuardCommand(String text) {
+        if (text.contains("no cuides") || text.contains("no defiendas")
+                || text.contains("no protejas") || text.contains("deja de cuidar")) {
+            return false;
+        }
+        boolean verb = text.contains("defende") || text.contains("defendi")
+                || text.contains("protege") || text.contains("protegi")
+                || text.contains("custodia") || text.contains("cuida")
+                || text.contains("guarda");
+        boolean place = text.contains("zona") || text.contains("area")
+                || text.contains("lugar") || text.contains("posicion")
+                || text.contains("territorio") || text.contains("base")
+                || text.contains("aca") || text.contains("aqui");
+        // "guarda este lugar como base" is place memory, not a guard order.
+        return verb && place && !text.contains("como");
     }
 
     /** Bed-time orders, in both rioplatense and neutral Spanish. */
@@ -4922,6 +5614,7 @@ public final class BridgeApi {
         if (player == null) {
             return;
         }
+        this.lastReflex = message;
         MinecraftServer server = player.server;
         String name = player.getGameProfile().getName();
         server.getPlayerList().broadcastSystemMessage(
@@ -5498,6 +6191,9 @@ public final class BridgeApi {
 
     private void finishTask(String state, String reason) {
         Task task = this.activeTask;
+        if (reason != null && !"replaced".equals(reason) && !"give".equals(reason)) {
+            this.lastInterruptReason = reason;
+        }
         this.activeTask = null;
         Map<String, Object> interruptInfo = this.interruptExtra;
         this.interruptExtra = null;
@@ -5543,6 +6239,7 @@ public final class BridgeApi {
         this.companion.controller().stop();
         if (task != null && !(task instanceof FollowTask)
                 && !"chat_stop".equals(reason) && !"replaced".equals(reason)
+                && !this.staying && this.guardAnchor == null
                 && this.followTarget != null) {
             // The follow order stays valid after chores, giving items or a
             // finished combat chase. Only "para" cancels it.

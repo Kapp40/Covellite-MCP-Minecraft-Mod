@@ -159,6 +159,13 @@ CoveMCP dispone de herramientas organizadas por función. Utiliza siempre las he
 - `get_recent_events`
 - `get_durability_report`
 - `get_threat_assessment`
+- `get_companion_state`
+
+### Roles de protección
+- `protect_player`: cuida a una persona desde su perspectiva: se mantiene cerca, evalúa amenazas alrededor del jugador, avisa si hay un creeper y no persigue fuera del radio de protección.
+- `stay`: se queda exactamente donde está. No defiende territorio ni persigue; solo responde a lo que ya está a alcance de golpe.
+- `guard_position`: defiende un área con radio. Ataca amenazas dentro del radio y nunca persigue más de `radio + 4` bloques.
+- `leave_position`: abandona el rol de `stay`/`guard_position`.
 
 ### Movimiento y control
 - `move`
@@ -208,7 +215,22 @@ CoveMCP dispone de herramientas organizadas por función. Utiliza siempre las he
 - `container_list`
 - `container_take`
 - `container_put`
+- `authorize_container`
+- `list_container_permissions`
+- `revoke_container`
+- `find_container`
+- `deposit_items`
+- `restock`
 - `batch`
+
+#### Permisos persistentes de cofres
+
+Cove recuerda, por mundo, qué cofres tiene autorización para usar y qué puede extraer o depositar de cada uno. Se guarda en `mods/covemcp/permissions/<mundo>.json`.
+
+- `authorize_container` con `take`/`put` limita direcciones por id de ítem; sin listas y con `all: true` da acceso total.
+- `deposit_items` y `restock` solo tocan contenedores autorizados y nunca reorganizan otros slots.
+- `container_take`/`container_put` siguen siendo manuales: se usan cuando el jugador da una orden explícita.
+- `find_container` permite ver qué cofres cercanos están autorizados antes de decidir.
 
 ### Captura
 - `take_screenshot`
@@ -447,6 +469,9 @@ El mod reconoce ciertas expresiones y puede reaccionar automáticamente:
 - Mirar.
 - Atacar.
 - **Defender al jugador** (`defendeme`, `protegeme`, `cuidame`, `cubrime`, `escoltame`).
+- **Quedarse en el lugar** (`quedate aca`, `esperame aca`, `no te muevas de aca`): estado `stay`, distinto de defender una zona.
+- **Defender una zona** (`defende esta zona`, `cuidá este lugar`, `custodiá la base`): estado `guard_position` con radio.
+- **Abandonar la posición** (`deja la posicion`, `abandona la zona`).
 - **Guardar y recordar lugares** (`guarda este punto como BASE`, `guarda esto`, `guardalo como casa`).
 - **Entregar o tirar objetos** (`dame`, `pasame`, `tirame`, `dropea`, `suelta` + objeto y cantidad opcional).
 - Saludos.
@@ -479,6 +504,17 @@ El compañero entra en modo combate sin que se lo pidan cuando recibe daño o de
 - No roba el movimiento de una tarea activa (`follow`, `goto`, `gather`): primero termina o sigue la tarea; el combate cierra la distancia cuando el compañero está libre.
 
 `auto_defend` sigue existiendo como ajuste de modo, pero la autodefensa por daño/amenaza funciona siempre.
+
+### Roles: stay, guard_position y protect_player
+
+- `stay` fija un punto y no persigue nunca: solo se defiende de lo que ya está a distancia de golpe.
+- `guard_position` fija un área y un radio: ataca lo que entra, pero no cruza el mapa; si el objetivo se aleja más de `radio + 4`, lo deja ir y vuelve al ancla.
+- `protect_player` evalúa desde el jugador, no desde Cove: si un creeper está al lado del jugador, avisa (`cuidado, hay un creeper al lado tuyo`) y no lo golpea a ciegas; si el jugador está en peligro con varios hostiles, sugiere retroceder o curarse. Con `agresividad: agresivo` amplía el radio de búsqueda; con `defensivo`, lo reduce.
+- Los tres estados se excluyen entre sí y `para` los limpia todos.
+
+### Estado consolidado
+
+`get_companion_state` devuelve en una sola llamada: actividad (`idle`, `following`, `guarding`, `staying`, `working`, `recovering`), tarea activa, objetivo, autonomía y postura, peligros cercanos, uso del inventario, último reflejo y motivo de la última interrupción.
 
 ### Reflejos de estado
 

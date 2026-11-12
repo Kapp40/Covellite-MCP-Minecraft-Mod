@@ -101,6 +101,36 @@ public final class ToolCatalog {
                 "Hostiles around the companion and nearest human, with fight/retreat recommendation.",
                 props("radius", number("4-64, default 24.")),
                 List.of());
+        add(tools, connection, "get_companion_state",
+                "Consolidated read-only snapshot: activity (idle/following/guarding/staying/working/recovering), "
+                        + "active task, target, autonomy, stance, threats, inventory, last reflex and last interruption.",
+                Map.of(), List.of());
+        add(tools, connection, "protect_player",
+                "Guard a human from their perspective: stays close, evaluates threats around the player, warns "
+                        + "about creepers instead of blindly swinging, and only chases inside the protect radius.",
+                props("player", string("Player name. Default: nearest human."),
+                        "enabled", bool("false releases the guard. Default true."),
+                        "radius", number("4-32, default 16. Threats inside it are engaged."),
+                        "aggressiveness", string("defensivo | normal | agresivo.")),
+                List.of());
+        add(tools, connection, "stay",
+                "Stay exactly here until another order. Distinct from guarding: never chases, only fights back "
+                        + "at arm's reach.",
+                props("x", number("Optional X. Default: current position."),
+                        "y", number("Optional Y."),
+                        "z", number("Optional Z.")),
+                List.of());
+        add(tools, connection, "guard_position",
+                "Guard an area with a radius: engages threats inside it and never chases beyond radius+4. "
+                        + "Distinct from stay.",
+                props("x", number("Optional X. Default: current position."),
+                        "y", number("Optional Y."),
+                        "z", number("Optional Z."),
+                        "radius", number("4-32, default 8.")),
+                List.of());
+        add(tools, connection, "leave_position",
+                "Drop stay/guard role and return to the previous activity.",
+                Map.of(), List.of());
 
         // Movement / control
         add(tools, connection, "move",
@@ -318,6 +348,41 @@ public final class ToolCatalog {
                         "count", integer("Default: whole stack."),
                         "container_slot", integer("Destination slot.")),
                 List.of("x", "y", "z"));
+        add(tools, connection, "authorize_container",
+                "Grant persistent permission for ONE chest/barrel. Empty take/put lists with all=true means "
+                        + "full access. Without permission the high-level tools refuse to touch it.",
+                props("x", integer("X"), "y", integer("Y"), "z", integer("Z"),
+                        "name", string("Optional label, e.g. base-storage."),
+                        "take", stringArray("Item ids Cove may take, e.g. [\"cobblestone\",\"torch\"]."),
+                        "put", stringArray("Item ids Cove may deposit."),
+                        "all", bool("Allow everything. Default true only when both lists are empty.")),
+                List.of("x", "y", "z"));
+        add(tools, connection, "list_container_permissions",
+                "List every saved container permission for this world.",
+                Map.of(), List.of());
+        add(tools, connection, "revoke_container",
+                "Remove the permission for one container.",
+                props("x", integer("X"), "y", integer("Y"), "z", integer("Z")),
+                List.of("x", "y", "z"));
+        add(tools, connection, "find_container",
+                "Nearby containers with their authorization and optional item filter. Read-only.",
+                props("radius", integer("1-32, default 12."),
+                        "item", string("Only containers holding this item id substring.")),
+                List.of());
+        add(tools, connection, "deposit_items",
+                "Deposit one item type ONLY into a container authorized for it. Never reorganizes other slots.",
+                props("item", string("Item id substring."),
+                        "count", integer("Default: whole stack."),
+                        "x", integer("Optional target X."), "y", integer("Optional Y."),
+                        "z", integer("Optional Z."),
+                        "radius", integer("Search radius when no coordinates. Default 16.")),
+                List.of("item"));
+        add(tools, connection, "restock",
+                "Pull one item type from the nearest authorized container, up to count.",
+                props("item", string("Item id substring."),
+                        "count", integer("1-2304, default 64."),
+                        "radius", integer("4-32, default 16.")),
+                List.of("item"));
         add(tools, connection, "use_on_entity",
                 "Use the held item on an entity (shears, bucket, name tag...).",
                 props("entity", string("Name or UUID."),
