@@ -402,8 +402,10 @@ public final class ToolCatalog {
                         "defend", bool("Auto-attack hostiles.")),
                 List.of());
         add(tools, connection, "take_screenshot",
-                "PNG from the companion's eyes; returns the file path.",
-                props("timeout_ms", integer("1000-15000, default 6000.")),
+                "Start an async screenshot from the companion's eyes. Returns an action_id; poll "
+                        + "get_action_status with it until state is completed (path, width, height) or failed "
+                        + "(reason). Never blocks the game.",
+                props("timeout_ms", integer("1000-15000, default 6000. Fails the action if no frame renders.")),
                 List.of());
 
         // Lifecycle

@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -75,7 +76,12 @@ public final class BridgeApi {
     private final CompanionManager companion;
     private final ChatLog chatLog;
     private final EventLog events;
-    private final Map<String, Map<String, Object>> actions = new ConcurrentHashMap<>();
+    // Action records. The outer map is only touched from the server tick
+    // thread (requests are queued and dispatched there), which is why a plain
+    // LinkedHashMap is safe and gives FIFO pruning. Each record is a
+    // ConcurrentHashMap because async work (e.g. the screenshot callback on
+    // the render thread) mutates its own record concurrently.
+    private final Map<String, Map<String, Object>> actions = new LinkedHashMap<>();
     private long nextActionId = 1L;
     private Task activeTask;
     private boolean emergency;
@@ -137,6 +143,8 @@ public final class BridgeApi {
     private float lastHpSeen = 20.0F;
     private boolean combatDriving = false;
     private long combatJumpTick = 0L;
+    /** Tick when the charge bar first became full and ready to swing; -1 = not waiting. */
+    private long combatReadySince = -1L;
 
     // Persistent follow, so a chat line or a finished task does not break it.
     private String followTarget = null;
@@ -290,7 +298,33 @@ public final class BridgeApi {
     // Per-tick task driver
     // ------------------------------------------------------------------
 
+    /**
+     * Called by {@link CompanionManager} when a dead playerdata had to be
+     * revived and moved to the world spawn. Without this, an old task or a
+     * persistent follow would send the companion walking all the way back to
+     * the place where it died.
+     */
+    public void onCompanionRevived() {
+        cancelActive("revived");
+        clearGive();
+        this.followTarget = null;
+        this.followResume = false;
+        this.combatTarget = null;
+        this.staying = false;
+        this.stayAnchor = null;
+        this.guardAnchor = null;
+        this.guardDim = null;
+        this.defendPlayer = null;
+        this.companion.controller().stop();
+        this.autopilotReady = false;
+    }
+
     public void tick(MinecraftServer server) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            // Screenshots are asynchronous; this releases one whose frame
+            // never rendered (paused/minimised window) and marks it failed.
+            com.covelliteai.client.PovCapture.watchdog();
+        }
         autopilotTick(server);
         if (this.activeTask == null) {
             return;
@@ -1589,8 +1623,19 @@ public final class BridgeApi {
     }
 
     /**
-     * Captures a real screenshot from the companion's eyes. Only works on the
+     * Requests a real screenshot from the companion's eyes. Only works on the
      * client (integrated server), where the renderer lives.
+     *
+     * <p>This used to call {@code PovCapture.capture(...)} and block the
+     * server thread waiting for the result (up to 15 seconds on failure),
+     * freezing the whole game. It is now fire-and-forget like the other
+     * async tasks ({@code move}, {@code goto}...): it returns an action id
+     * immediately, and the actual PNG path (or error) lands in that action's
+     * record once the render thread finishes, retrievable with
+     * {@code get_action_status}.</p>
+     *
+     * <p>{@code timeout_ms} is still honoured: the per-tick watchdog fails the
+     * action (and releases the capture slot) if the frame never renders.</p>
      */
     private Map<String, Object> takeScreenshot(Map<String, Object> params) {
         CompanionPlayer player = requirePlayer();
@@ -1598,10 +1643,26 @@ public final class BridgeApi {
             throw new IllegalArgumentException("screenshots are only available in the client");
         }
         long timeout = (long) clamp(num(params, "timeout_ms", 6000.0D), 1000.0D, 15000.0D);
-        return com.covelliteai.client.PovCapture.capture(
+        String id = newAction("take_screenshot", "running");
+        Map<String, Object> action = this.actions.get(id);
+        com.covelliteai.client.PovCapture.captureAsync(
                 player.getUUID(),
                 player.getX(), player.getY(), player.getZ(),
-                player.getYRot(), player.getXRot(), timeout);
+                player.getYRot(), player.getXRot(), timeout,
+                result -> {
+                    // Result first, state last: a reader that polls
+                    // get_action_status must never see "completed" without
+                    // the path already present.
+                    action.putAll(result);
+                    action.put("state", "completed");
+                },
+                error -> {
+                    action.put("reason", error);
+                    action.put("state", "failed");
+                });
+        Map<String, Object> out = actionResult(id, "running");
+        out.put("note", "poll get_action_status with this id for the PNG path");
+        return out;
     }
 
     /**
@@ -3581,7 +3642,14 @@ public final class BridgeApi {
             ref.container.setItem(targetSlot, moving.copy());
             moving.setCount(0);
         }
-        sourceStack.shrink(count - moving.getCount());
+        // Remove the full amount we attempted to move from the source slot now.
+        // Only the part that actually fit in the container was ever handed
+        // over; whatever is left in `moving` was never deposited and must be
+        // handed back below instead of being left behind here too (that
+        // double-counting was the duplication bug: it used to shrink by only
+        // the fitted amount, leaving the un-fitted remainder physically in
+        // both the source stack AND the "give it back" step).
+        sourceStack.shrink(count);
         if (sourceStack.isEmpty()) {
             inventory.setItem(source, ItemStack.EMPTY);
         }
@@ -3779,23 +3847,39 @@ public final class BridgeApi {
         int requested = (int) clamp(num(params, "count", 64.0D), 1.0D, 2304.0D);
         int radius = (int) clamp(num(params, "radius", 16.0D), 4.0D, 32.0D);
         String dim = dimName(player.serverLevel());
-        List<BlockPos> candidates = new ArrayList<>();
+
+        // Concrete container slots, not just containers: permissions are
+        // checked against each real item id, while the user text is only a
+        // search hint. With exact rules this must not match by substring
+        // ("iron" does not authorize "iron_sword"), and taking by slot avoids
+        // grabbing a different item that happens to contain the same text.
+        record TakeCandidate(BlockPos pos, int slot, int available) {
+        }
+        List<TakeCandidate> candidates = new ArrayList<>();
         BlockPos origin = player.blockPosition();
         for (BlockPos pos : BlockPos.betweenClosed(
                 origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
             ContainerPermissions.Rule rule = permissions().find(dim, pos.getX(), pos.getY(), pos.getZ());
-            if (rule == null || !rule.canTake(needle)) {
+            if (rule == null) {
                 continue;
             }
-            if (!(player.serverLevel().getBlockEntity(pos) instanceof Container container)
-                    || !containerHas(container, needle)) {
+            if (!(player.serverLevel().getBlockEntity(pos) instanceof Container container)) {
                 continue;
             }
-            candidates.add(pos.immutable());
+            for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                ItemStack stack = container.getItem(slot);
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                if (id.contains(needle) && rule.canTake(id)) {
+                    candidates.add(new TakeCandidate(pos.immutable(), slot, stack.getCount()));
+                }
+            }
         }
         candidates.sort((a, b) -> Double.compare(
-                player.distanceToSqr(a.getX() + 0.5D, a.getY() + 0.5D, a.getZ() + 0.5D),
-                player.distanceToSqr(b.getX() + 0.5D, b.getY() + 0.5D, b.getZ() + 0.5D)));
+                player.distanceToSqr(a.pos().getX() + 0.5D, a.pos().getY() + 0.5D, a.pos().getZ() + 0.5D),
+                player.distanceToSqr(b.pos().getX() + 0.5D, b.pos().getY() + 0.5D, b.pos().getZ() + 0.5D)));
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException(
                     "no authorized container offers items matching " + needle);
@@ -3803,23 +3887,23 @@ public final class BridgeApi {
         int remaining = requested;
         int taken = 0;
         List<Map<String, Object>> results = new ArrayList<>();
-        for (BlockPos pos : candidates) {
-            if (remaining <= 0) {
-                break;
-            }
+        Set<BlockPos> usedContainers = new LinkedHashSet<>();
+        for (int i = 0; i < candidates.size() && remaining > 0; i++) {
+            TakeCandidate candidate = candidates.get(i);
             Map<String, Object> call = new LinkedHashMap<>();
-            call.put("x", pos.getX());
-            call.put("y", pos.getY());
-            call.put("z", pos.getZ());
-            call.put("item", needle);
-            call.put("count", remaining);
+            call.put("x", candidate.pos().getX());
+            call.put("y", candidate.pos().getY());
+            call.put("z", candidate.pos().getZ());
+            call.put("slot", candidate.slot());
+            call.put("count", Math.min(remaining, candidate.available()));
             try {
                 Map<String, Object> result = containerTake(call);
                 results.add(result);
+                usedContainers.add(candidate.pos());
                 taken += ((Number) result.get("count")).intValue();
                 remaining = requested - taken;
             } catch (RuntimeException e) {
-                if (remaining > 0 && candidates.indexOf(pos) == candidates.size() - 1) {
+                if (i == candidates.size() - 1) {
                     throw e;
                 }
             }
@@ -3828,7 +3912,8 @@ public final class BridgeApi {
         out.put("ok", true);
         out.put("taken", taken);
         out.put("requested", requested);
-        out.put("containers", results.size());
+        out.put("containers", usedContainers.size());
+        out.put("takes", results.size());
         out.put("details", results);
         return out;
     }
@@ -3909,15 +3994,44 @@ public final class BridgeApi {
         if (id == null) {
             throw new IllegalArgumentException("id is required");
         }
-        boolean cancelled = cancelActive(id);
-        if (!cancelled) {
-            Map<String, Object> action = this.actions.get(id);
-            if (action == null) {
-                throw new IllegalArgumentException("unknown action id: " + id);
-            }
+        Map<String, Object> action = this.actions.get(id);
+        if (action == null) {
+            throw new IllegalArgumentException("unknown action id: " + id);
+        }
+        Object currentState = action.get("state");
+        if ("completed".equals(currentState) || "failed".equals(currentState)
+                || "cancelled".equals(currentState) || "timed_out".equals(currentState)) {
+            // Already finished: never overwrite a real result with "cancelled",
+            // and never touch whatever else might be running right now.
+            return Map.of("ok", true, "cancelled", false, "state", String.valueOf(currentState));
+        }
+        if (id.equals(activeTaskId())) {
+            cancelActive("cancel_action");
+        } else if ("take_screenshot".equals(String.valueOf(action.get("method")))) {
+            // It runs on the render thread and lasts one or two frames;
+            // pretending to cancel it would be a lie. The watchdog bounds it.
+            return Map.of("ok", true, "cancelled", false,
+                    "state", String.valueOf(currentState),
+                    "reason", "screenshots cannot be cancelled; wait for the result or its timeout");
+        } else {
+            // Bookkeeping entry for a task that is not actually the one
+            // running right now (e.g. stale or queued): just mark it, and do
+            // not touch the task that IS running.
             action.put("state", "cancelled");
         }
         return Map.of("ok", true, "cancelled", true);
+    }
+
+    /** The action id of whatever {@link #activeTask} currently is, or null. */
+    private String activeTaskId() {
+        Task task = this.activeTask;
+        if (task instanceof MoveTask move) return move.id;
+        if (task instanceof GotoTask gotoTask) return gotoTask.id;
+        if (task instanceof FollowTask followTask) return followTask.id;
+        if (task instanceof GatherTask gatherTask) return gatherTask.id;
+        if (task instanceof CraftTask craftTask) return craftTask.id;
+        if (task instanceof SleepTask sleepTask) return sleepTask.id;
+        return null;
     }
 
     private Map<String, Object> emergencyStop() {
@@ -3930,6 +4044,11 @@ public final class BridgeApi {
     private Map<String, Object> resetEmergencyStop() {
         this.emergency = false;
         return Map.of("ok", true, "emergency_stop", false);
+    }
+
+    /** Lets other classes (e.g. CovelliteAI.status()) report the real flag. */
+    public boolean isEmergencyStopped() {
+        return this.emergency;
     }
 
     // ------------------------------------------------------------------
@@ -4254,7 +4373,7 @@ public final class BridgeApi {
         AABB box = new AABB(point.x - radius, point.y - radius, point.z - radius,
                 point.x + radius, point.y + radius, point.z + radius);
         for (Entity entity : player.serverLevel().getEntities(player, box)) {
-            if (!(entity instanceof net.minecraft.world.entity.monster.Monster)
+            if (!(entity instanceof net.minecraft.world.entity.monster.Enemy)
                     || !entity.isAlive()
                     || entity instanceof net.minecraft.world.entity.monster.Creeper) {
                 continue;
@@ -4290,7 +4409,7 @@ public final class BridgeApi {
         int count = 0;
         for (Entity entity : around.serverLevel().getEntities(around,
                 around.getBoundingBox().inflate(radius))) {
-            if (entity instanceof net.minecraft.world.entity.monster.Monster && entity.isAlive()) {
+            if (entity instanceof net.minecraft.world.entity.monster.Enemy && entity.isAlive()) {
                 count++;
             }
         }
@@ -4303,7 +4422,7 @@ public final class BridgeApi {
         double bestDistance = radius * radius;
         for (Entity entity : around.serverLevel().getEntities(around,
                 around.getBoundingBox().inflate(radius))) {
-            if (!(entity instanceof net.minecraft.world.entity.monster.Monster)) {
+            if (!(entity instanceof net.minecraft.world.entity.monster.Enemy)) {
                 continue;
             }
             if (!entity.isAlive() || entity instanceof net.minecraft.world.entity.monster.Creeper) {
@@ -4322,20 +4441,45 @@ public final class BridgeApi {
      * Charged swing with real critical hits: jump, then hit while falling with
      * the attack strength bar full. Never spams: each swing waits for the
      * vanilla cooldown.
+     *
+     * <p>In water, on a ladder, or on stairs/slabs that keep resetting
+     * {@code fallDistance}, the "jump then hit while falling" trick can never
+     * be satisfied (jumping may not even move the companion, or it never
+     * truly falls). That used to mean no critical window ever arrived, so the
+     * companion stood there swinging at nothing forever. After a short wait
+     * (or immediately in water/on a ladder, where no jump is possible at
+     * all) this gives up on the critical and lands a normal hit instead: a
+     * guaranteed hit beats withholding damage indefinitely.</p>
      */
     private void combatSwing(CompanionPlayer player, Entity target) {
         float charge = player.getAttackStrengthScale(0.5F);
         if (charge < 0.9F) {
+            this.combatReadySince = -1L;
             return;
         }
         if (this.autopilotTicks - this.lastCombatSwing < 6L) {
             return;
+        }
+        if (this.combatReadySince < 0L) {
+            this.combatReadySince = this.autopilotTicks;
         }
         boolean falling = !player.onGround()
                 && player.getDeltaMovement().y < 0.0D
                 && player.fallDistance > 0.0F
                 && !player.onClimbable()
                 && !player.isInWater();
+        boolean giveUpOnCrit = player.isInWater() || player.onClimbable()
+                || this.autopilotTicks - this.combatReadySince > 15L;
+        if (falling || giveUpOnCrit) {
+            player.setSprinting(false); // sprinting cancels vanilla critical hits
+            lookAtPoint(player, target.getEyePosition());
+            player.attackWithFullStrength(target);
+            player.swing(InteractionHand.MAIN_HAND, true);
+            player.containerMenu.broadcastChanges();
+            this.lastCombatSwing = this.autopilotTicks;
+            this.combatReadySince = -1L;
+            return;
+        }
         if (player.onGround()) {
             // Jump first; the next tick in the air becomes the critical hit.
             if (this.autopilotTicks - this.combatJumpTick > 8L) {
@@ -4343,17 +4487,7 @@ public final class BridgeApi {
                 this.companion.controller().jump();
                 this.combatJumpTick = this.autopilotTicks;
             }
-            return;
         }
-        if (!falling) {
-            return;
-        }
-        player.setSprinting(false); // sprinting cancels vanilla critical hits
-        lookAtPoint(player, target.getEyePosition());
-        player.attackWithFullStrength(target);
-        player.swing(InteractionHand.MAIN_HAND, true);
-        player.containerMenu.broadcastChanges();
-        this.lastCombatSwing = this.autopilotTicks;
     }
 
     /** Walks toward a hostile using the vanilla movement inputs. */
@@ -4462,7 +4596,21 @@ public final class BridgeApi {
             }
             return;
         }
-        player.getInventory().selected = replacement;
+        // findCompatibleTool searches the whole inventory (slots 0-35), but
+        // Inventory.selected only addresses the hotbar (0-8). Setting it
+        // directly to a backpack slot used to point the hand at a
+        // nonexistent hotbar slot, leaving the companion holding nothing.
+        // When the replacement is in the backpack, swap it into the
+        // currently-held hotbar slot instead (same pattern used elsewhere in
+        // this file, e.g. placeBlock's hotbar swap).
+        if (replacement < 9) {
+            player.getInventory().selected = replacement;
+        } else {
+            int hotbarSlot = player.getInventory().selected;
+            ItemStack previous = player.getInventory().getItem(hotbarSlot);
+            player.getInventory().setItem(hotbarSlot, player.getInventory().getItem(replacement));
+            player.getInventory().setItem(replacement, previous);
+        }
         player.containerMenu.broadcastChanges();
         this.warnedTools.remove(hand.getItem());
         if (this.autopilotTicks - this.lastDurabilityNotice > 200L) {
@@ -5598,7 +5746,7 @@ public final class BridgeApi {
         double bestDistance = radius * radius;
         for (Entity entity : player.serverLevel().getEntities(player,
                 player.getBoundingBox().inflate(radius))) {
-            if (!(entity instanceof net.minecraft.world.entity.monster.Monster) || !entity.isAlive()) {
+            if (!(entity instanceof net.minecraft.world.entity.monster.Enemy) || !entity.isAlive()) {
                 continue;
             }
             double distance = player.distanceToSqr(entity);

@@ -9,6 +9,7 @@ import com.covelliteai.CovelliteAI;
 import com.covelliteai.CovelliteConfig;
 import com.mojang.authlib.GameProfile;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,9 +40,16 @@ public final class CompanionManager {
     private CompanionConnection connection;
     private MinecraftServer server;
     private int respawnTicks = -1;
+    /** Optional callback run after a dead playerdata was revived at spawn. */
+    private Runnable reviveHook;
 
     public CompanionManager(CovelliteConfig config) {
         this.config = config;
+    }
+
+    /** Wired by the mod so the controller can drop stale tasks on revive. */
+    public void setReviveHook(Runnable hook) {
+        this.reviveHook = hook;
     }
 
     // ------------------------------------------------------------------
@@ -104,17 +112,35 @@ public final class CompanionManager {
             companion.connection = companionListener;
 
             // Playerdata saved on death restores with zero health, which would
-            // make the companion dead the instant it joins.
+            // make the companion dead the instant it joins. It also restores
+            // at the exact spot it died (lava, the void, etc.), which used to
+            // make it die again a few seconds later in a loop: move it to a
+            // safe shared spawn point whenever we had to revive it like this.
+            boolean revived = false;
             if (!companion.isAlive()) {
-                CovelliteAI.LOGGER.warn("Companion playerdata was dead; restoring full health");
+                CovelliteAI.LOGGER.warn("Companion playerdata was dead; restoring full health and moving to spawn");
                 companion.setHealth(companion.getMaxHealth());
                 companion.setRemainingFireTicks(0);
+                companion.getFoodData().setFoodLevel(20);
+                companion.getFoodData().setSaturation(5.0F);
+                companion.setAirSupply(companion.getMaxAirSupply());
+                moveToSafeSpawn(server, companion);
+                revived = true;
             }
 
             this.player = companion;
             this.listener = companionListener;
             this.connection = conn;
             this.respawnTicks = -1;
+            if (revived) {
+                // Tell the controller side to forget stale tasks/follows; it
+                // knows nothing about this class and must not walk back to the
+                // spot where the companion died.
+                Runnable hook = this.reviveHook;
+                if (hook != null) {
+                    hook.run();
+                }
+            }
         } catch (RuntimeException e) {
             CovelliteAI.LOGGER.error("Companion spawn failed; cleaning up", e);
             ServerPlayer partial = playerList.getPlayer(uuid);
@@ -140,6 +166,20 @@ public final class CompanionManager {
                 companion.getId(),
                 companion.getUUID());
         return true;
+    }
+
+    /**
+     * Sends a just-revived companion to the overworld's shared spawn point
+     * instead of leaving it wherever its playerdata says it died. Without
+     * this, dying in lava or in the void meant it kept reviving in the same
+     * hazard and dying again every few seconds.
+     */
+    private static void moveToSafeSpawn(MinecraftServer server, CompanionPlayer companion) {
+        ServerLevel overworld = server.overworld();
+        BlockPos spawn = overworld.getSharedSpawnPos();
+        companion.teleportTo(overworld,
+                spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
+                overworld.getSharedSpawnAngle(), 0.0F);
     }
 
     public void tick(MinecraftServer server) {

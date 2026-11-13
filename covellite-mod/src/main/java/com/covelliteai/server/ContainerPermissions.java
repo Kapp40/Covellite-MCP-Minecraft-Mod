@@ -113,6 +113,14 @@ public final class ContainerPermissions {
         return out;
     }
 
+    /**
+     * A rule entry matches an item only on an exact id (either form,
+     * {@code minecraft:iron} or {@code iron}), {@code *} for "anything", or
+     * an explicit prefix wildcard written as {@code something*} (e.g.
+     * {@code iron*} on purpose matches {@code iron_sword} too). Before this,
+     * plain substring matching let "stone" also authorize "cobblestone" and
+     * "iron" also authorize "iron_sword" — items nobody explicitly listed.
+     */
     private static boolean matches(Set<String> list, String itemId) {
         if (itemId == null || itemId.isBlank() || list.isEmpty()) {
             return false;
@@ -121,8 +129,17 @@ public final class ContainerPermissions {
         String shortId = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
         for (String raw : list) {
             String query = raw.startsWith("minecraft:") ? raw.substring("minecraft:".length()) : raw;
-            if ("*".equals(query) || id.equals(raw) || shortId.equals(query)
-                    || id.contains(query) || shortId.contains(query)) {
+            if ("*".equals(query)) {
+                return true;
+            }
+            if (query.endsWith("*")) {
+                String prefix = query.substring(0, query.length() - 1);
+                if (!prefix.isEmpty() && (id.startsWith(prefix) || shortId.startsWith(prefix))) {
+                    return true;
+                }
+                continue;
+            }
+            if (id.equals(raw) || id.equals(query) || shortId.equals(query)) {
                 return true;
             }
         }

@@ -228,6 +228,7 @@ CoveMCP dispone de herramientas organizadas por función. Utiliza siempre las he
 Cove recuerda, por mundo, qué cofres tiene autorización para usar y qué puede extraer o depositar de cada uno. Se guarda en `mods/covemcp/permissions/<mundo>.json`.
 
 - `authorize_container` con `take`/`put` limita direcciones por id de ítem; sin listas y con `all: true` da acceso total.
+- El matching es exacto por id (`minecraft:iron` o `iron`); para rangos se escribe un comodín de prefijo explícito, por ejemplo `iron*` (autoriza `iron_ingot`, `iron_sword`...).
 - `deposit_items` y `restock` solo tocan contenedores autorizados y nunca reorganizan otros slots.
 - `container_take`/`container_put` siguen siendo manuales: se usan cuando el jugador da una orden explícita.
 - `find_container` permite ver qué cofres cercanos están autorizados antes de decidir.
@@ -566,6 +567,8 @@ No confundas autonomía con permiso ilimitado.
 ## 15. Capturas de pantalla
 
 `take_screenshot` obtiene una captura real de la perspectiva del jugador mediante el framebuffer del renderer cliente.
+
+Es asíncrona: devuelve un `action_id` inmediatamente y nunca bloquea el juego. El resultado (o el error) aparece en ese registro y se consulta con `get_action_status` hasta que `state` sea `completed` (con `path`, `width`, `height`) o `failed` (con `reason`). `timeout_ms` (1000-15000, por defecto 6000) marca la captura como fallida si ningún frame llega a renderizarse —por ejemplo con la ventana minimizada— y libera el turno para la próxima.
 
 Requisitos:
 - Minecraft debe tener el cliente abierto.

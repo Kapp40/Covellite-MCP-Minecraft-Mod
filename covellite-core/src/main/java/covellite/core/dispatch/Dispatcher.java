@@ -67,16 +67,25 @@ public final class Dispatcher {
             response.put("result", result == null ? Map.of() : result);
             return response;
         } catch (IllegalArgumentException e) {
-            return error(id, "invalid_params", e.getMessage());
+            return error(id, "invalid_params", e.getMessage() == null
+                    ? "invalid parameters" : e.getMessage());
         } catch (Exception e) {
-            return error(id, "internal_error", e.getMessage());
+            // Keep the exception type when there is no message (bare NPEs),
+            // otherwise the caller only sees "(no message)".
+            String detail = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            return error(id, "internal_error", detail);
         }
     }
 
     private Map<String, Object> error(String id, String code, String message) {
         Map<String, Object> response = new java.util.HashMap<>();
         if (id != null) response.put("id", id);
-        response.put("error", Map.of("code", code, "message", message));
+        // Some Java exceptions (e.g. a bare NullPointerException) carry no
+        // message. Map.of(...) throws NullPointerException on a null value,
+        // which used to escape dispatch() uncaught and crash the server tick
+        // that called it. Always fall back to a non-null placeholder.
+        String safeMessage = message == null ? ("(no message) " + code) : message;
+        response.put("error", Map.of("code", code, "message", safeMessage));
         return response;
     }
 

@@ -87,6 +87,7 @@ public final class CovelliteAI {
         this.chatLog = new ChatLog(config.maxChatHistory);
         this.companion = new CompanionManager(config);
         this.bridgeApi = new BridgeApi(this.companion, this.chatLog, this.events);
+        this.companion.setReviveHook(this.bridgeApi::onCompanionRevived);
         this.actions = new ActionQueue(config.maxActions, config.maxActionHistory,
                 status -> { }, () -> this.companion.controller().stop());
 
@@ -260,7 +261,23 @@ public final class CovelliteAI {
         int budget = 32;
         Map<String, Object> request;
         while (budget-- > 0 && (request = inbound.poll()) != null) {
-            Map<String, Object> response = dispatcher.dispatch(request);
+            Map<String, Object> response;
+            try {
+                response = dispatcher.dispatch(request);
+            } catch (RuntimeException e) {
+                // Defense in depth: dispatch() already catches handler
+                // exceptions, but a malformed request or a bug in a decorator
+                // must never be able to kill the server tick that called us.
+                LOGGER.error("Unhandled exception dispatching request {}: {}", request, e.toString(), e);
+                Object rawId = request.get("id");
+                Map<String, Object> error = new LinkedHashMap<>();
+                if (rawId != null) {
+                    error.put("id", String.valueOf(rawId));
+                }
+                error.put("error", Map.of("code", "internal_error",
+                        "message", e.getMessage() == null ? e.toString() : e.getMessage()));
+                response = error;
+            }
             send(response);
         }
     }
@@ -286,7 +303,7 @@ public final class CovelliteAI {
         map.put("server_running", this.server != null && this.server.isRunning());
         map.put("bridge_authenticated", this.bridge != null && this.bridge.isAuthenticated());
         map.put("bridge_port", this.config.port);
-        map.put("emergency_stop_active", this.actions.isEmergencyStopped());
+        map.put("emergency_stop_active", this.bridgeApi.isEmergencyStopped());
         map.put("live_actions", this.actions.liveStatuses().size());
         map.put("companion", this.companion.state());
         map.put("autopilot", this.bridgeApi.autopilotState());

@@ -5,9 +5,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -53,37 +51,55 @@ public final class PovCapture {
     }
 
     /**
-     * Requests a screenshot and blocks the caller until the client thread has
-     * written the PNG. Intended to be called from the integrated server thread.
+     * Requests a screenshot without blocking the caller. Intended to be
+     * called from the integrated server thread: {@code onResult}/{@code
+     * onError} are invoked later, from the render thread, once the frame is
+     * actually captured (or fails to be). This used to block the calling
+     * thread for up to 15 seconds with {@code future.get(...)}, which froze
+     * the whole game whenever a screenshot was requested and something went
+     * wrong; it also used to touch the client-only camera directly from the
+     * calling (server) thread on a timeout or interrupt, which is unsafe.
+     * Neither problem can happen now: this method never blocks, and every
+     * path that touches {@code Minecraft}/the camera runs inside {@code
+     * minecraft.execute(...)} or the render-stage event, i.e. on the render
+     * thread.</p>
+     *
+     * <p>{@code timeoutMs} is enforced by {@link #watchdog()}, which the
+     * server tick calls. Without it, a paused or minimised window (where no
+     * render stage ever fires) would leave the request active forever and
+     * block every future screenshot.</p>
      */
-    public static Map<String, Object> capture(java.util.UUID uuid,
-                                              double x, double y, double z,
-                                              float yaw, float pitch,
-                                              long timeoutMs) {
-        Request request = new Request(uuid, x, y, z, yaw, pitch);
+    public static void captureAsync(UUID uuid, double x, double y, double z,
+                                     float yaw, float pitch, long timeoutMs,
+                                     Consumer<Map<String, Object>> onResult,
+                                     Consumer<String> onError) {
+        Request request = new Request(uuid, x, y, z, yaw, pitch,
+                Math.max(1000L, timeoutMs), onResult, onError);
         synchronized (LOCK) {
             if (active != null) {
-                throw new IllegalStateException("another screenshot is already in progress");
+                onError.accept("another screenshot is already in progress");
+                return;
             }
             active = request;
         }
+        Minecraft.getInstance().execute(() -> begin(request));
+    }
 
-        Minecraft minecraft = Minecraft.getInstance();
-        minecraft.execute(() -> begin(request));
-
-        try {
-            return request.future.get(timeoutMs, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            fail(request, "screenshot timed out; is the game window rendering?");
-            throw new IllegalStateException("screenshot timed out after " + timeoutMs + " ms");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            fail(request, "interrupted");
-            throw new IllegalStateException("screenshot interrupted");
-        } catch (Exception e) {
-            fail(request, String.valueOf(e.getMessage()));
-            throw new IllegalStateException("screenshot failed: " + e.getMessage(), e);
+    /**
+     * Fails a screenshot that never finished. Called from the server tick, so
+     * it only marks the request and hands the client-side cleanup to the
+     * render thread: the camera must never be touched from another thread.
+     */
+    public static void watchdog() {
+        Request request;
+        synchronized (LOCK) {
+            request = active;
         }
+        if (request == null || System.currentTimeMillis() - request.startedAt < request.timeoutMs) {
+            return;
+        }
+        Minecraft.getInstance().execute(() -> fail(request,
+                "screenshot timed out after " + request.timeoutMs + " ms; is the game window rendering?"));
     }
 
     private static void begin(Request request) {
@@ -174,6 +190,10 @@ public final class PovCapture {
 
             // Restore the human camera before touching the disk.
             restoreCamera(request);
+            if (!claim(request)) {
+                // The watchdog already reported this request as failed.
+                return;
+            }
 
             Path directory = minecraft.gameDirectory.toPath().resolve("covemcp-screenshots");
             Files.createDirectories(directory);
@@ -190,12 +210,7 @@ public final class PovCapture {
             result.put("z", request.z);
             result.put("yaw", request.yaw);
             result.put("pitch", request.pitch);
-            synchronized (LOCK) {
-                if (active == request) {
-                    active = null;
-                }
-            }
-            request.future.complete(result);
+            request.onResult.accept(result);
         } catch (Exception e) {
             if (request.previous != null) {
                 restoreCamera(request);
@@ -208,18 +223,31 @@ public final class PovCapture {
         }
     }
 
+    /**
+     * Marks the request as finished and detaches it. Only the first caller
+     * (render stage or watchdog) wins, so the caller never receives both a
+     * result and an error.
+     */
+    private static boolean claim(Request request) {
+        synchronized (LOCK) {
+            if (request.done || active != request) {
+                return false;
+            }
+            request.done = true;
+            active = null;
+            return true;
+        }
+    }
+
     private static void fail(Request request, String message) {
         request.cameraSet = false;
-        Minecraft minecraft = Minecraft.getInstance();
         if (request.previous != null) {
             restoreCamera(request);
         }
-        synchronized (LOCK) {
-            if (active == request) {
-                active = null;
-            }
+        if (!claim(request)) {
+            return;
         }
-        request.future.completeExceptionally(new IllegalStateException(message));
+        request.onError.accept(message);
     }
 
     private static final class Request {
@@ -229,7 +257,10 @@ public final class PovCapture {
         final double z;
         final float yaw;
         final float pitch;
-        final CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
+        final long timeoutMs;
+        final long startedAt;
+        final Consumer<Map<String, Object>> onResult;
+        final Consumer<String> onError;
         Entity previous;
         AbstractClientPlayer camera;
         double previousX;
@@ -240,14 +271,21 @@ public final class PovCapture {
         float previousYHeadRot;
         int framesLeft;
         boolean cameraSet;
+        boolean done;
 
-        Request(UUID uuid, double x, double y, double z, float yaw, float pitch) {
+        Request(UUID uuid, double x, double y, double z, float yaw, float pitch,
+                long timeoutMs, Consumer<Map<String, Object>> onResult,
+                Consumer<String> onError) {
             this.uuid = uuid;
             this.x = x;
             this.y = y;
             this.z = z;
             this.yaw = yaw;
             this.pitch = pitch;
+            this.timeoutMs = timeoutMs;
+            this.startedAt = System.currentTimeMillis();
+            this.onResult = onResult;
+            this.onError = onError;
         }
     }
 }
