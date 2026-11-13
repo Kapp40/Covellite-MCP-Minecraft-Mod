@@ -177,6 +177,25 @@ public final class CovelliteAI {
         boolean fromCompanion = this.companion.player() == player;
         this.chatLog.add(name, text, "chat", fromCompanion);
         this.events.add("chat", Map.of("sender", name, "message", text));
+        if (!fromCompanion) {
+            relayHumanChat(name, text);
+        }
+    }
+
+    /**
+     * ChatRelay: pushes ONE human-typed chat line to the bridge the instant it
+     * happens, instead of waiting for the agent to poll (scan / get_recent_events
+     * / the next tool call's new_chat). Cove's own lines never go through here
+     * (fromCompanion is already filtered by the caller), and this is sent as an
+     * id-less message, so it never collides with a pending request/response.
+     */
+    private void relayHumanChat(String sender, String text) {
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("type", "chat_relay");
+        message.put("from", sender);
+        message.put("message", text);
+        message.put("at", System.currentTimeMillis());
+        send(message);
     }
 
     private void onLivingDeath(LivingDeathEvent event) {

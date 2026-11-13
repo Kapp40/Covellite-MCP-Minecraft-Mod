@@ -14,10 +14,14 @@ import java.util.Map;
  * implemented by the mod are registered.
  *
  * <p>Descriptions are intentionally terse: the model re-reads the whole
- * catalog every turn, so every word costs latency. {@code move} and
- * {@code goto} (and a {@code batch} that ends in one of them) block inside the
- * bridge until the action finishes, so the model needs a single call per task.
- * Chat typed by the human is attached to any result as {@code new_chat}.</p>
+ * catalog every turn, so every word costs latency. The "quick action" tools
+ * (see {@link #isAwaited}) block inside the bridge until they finish, polling
+ * {@code get_action_status} every 20ms itself, so the model needs a single
+ * call per task instead of a polling loop of its own. {@code wait:false}
+ * opts out and returns the raw {@code action_id} for manual polling. Chat
+ * typed by the human is attached to any result as {@code new_chat}; the same
+ * lines are also queued by {@link ChatRelay} and exposed by
+ * {@code get_relayed_chat}, so a message is never lost between turns.</p>
  */
 public final class ToolCatalog {
     private ToolCatalog() {}
@@ -27,7 +31,7 @@ public final class ToolCatalog {
     private static final String INTERRUPTS_DOC =
             "Default true. false = never stop early.";
 
-    public static List<McpServerFeatures.SyncToolSpecification> build(ModConnection connection) {
+    public static List<McpServerFeatures.SyncToolSpecification> build(ModConnection connection, ChatRelay relay) {
         List<McpServerFeatures.SyncToolSpecification> tools = new ArrayList<>();
 
         // Perception
@@ -94,6 +98,14 @@ public final class ToolCatalog {
                 props("since", integer("Only events after this sequence."),
                         "limit", integer("1-256, default 32.")),
                 List.of());
+        addLocal(tools, "get_relayed_chat",
+                "Human Minecraft chat relayed live, including lines typed between your turns. Returns "
+                        + "{messages:[{seq,from,message,at}],last_seq}. Call it first when the user refers to "
+                        + "something said in the game; pass the previous last_seq as 'since' to get only new lines.",
+                props("since", integer("Only messages after this sequence. Omit for the newest."),
+                        "limit", integer("1-256, default 20.")),
+                List.of(),
+                args -> relay.since(numArg(args, "since", 0L), (int) numArg(args, "limit", 20L)));
         add(tools, connection, "get_durability_report",
                 "Durability of every damageable item carried or worn, with low-warning flag.",
                 Map.of(), List.of());
@@ -402,10 +414,10 @@ public final class ToolCatalog {
                         "defend", bool("Auto-attack hostiles.")),
                 List.of());
         add(tools, connection, "take_screenshot",
-                "Start an async screenshot from the companion's eyes. Returns an action_id; poll "
-                        + "get_action_status with it until state is completed (path, width, height) or failed "
-                        + "(reason). Never blocks the game.",
-                props("timeout_ms", integer("1000-15000, default 6000. Fails the action if no frame renders.")),
+                "Screenshot from the companion's eyes. Blocks until it is ready; returns path/width/height "
+                        + "or an error. Never blocks the game itself (the mod side is fully async).",
+                props("timeout_ms", integer("1000-15000, default 6000. Fails the action if no frame renders."),
+                        "wait", bool("Wait until finished. Default true.")),
                 List.of());
 
         // Lifecycle
@@ -414,6 +426,44 @@ public final class ToolCatalog {
         add(tools, connection, "respawn", "Revive the companion now.", Map.of(), List.of());
 
         return tools;
+    }
+
+    /**
+     * Registers a tool served entirely by the bridge, with no round-trip to the
+     * mod. Used for data the bridge already owns (the relayed chat queue), so
+     * it keeps working even while Minecraft is closed.
+     */
+    private static void addLocal(List<McpServerFeatures.SyncToolSpecification> tools,
+                                 String name,
+                                 String description,
+                                 Map<String, Object> properties,
+                                 List<String> required,
+                                 java.util.function.Function<Map<String, Object>, Object> handler) {
+        McpSchema.JsonSchema schema = new McpSchema.JsonSchema(
+                "object", properties, required, false, null, null);
+        McpSchema.Tool tool = McpSchema.Tool.builder()
+                .name(name)
+                .description(description)
+                .inputSchema(schema)
+                .build();
+        tools.add(new McpServerFeatures.SyncToolSpecification(tool, (exchange, request) -> {
+            try {
+                Map<String, Object> args = request.arguments() == null
+                        ? new LinkedHashMap<>()
+                        : new LinkedHashMap<>(request.arguments());
+                return McpSchema.CallToolResult.builder()
+                        .content(List.of(new McpSchema.TextContent(Json.stringify(handler.apply(args)))))
+                        .isError(false)
+                        .build();
+            } catch (Exception e) {
+                return error(e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+        }));
+    }
+
+    private static long numArg(Map<String, Object> args, String key, long fallback) {
+        Object value = args.get(key);
+        return value instanceof Number number ? number.longValue() : fallback;
     }
 
     private static void add(List<McpServerFeatures.SyncToolSpecification> tools,
@@ -475,7 +525,7 @@ public final class ToolCatalog {
     private static boolean isAwaited(String name) {
         return "move".equals(name) || "goto".equals(name) || "go".equals(name)
                 || "chop_tree".equals(name) || "gather".equals(name) || "mine".equals(name)
-                || "craft".equals(name) || "sleep".equals(name);
+                || "craft".equals(name) || "sleep".equals(name) || "take_screenshot".equals(name);
     }
 
     private static long maxWaitMs(String name, Map<String, Object> args) {
@@ -489,6 +539,13 @@ public final class ToolCatalog {
         }
         if ("chop_tree".equals(name)) {
             return 2400L * 50L + 5_000L;
+        }
+        if ("take_screenshot".equals(name)) {
+            // Give it a bit more than the mod's own timeout_ms so the mod's
+            // own "failed" result (rather than the bridge's generic
+            // "still running" fallback) is what actually comes back.
+            double timeoutMs = args.get("timeout_ms") instanceof Number n ? n.doubleValue() : 6000.0D;
+            return (long) Math.min(15000.0D, Math.max(1000.0D, timeoutMs)) + 3_000L;
         }
         return 90_000L;
     }

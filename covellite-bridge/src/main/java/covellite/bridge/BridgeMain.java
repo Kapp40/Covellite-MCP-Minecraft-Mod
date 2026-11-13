@@ -68,7 +68,8 @@ public final class BridgeMain {
             return;
         }
 
-        ModConnection connection = new ModConnection(token, port);
+        ChatRelay relay = new ChatRelay();
+        ModConnection connection = new ModConnection(token, port, relay);
         Runtime.getRuntime().addShutdownHook(new Thread(connection::close, "bridge-shutdown"));
 
         // The MCP client may launch the bridge before Minecraft finishes loading.
@@ -98,7 +99,7 @@ public final class BridgeMain {
         connector.start();
 
         List<io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification> tools =
-                ToolCatalog.build(connection);
+                ToolCatalog.build(connection, relay);
 
         StdioServerTransportProvider transport =
                 new StdioServerTransportProvider(McpJsonDefaults.getMapper());

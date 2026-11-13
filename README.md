@@ -107,6 +107,8 @@ Ejemplos de elementos de `see`:
 
 `new_chat` contiene mensajes nuevos con formato `{from,msg}`. Procesa estos mensajes sin consultar repetidamente el historial. Usa `get_chat_history` solamente cuando necesites recuperar contexto anterior.
 
+Además, cada línea escrita por el humano se encola en vivo (ChatRelay) y queda disponible con `get_relayed_chat`, que funciona incluso entre turnos y con Minecraft cerrado. Consulta primero esa herramienta cuando el usuario haga referencia a algo dicho en el juego.
+
 ### Estado del jugador
 
 `get_player_state` utiliza estas claves:
@@ -157,6 +159,7 @@ CoveMCP dispone de herramientas organizadas por función. Utiliza siempre las he
 - `get_targeted_object`
 - `get_chat_history`
 - `get_recent_events`
+- `get_relayed_chat`
 - `get_durability_report`
 - `get_threat_assessment`
 - `get_companion_state`
@@ -282,6 +285,7 @@ Las siguientes herramientas pueden ejecutar una tarea completa y esperar a que t
 - `chop_tree`
 - `gather`
 - `mine`
+- `take_screenshot`
 
 Por defecto, el bridge consulta el progreso cada 20 ms y devuelve el resultado al terminar.
 
@@ -549,6 +553,48 @@ El compañero no debe cerrar el turno del proveedor (OpenCode, Qwen, Claude Cowo
 - No terminar con frases de despedida del tipo "decime qué hacemos y me quedo acá". En su lugar, proponer un siguiente paso concreto o preguntar algo puntual.
 - El mod aporta charla idle periódica (~1 minuto) justamente para que el silencio del modelo no borre al personaje.
 
+### Chat en vivo: ChatRelay y despertar del agente
+
+El chat humano ya no tiene que esperar a que el agente llame una herramienta. Hay dos capas independientes, con garantías distintas:
+
+**1. Capa garantizada — cola + `get_relayed_chat`**
+
+- Cuando un jugador escribe en el chat, el mod envía al bridge un mensaje `chat_relay` con `{from, message, at}` (sin `id`, así que nunca se confunde con una respuesta pendiente).
+- El bridge lo intercepta en `ModConnection`, lo imprime como `[chat] <jugador> texto` en stderr y lo agrega a `~/.covemcp/relay.jsonl`. Ese archivo es la fuente de verdad.
+- La herramienta `get_relayed_chat` es **local al bridge** (no requiere Minecraft ni el mod conectado):
+
+  ```json
+  {"since": 12, "limit": 20}
+  ```
+
+  Devuelve `{messages:[{seq,from,message,at}], count, last_seq, file}`. `seq` es monotónico y se restaura al reiniciar el bridge, así que pasar el `last_seq` anterior como `since` nunca repite ni pierde líneas.
+- El archivo se recorta solo (máximo 2000 líneas, conserva las últimas 1000) y un disco lleno no rompe el chat: el error se registra una vez y el juego sigue.
+
+**2. Capa de mejor esfuerzo — despertar automático (plugin de OpenCode)**
+
+El plugin `covemcp-relay` lee el mismo archivo y admite cada línea nueva como un turno de conversación:
+
+- Se descubre solo en `~/.config/opencode/plugins/covemcp-relay/` (OpenCode lo carga al iniciar y al detectar cambios; no hay que tocar `opencode.jsonc`).
+- Elige la sesión raíz más reciente (o `options.sessionID` si se configura), evita duplicados con `ctx.storage`, ignora las líneas del propio compañero y no reproduce el historial viejo la primera vez.
+- Opciones (objeto en `plugins`, si se quiere fijar una sesión o el modo de entrega):
+
+  ```jsonc
+  {
+    "plugins": [
+      { "package": "./plugins/covemcp-relay",
+        "options": { "delivery": "queue", "companion": "AIPlayer65", "pollMs": 1000 } }
+    ]
+  }
+  ```
+
+  `delivery: "queue"` (por defecto) espera a que la sesión esté libre; `"steer"` inyecta en el turno en curso.
+- Para desactivarlo: borrar o renombrar el directorio del plugin, o usar `"plugins": ["-covemcp.relay"]`.
+
+**Importante:** notificar por MCP no equivale a crear un turno. La capa 2 depende de que el cliente ejecute plugins; la capa 1 funciona siempre. Si el despertar no ocurre, `get_relayed_chat` sigue entregando el mensaje en la siguiente interacción.
+
+El código del plugin vive versionado en `opencode-plugin/covemcp-relay/index.ts`. Para instalarlo en otra máquina, copiar esa carpeta a `~/.config/opencode/plugins/covemcp-relay/` y reiniciar OpenCode; no requiere dependencias ni build.
+
+
 
 ## 14. Seguridad del mundo
 
@@ -568,7 +614,7 @@ No confundas autonomía con permiso ilimitado.
 
 `take_screenshot` obtiene una captura real de la perspectiva del jugador mediante el framebuffer del renderer cliente.
 
-Es asíncrona: devuelve un `action_id` inmediatamente y nunca bloquea el juego. El resultado (o el error) aparece en ese registro y se consulta con `get_action_status` hasta que `state` sea `completed` (con `path`, `width`, `height`) o `failed` (con `reason`). `timeout_ms` (1000-15000, por defecto 6000) marca la captura como fallida si ningún frame llega a renderizarse —por ejemplo con la ventana minimizada— y libera el turno para la próxima.
+Del lado del mod es totalmente asíncrona y nunca bloquea el juego (ni el hilo del servidor ni el render). Del lado del bridge sigue la misma convención que las demás acciones rápidas (ver sección 7): por defecto el bridge espera y consulta el progreso cada 20 ms, devolviendo un único resultado con `path`, `width`, `height` (éxito) o `reason` (falla) en una sola llamada MCP, sin que el agente tenga que hacer polling manual. Con `wait:false` devuelve el `action_id` de inmediato para consultarlo más tarde con `get_action_status`. `timeout_ms` (1000-15000, por defecto 6000) marca la captura como fallida si ningún frame llega a renderizarse —por ejemplo con la ventana minimizada— y libera el turno para la próxima.
 
 Requisitos:
 - Minecraft debe tener el cliente abierto.
@@ -699,6 +745,7 @@ Verificado en Minecraft 1.21.1 y NeoForge 21.1.265:
 - `covellite-core`
 - `covellite-mod`
 - `covellite-bridge`
+- `opencode-plugin/covemcp-relay` (despertar automático, copiar a `~/.config/opencode/plugins/`)
 - `assets`
 
 ---

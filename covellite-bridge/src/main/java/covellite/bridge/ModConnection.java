@@ -18,8 +18,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * CoveMCP mod over the authenticated localhost TCP connection.
  *
  * <p>The mod may also emit unsolicited {@code state}/{@code event} messages.
- * Those are logged to stderr and never written to stdout, so stdout stays a
- * clean MCP JSON-RPC stream.</p>
+ * Human chat is pushed as {@code chat_relay} and kept by {@link ChatRelay};
+ * everything else is logged to stderr and never written to stdout, so stdout
+ * stays a clean MCP JSON-RPC stream.</p>
  */
 public final class ModConnection implements AutoCloseable {
     private static final long AUTH_TIMEOUT_MS = 15_000L;
@@ -27,6 +28,7 @@ public final class ModConnection implements AutoCloseable {
 
     private final String token;
     private final int port;
+    private final ChatRelay relay;
     private final AtomicLong counter = new AtomicLong();
     private final Map<String, CompletableFuture<Map<String, Object>>> pending = new ConcurrentHashMap<>();
 
@@ -34,8 +36,13 @@ public final class ModConnection implements AutoCloseable {
     private volatile boolean authenticated;
 
     public ModConnection(String token, int port) {
+        this(token, port, new ChatRelay());
+    }
+
+    public ModConnection(String token, int port, ChatRelay relay) {
         this.token = token;
         this.port = port;
+        this.relay = relay;
     }
 
     public synchronized void connect() throws IOException, InterruptedException {
@@ -207,6 +214,13 @@ public final class ModConnection implements AutoCloseable {
             }
         }
         Object type = message.get("type");
+        if ("chat_relay".equals(type)) {
+            // Human chat pushed by the mod as it is typed. It has no request
+            // id, so it must be intercepted before the generic "unsolicited"
+            // branch (and never written to stdout).
+            relay.accept(message);
+            return;
+        }
         if ("event".equals(type)) {
             System.err.println("[bridge] event: " + Json.stringify(message));
         } else if ("state".equals(type) || "state_delta".equals(type)) {
