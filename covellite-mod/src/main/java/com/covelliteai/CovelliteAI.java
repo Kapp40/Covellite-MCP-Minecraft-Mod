@@ -17,6 +17,7 @@ import com.covelliteai.server.CompanionCommands;
 import com.covelliteai.server.PrototypeScenario;
 
 import covellite.core.action.ActionQueue;
+import covellite.agent.brain.BrainArbiter;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.EventLog;
 import covellite.core.json.Json;
@@ -104,6 +105,22 @@ public final class CovelliteAI {
             LOGGER.info("Prototype verification scenario enabled by {}", prototypeMarker);
         }
 
+        // One body, two brains. The brain comes from config (brain=local|mcp),
+        // falling back to agentEnabled when the key is absent.
+        this.bridgeApi.setInitialBrain(initialBrain(this.config));
+        this.agentBridge.setArbiter(this.bridgeApi.brains());
+        this.bridgeApi.setBrainSwitchHook(brain -> {
+            MinecraftServer current = this.server;
+            if (current == null) {
+                return;
+            }
+            if (brain == BrainArbiter.Brain.LOCAL) {
+                this.agentBridge.start(current, current.getWorldData().getLevelName(), true);
+            } else {
+                this.agentBridge.stop();
+            }
+        });
+
         registerHandlers();
         this.agentBridge.attach(this.dispatcher);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
@@ -137,8 +154,23 @@ public final class CovelliteAI {
     private void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
         this.companion.spawn(event.getServer());
-        this.agentBridge.start(event.getServer(),
-                event.getServer().getWorldData().getLevelName());
+        // Only the selected brain starts. MCP keeps full control of the body
+        // when configured that way.
+        if (this.bridgeApi.brains().brain() == BrainArbiter.Brain.LOCAL) {
+            this.agentBridge.start(event.getServer(),
+                    event.getServer().getWorldData().getLevelName(), true);
+        }
+    }
+
+    /** Reads {@code brain} from the config, defaulting to the agent setting. */
+    private static BrainArbiter.Brain initialBrain(CovelliteConfig config) {
+        BrainArbiter.Brain configured = BrainArbiter.Brain.parse(
+                config.properties.getOrDefault("brain", ""));
+        if (configured != null) {
+            return configured;
+        }
+        String enabled = config.properties.getOrDefault("agentEnabled", "false");
+        return Boolean.parseBoolean(enabled) ? BrainArbiter.Brain.LOCAL : BrainArbiter.Brain.MCP;
     }
 
     private void onServerTick(ServerTickEvent.Post event) {
@@ -149,6 +181,10 @@ public final class CovelliteAI {
         this.serverTicks++;
         if (this.serverTicks % 200L == 0L) {
             ensureBridge();
+        }
+        if (this.serverTicks % 10L == 0L) {
+            BridgeServer currentBridge = this.bridge;
+            this.bridgeApi.onMcpLink(currentBridge != null && currentBridge.isAuthenticated());
         }
         processInbound();
         this.agentBridge.tick(current);
@@ -196,9 +232,10 @@ public final class CovelliteAI {
         this.chatLog.add(name, text, "chat", fromCompanion);
         this.events.add("chat", Map.of("sender", name, "message", text));
         if (!fromCompanion) {
-            relayHumanChat(name, text);
-            // Internal channel: the in-process agent hears the same line without
-            // going through ChatRelay, which stays exclusive to MCP clients.
+            // The active brain hears the human; the inactive one never does.
+            if (this.bridgeApi.brains().mayAct(BrainArbiter.Brain.MCP)) {
+                relayHumanChat(name, text);
+            }
             this.agentBridge.onHumanChat(name, text);
         }
     }
@@ -318,6 +355,18 @@ public final class CovelliteAI {
         while (budget-- > 0 && (request = inbound.poll()) != null) {
             Map<String, Object> response;
             try {
+                // Execution-time authority for the external brain.
+                if (!this.bridgeApi.brains().mayAct(BrainArbiter.Brain.MCP)) {
+                    Object rawId = request.get("id");
+                    Map<String, Object> denied = new LinkedHashMap<>();
+                    if (rawId != null) {
+                        denied.put("id", String.valueOf(rawId));
+                    }
+                    denied.put("error", Map.of("code", "brain_not_active",
+                            "message", "el cerebro activo es " + this.bridgeApi.brains().describe()));
+                    send(denied);
+                    continue;
+                }
                 response = dispatcher.dispatch(request);
             } catch (RuntimeException e) {
                 // Defense in depth: dispatch() already catches handler

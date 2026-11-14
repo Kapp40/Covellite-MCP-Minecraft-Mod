@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import covellite.agent.brain.BrainArbiter;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
@@ -34,6 +35,7 @@ public final class AgentSelfTest {
         fishingTest();
         ledgerTest();
         reflexTest();
+        brainTest();
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -96,6 +98,38 @@ public final class AgentSelfTest {
         check("summary lists active goals", goals.summary().contains("refugio"));
         check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
         check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Brain arbitration
+    // ------------------------------------------------------------------
+
+    private static void brainTest() {
+        BrainArbiter arbiter = new BrainArbiter(BrainArbiter.Brain.LOCAL);
+        check("the selected brain may act", arbiter.mayAct(BrainArbiter.Brain.LOCAL));
+        check("the other brain may not act", !arbiter.mayAct(BrainArbiter.Brain.MCP));
+
+        arbiter.revoke("switch");
+        check("revoked authority blocks everyone",
+                !arbiter.mayAct(BrainArbiter.Brain.LOCAL) && !arbiter.mayAct(BrainArbiter.Brain.MCP));
+        long revokedEpoch = arbiter.epoch();
+        arbiter.activate(BrainArbiter.Brain.MCP, "command");
+        check("the new brain takes over", arbiter.mayAct(BrainArbiter.Brain.MCP));
+        check("the old brain stays out", !arbiter.mayAct(BrainArbiter.Brain.LOCAL));
+        check("epoch moves on every transition", arbiter.epoch() > revokedEpoch);
+
+        arbiter.pause("mcp_disconnected");
+        check("pausing does not change the brain", arbiter.brain() == BrainArbiter.Brain.MCP);
+        check("paused brain may not act", !arbiter.mayAct(BrainArbiter.Brain.MCP));
+        check("pause reason is kept", arbiter.pauseReason().equals("mcp_disconnected"));
+        arbiter.resume();
+        check("resume grants the same brain again", arbiter.mayAct(BrainArbiter.Brain.MCP));
+
+        check("switches are logged", arbiter.log().stream()
+                .anyMatch(line -> line.contains("cerebro=mcp")));
+        check("brain ids parse", BrainArbiter.Brain.parse("LOCAL") == BrainArbiter.Brain.LOCAL
+                && BrainArbiter.Brain.parse("externo") == BrainArbiter.Brain.MCP
+                && BrainArbiter.Brain.parse("otro") == null);
     }
 
     // ------------------------------------------------------------------

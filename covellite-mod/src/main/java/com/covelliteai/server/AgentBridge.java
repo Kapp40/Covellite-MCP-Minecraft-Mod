@@ -22,6 +22,7 @@ import covellite.agent.AgentProvider;
 import covellite.agent.AgentRuntime;
 import covellite.agent.AgentSettings;
 import covellite.agent.AgentToolRegistry;
+import covellite.agent.brain.BrainArbiter;
 import covellite.agent.AgentTools;
 import covellite.agent.ProviderException;
 import covellite.agent.ProviderFactory;
@@ -70,6 +71,7 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
 
     private volatile Dispatcher dispatcher;
     private volatile MinecraftServer server;
+    private volatile BrainArbiter arbiter;
     private volatile AgentRuntime runtime;
     private volatile String worldId = "";
     private volatile String state = "disabled";
@@ -84,6 +86,16 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     /** The dispatcher that owns every world tool. Must be called once at boot. */
     public void attach(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
+    }
+
+    /** Shared authority: the local brain may only act while it owns the body. */
+    public void setArbiter(BrainArbiter arbiter) {
+        this.arbiter = arbiter;
+    }
+
+    private boolean localAuthority() {
+        BrainArbiter current = this.arbiter;
+        return current == null || current.mayAct(BrainArbiter.Brain.LOCAL);
     }
 
     public boolean enabled() {
@@ -183,6 +195,14 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         Pending pending;
         while (budget-- > 0 && (pending = this.outbound.poll()) != null) {
             Map<String, Object> response;
+            // Authority is re-checked right before the world call runs, so a
+            // request queued by the old brain dies with the brain switch.
+            BrainArbiter authority = this.arbiter;
+            if (authority != null && !authority.mayAct(BrainArbiter.Brain.LOCAL)) {
+                pending.future().complete(Map.of("error", Map.of("code", "brain_not_active",
+                        "message", "el cerebro activo es " + authority.brain().id())));
+                continue;
+            }
             try {
                 response = requireDispatcher().dispatch(pending.request());
             } catch (RuntimeException e) {
@@ -207,6 +227,10 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
      */
     @Override
     public Map<String, Object> execute(String name, Map<String, Object> arguments) {
+        if (!localAuthority()) {
+            throw new IllegalStateException("brain_not_active: el cerebro activo es "
+                    + this.arbiter.brain().id());
+        }
         return call(name, arguments, TOOL_TIMEOUT_MS);
     }
 
@@ -274,6 +298,10 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     // ------------------------------------------------------------------
 
     public void onHumanChat(String sender, String text) {
+        // A brain that does not own the body must not even receive messages.
+        if (!localAuthority()) {
+            return;
+        }
         AgentRuntime current = this.runtime;
         if (current != null) {
             current.onHumanChat(sender, text);
@@ -281,6 +309,9 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     }
 
     public void onPlayerJoin(String name) {
+        if (!localAuthority()) {
+            return;
+        }
         AgentRuntime current = this.runtime;
         if (current != null) {
             current.onPlayerJoin(name);
@@ -342,6 +373,11 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
                 }
                 if (current != null) {
                     current.setPersonality(clean);
+                }
+            }
+            case "brain" -> {
+                if (BrainArbiter.Brain.parse(clean) == null) {
+                    return false;
                 }
             }
             case "agentLanguage" -> {

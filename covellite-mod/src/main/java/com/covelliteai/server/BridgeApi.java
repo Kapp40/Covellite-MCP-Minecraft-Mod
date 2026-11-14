@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import com.covelliteai.CovelliteAI;
 
 import covellite.agent.FishingSignal;
+import covellite.agent.brain.BrainArbiter;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
@@ -211,6 +212,11 @@ public final class BridgeApi {
     private long reflexScanTicks;
     private long reflexLockUntil;
     private long glanceAtTick;
+
+    // One body, two brains: only the active one has authority over the world.
+    private final BrainArbiter brains = new BrainArbiter(BrainArbiter.Brain.MCP);
+    private java.util.function.Consumer<BrainArbiter.Brain> brainSwitchHook;
+    private long activeTaskEpoch = 1L;
 
     // Tasks that arrived while something more important was running.
     private final java.util.ArrayDeque<QueuedTask> pendingTasks = new java.util.ArrayDeque<>();
@@ -408,6 +414,16 @@ public final class BridgeApi {
         }
         maybeGlance(player);
         if (this.activeTask == null) {
+            return;
+        }
+        // Execution-time authority: a task started before a switch cannot
+        // continue under the new brain, no matter what it already queued.
+        if (this.activeTaskEpoch != this.brains.epoch()) {
+            finishTask("interrupted", "brain_switch");
+            return;
+        }
+        if (this.brains.paused()) {
+            finishTask("interrupted", "brain_paused");
             return;
         }
         String interruptReason = checkInterrupt(player);
@@ -1519,6 +1535,109 @@ public final class BridgeApi {
     // Fase 4: exploracion y cartografia
     // ------------------------------------------------------------------
 
+    /** The single arbiter that decides which brain may act. */
+    public BrainArbiter brains() {
+        return this.brains;
+    }
+
+    /** Applies the configured brain at startup without firing the switch hook. */
+    public void setInitialBrain(BrainArbiter.Brain brain) {
+        if (brain != null) {
+            this.brains.activate(brain, "inicio");
+            this.activeTaskEpoch = this.brains.epoch();
+        }
+    }
+
+    /** Called after a switch so the owner can start or stop the local runtime. */
+    public void setBrainSwitchHook(java.util.function.Consumer<BrainArbiter.Brain> hook) {
+        this.brainSwitchHook = hook;
+    }
+
+    /**
+     * Atomic hand-over, in the documented order: the old brain loses authority,
+     * its actions and queue die, the body releases every control, and only then
+     * the new brain takes over. Memory, map, reflexes and world state are kept.
+     */
+    public synchronized Map<String, Object> switchBrain(BrainArbiter.Brain target, String reason) {
+        if (target == null) {
+            throw new IllegalArgumentException("modo de cerebro invalido: usa local o mcp");
+        }
+        BrainArbiter.Brain previous = this.brains.brain();
+        this.brains.revoke("cambio a " + target.id());
+
+        this.pendingTasks.clear();
+        cancelActive("brain_switch");
+        int cancelled = 0;
+        for (Map<String, Object> action : this.actions.values()) {
+            if ("running".equals(String.valueOf(action.get("state")))) {
+                action.put("state", "cancelled");
+                action.put("reason", "brain_switch");
+                cancelled++;
+            }
+        }
+
+        this.sneakHeld = false;
+        this.companion.controller().setSneak(false);
+        this.companion.controller().stop();
+        this.reflexLockUntil = 0L;
+
+        this.brains.activate(target, reason == null ? "cambio" : reason);
+        this.activeTaskEpoch = this.brains.epoch();
+
+        java.util.function.Consumer<BrainArbiter.Brain> hook = this.brainSwitchHook;
+        if (hook != null) {
+            hook.accept(target);
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("previous", previous.id());
+        out.put("brain", target.id());
+        out.put("epoch", this.brains.epoch());
+        out.put("cancelled_actions", cancelled);
+        return out;
+    }
+
+    /**
+     * Tracks the MCP link. A lost link pauses the body when MCP owns it: no
+     * automatic fallback to LOCAL, only safety reflexes keep running.
+     */
+    public void onMcpLink(boolean online) {
+        if (this.brains.brain() != BrainArbiter.Brain.MCP) {
+            return;
+        }
+        if (!online) {
+            if (this.brains.paused()) {
+                return;
+            }
+            this.brains.pause("mcp_disconnected");
+            this.pendingTasks.clear();
+            cancelActive("mcp_disconnected");
+            this.companion.controller().stop();
+        } else if (this.brains.paused()) {
+            this.brains.resume();
+        }
+    }
+
+    /** Brains, epoch, pause state and the switch log, for {@code /cove brain}. */
+    public java.util.List<String> brainReport() {
+        java.util.List<String> lines = new ArrayList<>();
+        lines.add("Cerebro: " + this.brains.describe());
+        lines.add("Tarea activa: " + (this.activeTask == null ? "ninguna" : "si")
+                + " - en espera: " + this.pendingTasks.size());
+        java.util.List<String> log = this.brains.log();
+        if (log.isEmpty()) {
+            lines.add("Sin cambios de cerebro.");
+        } else {
+            int from = Math.max(0, log.size() - 6);
+            for (int i = from; i < log.size(); i++) {
+                lines.add("  " + log.get(i));
+            }
+        }
+        lines.add("Memoria, mapa, reflejos y estado del mundo se conservan al cambiar.");
+        return lines;
+    }
+
     /** Compact world panel for {@code /cove panel}. */
     public java.util.List<String> panelLines() {
         java.util.List<String> lines = new ArrayList<>();
@@ -1534,6 +1653,7 @@ public final class BridgeApi {
                 Math.round(player.getHealth()), player.getFoodData().getFoodLevel()));
         lines.add("Mapa: " + map.get("explored_chunks") + " chunks (" + map.get("coverage")
                 + ") - lugares " + map.get("pois"));
+        lines.add("Cerebro: " + this.brains.describe());
         lines.add("Mano: " + player.getMainHandItem().getHoverName().getString()
                 + " - offhand: " + player.getOffhandItem().getHoverName().getString());
         lines.add("Tarea: " + (this.activeTask == null ? "ninguna" : "activa")
@@ -6274,6 +6394,7 @@ public final class BridgeApi {
             this.startingTask = false;
         }
         this.activeTask = task;
+        this.activeTaskEpoch = this.brains.epoch();
         this.interruptOn = false;
         this.interruptExtra = null;
         return true;
@@ -6299,6 +6420,7 @@ public final class BridgeApi {
         }
         this.pendingTasks.remove(best);
         this.activeTask = best.task();
+        this.activeTaskEpoch = this.brains.epoch();
         this.interruptOn = false;
         this.interruptExtra = null;
     }
@@ -6471,6 +6593,7 @@ public final class BridgeApi {
         lines.add(waiting.toString());
         lines.add("Bloqueo de reflejo: "
                 + Math.max(0L, this.reflexLockUntil - this.autopilotTicks) + " ticks");
+        lines.add("Cerebro: " + this.brains.describe());
         return lines;
     }
 

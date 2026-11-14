@@ -870,6 +870,36 @@ Pendiente de esta fase: construcción por planos, copia de estructuras, comercio
 
 **Cove es 100% texto y acciones.** No hay TTS, ni voz, ni micrófono, ni servicio de audio: se comunica por el chat del juego y por lo que hace en el mundo. La voz quedó descartada del proyecto, no pendiente.
 
+### Un cuerpo, dos cerebros
+
+Cove tiene **una sola identidad** (memoria, mapa, experiencias, estado del mundo, reflejos) y **dos formas de inteligencia**. Sólo una manda a la vez.
+
+| Cerebro | Qué es |
+|---|---|
+| `local` | runtime integrado (`covellite-agent`) con proveedores propios: Ollama, LM Studio, llama.cpp, OpenAI, Anthropic, Gemini y compatibles |
+| `mcp` | inteligencia externa (DeepSeek, OpenCode, Freebuff, cualquier cliente MCP) que usa el cuerpo de Cove a través de las tools |
+
+**Cambio en caliente y atómico:** `/cove brain local` / `/cove brain mcp` (o `brain=local|mcp` en `covemcp.properties`; si la clave falta, se deduce de `agentEnabled`).
+
+El traspaso respeta este orden estricto:
+
+1. **Revocación** del cerebro anterior: sube la época de autoridad y nadie puede actuar hasta que termina el cambio.
+2. **Cancelación**: se mata la tarea activa, se vacía la cola de tareas pendientes y toda acción marcada como `running` pasa a `cancelled` con `reason=brain_switch`.
+3. **Liberación del cuerpo**: se suelta el agachado, se cortan los inputs y se detiene el controlador.
+4. **Activación** del nuevo cerebro con una época nueva.
+
+**Autoridad comprobada al ejecutar, no al pedir.** Hay tres controles independientes:
+
+- Cada petición MCP se valida contra el árbitro en el momento del despacho; si el cerebro activo es `local`, responde `brain_not_active`.
+- Cada tool del agente local se valida al entrar **y otra vez justo antes** de tocar el mundo, así una llamada encolada por el cerebro anterior muere con el cambio.
+- Cada tarea guarda la época en la que arrancó; al tick siguiente, si la época cambió, se interrumpe con `brain_switch`.
+
+**Desconexión de MCP** (`brain=mcp`): el cuerpo **se pausa y espera**, no cae a `local`. Se detienen tareas y cola, se conservan memoria, mapa y estado, y los reflejos de capa 0 siguen protegiendo al compañero. Al reconectar se reanuda la autoridad pero el cuerpo queda idle hasta recibir órdenes. El fallback automático a `local` no existe; el cambio es manual.
+
+**Aislamiento del cerebro inactivo:** no recibe chat, no planifica, no ejecuta tools ni modifica el mundo. `ChatRelay` sólo retransmite cuando `mcp` está activo, y el runtime local no escucha mensajes cuando manda `mcp`. Los comandos de administración (`/cove why`, `/cove panel`, `/cove brain`, configuración) funcionan siempre, con cualquier cerebro.
+
+`/cove brain` sin argumentos muestra cerebro, época, estado de pausa, tareas y el log de cambios.
+
 ### Sin voz: sólo texto y acciones
 
 Cove no tiene TTS, ni síntesis de voz, ni reconocimiento de habla, ni micrófono, ni servicio de audio de ningún tipo. No hay dependencias de audio en el proyecto ni claves para eso.

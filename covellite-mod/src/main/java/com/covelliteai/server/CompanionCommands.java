@@ -101,6 +101,36 @@ public final class CompanionCommands {
     private static void registerAgent(CommandDispatcher<CommandSourceStack> dispatcher, AgentBridge agent,
                                       BridgeApi api) {
         dispatcher.register(Commands.literal("cove")
+                .then(Commands.literal("brain")
+                        .executes(ctx -> {
+                            if (api == null) {
+                                return failure(ctx.getSource(), "el compañero no está disponible");
+                            }
+                            for (String line : api.brainReport()) {
+                                ctx.getSource().sendSuccess(
+                                        () -> Component.literal("[CoveMCP] " + line), false);
+                            }
+                            return 1;
+                        })
+                        .then(Commands.argument("modo", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    if (api == null) {
+                                        return failure(ctx.getSource(), "el compañero no está disponible");
+                                    }
+                                    String raw = StringArgumentType.getString(ctx, "modo");
+                                    covellite.agent.brain.BrainArbiter.Brain target =
+                                            covellite.agent.brain.BrainArbiter.Brain.parse(raw);
+                                    if (target == null) {
+                                        return failure(ctx.getSource(), "uso: /cove brain local|mcp");
+                                    }
+                                    java.util.Map<String, Object> result = api.switchBrain(target, "comando");
+                                    if (agent != null) {
+                                        agent.updateSetting("brain", target.id());
+                                    }
+                                    return feedback(ctx.getSource(), "cerebro=" + result.get("brain")
+                                            + " (antes " + result.get("previous") + ", epoca "
+                                            + result.get("epoch") + ")");
+                                })))
                 .then(Commands.literal("ai")
                         .then(Commands.literal("status")
                                 .executes(ctx -> feedback(ctx.getSource(), agent.status().toString())))
