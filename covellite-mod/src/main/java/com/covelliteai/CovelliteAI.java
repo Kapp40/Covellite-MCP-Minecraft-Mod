@@ -5,7 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -19,6 +21,7 @@ import com.covelliteai.server.PrototypeScenario;
 import covellite.core.action.ActionQueue;
 import covellite.agent.brain.BrainArbiter;
 import covellite.core.dispatch.Dispatcher;
+import covellite.core.event.Event;
 import covellite.core.event.EventLog;
 import covellite.core.json.Json;
 import covellite.core.net.BridgeServer;
@@ -318,7 +321,18 @@ public final class CovelliteAI {
         map.put("companion", this.companion.state());
         map.put("autopilot", this.bridgeApi.autopilotState());
         map.put("emergency_stop", this.bridgeApi.isEmergencyStopped());
-        map.put("recent_events", this.events.recent(5));
+        // Events are objects, not maps: stringifying them directly threw and
+        // killed the server tick. Hand the agent plain data instead.
+        List<Map<String, Object>> recent = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        for (Event event : this.events.recent(5)) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("type", event.type());
+            item.put("age_ms", Math.max(0L, now - event.timestamp()));
+            item.put("payload", event.payload());
+            recent.add(item);
+        }
+        map.put("recent_events", recent);
         map.put("chat_messages", this.chatLog.size());
         return map;
     }

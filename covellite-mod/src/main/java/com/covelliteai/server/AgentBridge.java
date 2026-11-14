@@ -320,8 +320,15 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
 
     public void updateSnapshot(Map<String, Object> snapshot) {
         AgentRuntime current = this.runtime;
-        if (current != null) {
+        if (current == null) {
+            return;
+        }
+        // This runs inside the server tick: a serialization problem must never
+        // take the world down with it.
+        try {
             current.setWorldSnapshot(Json.stringify(snapshot));
+        } catch (RuntimeException e) {
+            CovelliteAI.LOGGER.warn("Could not serialize the world snapshot: {}", e.getMessage());
         }
     }
 

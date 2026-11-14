@@ -217,6 +217,7 @@ public final class BridgeApi {
     private final BrainArbiter brains = new BrainArbiter(BrainArbiter.Brain.MCP);
     private java.util.function.Consumer<BrainArbiter.Brain> brainSwitchHook;
     private long activeTaskEpoch = 1L;
+    private boolean mcpLinkOnline;
 
     // Tasks that arrived while something more important was running.
     private final java.util.ArrayDeque<QueuedTask> pendingTasks = new java.util.ArrayDeque<>();
@@ -1603,11 +1604,15 @@ public final class BridgeApi {
      * automatic fallback to LOCAL, only safety reflexes keep running.
      */
     public void onMcpLink(boolean online) {
+        boolean wasOnline = this.mcpLinkOnline;
+        this.mcpLinkOnline = online;
         if (this.brains.brain() != BrainArbiter.Brain.MCP) {
             return;
         }
         if (!online) {
-            if (this.brains.paused()) {
+            // Never connected is not the same as lost: at boot the body simply
+            // waits, it is not "paused" after a disconnect that never happened.
+            if (!wasOnline || this.brains.paused()) {
                 return;
             }
             this.brains.pause("mcp_disconnected");
@@ -6602,6 +6607,24 @@ public final class BridgeApi {
         java.util.List<String> lines = new ArrayList<>();
         lines.add("Reflejos capa 0: " + this.reflexes.reflexes().size()
                 + " armados (prioridad 91-100), escaneo cada 5 ticks");
+        CompanionPlayer sensed = this.companion.player();
+        if (sensed == null) {
+            lines.add("Companero: ausente del mundo");
+        } else {
+            // Live sensor read: proves the scan runs and shows why nothing fires.
+            ReflexInputs inputs = ReflexSensor.sense(sensed);
+            lines.add("Sensor: aire=" + inputs.airTicks()
+                    + " caida=" + round1(inputs.fallDistance())
+                    + " lava_cerca=" + inputs.lavaAdjacent()
+                    + " lava_adelante=" + inputs.lavaAhead()
+                    + " lava_debajo=" + inputs.lavaBelowTarget()
+                    + " tnt_a=" + inputs.primedTntDistance()
+                    + " congelando=" + inputs.freezing()
+                    + " tela=" + inputs.inCobweb()
+                    + " levitando=" + inputs.levitating()
+                    + " suelo_adelante=" + inputs.solidAhead()
+                    + " agua_debajo=" + inputs.waterBelowBlocks());
+        }
         java.util.List<ReflexEngine.Shot> history = this.reflexes.history();
         if (history.isEmpty()) {
             lines.add("Ninguno se disparo todavia.");
