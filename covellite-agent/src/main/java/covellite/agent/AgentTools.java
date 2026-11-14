@@ -158,7 +158,7 @@ public final class AgentTools {
                         "ticks", integer("1-200, por defecto 20."),
                         "radius", number("Radio de busqueda del hostil.")), List.of()));
         add(registry, remote, "shoot",
-                "Dispara una flecha con arco a una entidad. Requiere arco y flechas.",
+                "Dispara a una entidad con arco, ballesta o tridente. Con arco hace falta flechas.",
                 schema(props(
                         "entity", string("Nombre o UUID de la entidad."),
                         "charge_ticks", integer("Ticks de carga, por defecto 22.")), List.of("entity")));

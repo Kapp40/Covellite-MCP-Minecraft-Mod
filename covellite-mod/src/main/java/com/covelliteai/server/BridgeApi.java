@@ -52,6 +52,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.FishingRodItem;
+import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -1761,13 +1762,17 @@ public final class BridgeApi {
         if (!(player.getMainHandItem().getItem() instanceof BowItem)
                 && !(player.getMainHandItem().getItem() instanceof CrossbowItem)
                 && !CombatKit.equipRanged(player)) {
-            throw new IllegalArgumentException("no bow or crossbow in the inventory");
+            throw new IllegalArgumentException("no bow, crossbow or trident in the inventory");
         }
         Entity target = findEntity(player, query, 32.0D);
         int charge;
         if (player.getMainHandItem().getItem() instanceof CrossbowItem crossbow) {
             // Vanilla charges a crossbow at a fixed rate; releasing early cancels the shot.
             charge = CrossbowItem.getChargeDuration(player.getMainHandItem(), player) + 2;
+        } else if (player.getMainHandItem().getItem() instanceof TridentItem) {
+            // A trident winds up for ten ticks and flies on release; without
+            // Loyalty it stays where it lands, exactly like vanilla.
+            charge = 10;
         } else if (player.getMainHandItem().getItem() instanceof BowItem) {
             charge = (int) clamp(num(params, "charge_ticks", 22.0D), 5.0D, 60.0D);
         } else {
@@ -6434,6 +6439,39 @@ public final class BridgeApi {
             }
         }
         return best;
+    }
+
+    /** Why the companion is doing what it is doing, for {@code /cove why}. */
+    public java.util.List<String> whyReport() {
+        java.util.List<String> lines = new ArrayList<>();
+        Task task = this.activeTask;
+        lines.add("Tarea: " + (task == null ? "ninguna" : task.getClass().getSimpleName()
+                + " (prioridad " + task.priority() + ")"));
+        lines.add("Ultima interrupcion: "
+                + (this.lastInterruptReason == null || this.lastInterruptReason.isBlank()
+                        ? "ninguna" : this.lastInterruptReason));
+        java.util.List<ReflexEngine.Shot> history = this.reflexes.history();
+        if (history.isEmpty()) {
+            lines.add("Ultimo reflejo: ninguno");
+        } else {
+            ReflexEngine.Shot shot = history.get(history.size() - 1);
+            lines.add("Ultimo reflejo: " + shot.id() + " en t" + shot.tick()
+                    + " (" + shot.description() + ")");
+        }
+        StringBuilder waiting = new StringBuilder("En espera: " + this.pendingTasks.size());
+        int shown = 0;
+        for (QueuedTask queued : this.pendingTasks) {
+            waiting.append(shown == 0 ? " - " : ", ")
+                    .append(queued.task().getClass().getSimpleName())
+                    .append('(').append(queued.priority()).append(')');
+            if (++shown >= 4) {
+                break;
+            }
+        }
+        lines.add(waiting.toString());
+        lines.add("Bloqueo de reflejo: "
+                + Math.max(0L, this.reflexLockUntil - this.autopilotTicks) + " ticks");
+        return lines;
     }
 
     /** What fired and when, for {@code /cove reflexes}. */

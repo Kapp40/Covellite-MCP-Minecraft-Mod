@@ -134,10 +134,11 @@ public final class CombatKit {
     // Ranged
     // ------------------------------------------------------------------
 
-    /** Moves a bow or crossbow to the main hand. */
+    /** Moves a bow, crossbow or trident to the main hand. */
     public static boolean equipRanged(ServerPlayer player) {
         return equipItem(player, stack -> stack.getItem() instanceof BowItem
-                || stack.getItem() instanceof CrossbowItem);
+                || stack.getItem() instanceof CrossbowItem
+                || stack.getItem() instanceof TridentItem);
     }
 
     /** Moves the first inventory item matching the predicate to the main hand. */

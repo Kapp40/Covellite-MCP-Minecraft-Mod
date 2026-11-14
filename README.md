@@ -868,7 +868,15 @@ Pendiente de esta fase: construcción por planos, copia de estructuras, comercio
 - **Reconocimiento de jugador**: las preferencias y los recuerdos conversacionales van etiquetados con el nombre del jugador, y la recuperación contextual los prioriza por la frase actual.
 - **Panel en el juego**: `/cove panel` imprime estado del agente (proveedor, modelo, personalidad, idioma, turnos, objetivos) y del compañero (posición, vida, comida, mapa, manos, tarea, parada de emergencia).
 
-La **voz** (TTS/STT) no está implementada: requiere un servicio externo y quedó fuera de esta fase.
+**Cove es 100% texto y acciones.** No hay TTS, ni voz, ni micrófono, ni servicio de audio: se comunica por el chat del juego y por lo que hace en el mundo. La voz quedó descartada del proyecto, no pendiente.
+
+### Sin voz: sólo texto y acciones
+
+Cove no tiene TTS, ni síntesis de voz, ni reconocimiento de habla, ni micrófono, ni servicio de audio de ningún tipo. No hay dependencias de audio en el proyecto ni claves para eso.
+
+- Se comunica **por chat** (`send_chat`, avisos de tarea, alertas de reflejos) y por lo que **hace** en el mundo.
+- Toda la interfaz es texto: comandos `/cove ...` y el chat.
+- La voz quedó **descartada** como decisión de diseño, no como pendiente.
 
 ### Reflejos de supervivencia (capa 0)
 
@@ -918,7 +926,7 @@ El pathfinder comprime la ruta antes de devolverla: descarta waypoints que una c
 - **`trade_scan`**: aldeanos cercanos con profesión, nivel, XP y hasta 20 ofertas por aldeano (coste, resultado, usos, agotado).
 - **`villager_trade`**: ejecuta una oferta concreta. El reparto del pago lo decide `ItemLedger` (puro y testeado): suma montones parciales, rechaza si no alcanza y dice qué ítem falta. Después descuenta exactamente lo planeado, entrega el resultado, incrementa `uses` y deja el resultado en el suelo si no cabe.
   - **Límite honesto**: se habla con la entidad `Villager`, no con la pantalla de comercio, así que el aldeano no repone stock ni sube de nivel desde aquí. Para eso hace falta la mesa real.
-- **`shoot` con ballesta**: además del arco, dispara ballestas usando `CrossbowItem.getChargeDuration` en vez de un tiempo fijo, porque soltar antes cancela el disparo.
+- **`shoot` con ballesta y tridente**: además del arco, dispara ballestas usando `CrossbowItem.getChargeDuration` en vez de un tiempo fijo (soltar antes cancela el disparo) y arroja tridentes con su carga de 10 ticks. Sin Lealtad el tridente queda donde cae, como en vanilla.
 
 ### Sistema de extensiones (Fase 6)
 
@@ -965,9 +973,11 @@ Fase 5 implementada: personalidad e idioma cambiables en vivo, aprendizaje de pr
 
 Fase 6 implementada: sistema de extensiones con aislamiento de fallos, descubrimiento por `ServiceLoader` y el paquete `construction` (paredes, cajas y túneles) como prueba de que se puede crecer sin tocar el catálogo central.
 
-Extra de pulido posterior: `shoot` dispara ballesta además de arco (usa el tiempo de carga real de vanilla), `fish` pesca con caña y `trade_scan` / `villager_trade` negocian con aldeanos pagando desde el inventario real.
+Extra de pulido posterior: `shoot` dispara ballesta y tridente además de arco (con los tiempos de carga reales de vanilla), `fish` pesca con caña y `trade_scan` / `villager_trade` negocian con aldeanos pagando desde el inventario real.
 
-Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, planos de construcción complejos, tridentes, y partir `BridgeApi` en servicios (su lógica ya vive en `CombatKit`, `SurvivalService`, `TradeService` y `ExplorationMap`; los handlers siguen siendo adaptadores finos).
+Sin voz por decisión de diseño: Cove habla sólo por chat.
+
+Pendiente: interfaz gráfica con pantalla propia, planos de construcción complejos y partir `BridgeApi` en servicios (su lógica ya vive en `CombatKit`, `SurvivalService`, `TradeService` y `ExplorationMap`; los handlers siguen siendo adaptadores finos).
 
 ---
 
