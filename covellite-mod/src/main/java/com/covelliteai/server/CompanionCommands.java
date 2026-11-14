@@ -20,10 +20,10 @@ public final class CompanionCommands {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher,
-                                CompanionManager manager, AgentBridge agent) {
+                                CompanionManager manager, AgentBridge agent, BridgeApi api) {
         register(dispatcher, manager);
         if (agent != null) {
-            registerAgent(dispatcher, agent);
+            registerAgent(dispatcher, agent, api);
         }
     }
 
@@ -98,7 +98,8 @@ public final class CompanionCommands {
      * This is the first in-game surface of the agent; it works without editing
      * any file.
      */
-    private static void registerAgent(CommandDispatcher<CommandSourceStack> dispatcher, AgentBridge agent) {
+    private static void registerAgent(CommandDispatcher<CommandSourceStack> dispatcher, AgentBridge agent,
+                                      BridgeApi api) {
         dispatcher.register(Commands.literal("cove")
                 .then(Commands.literal("ai")
                         .then(Commands.literal("status")
@@ -139,6 +140,37 @@ public final class CompanionCommands {
                                             return feedback(ctx.getSource(), lines.isEmpty()
                                                     ? "sin recuerdos de tipo " + kind
                                                     : String.join(" | ", lines));
+                                        })))
+                        .then(Commands.literal("panel")
+                                .executes(ctx -> {
+                                    java.util.List<String> lines = new java.util.ArrayList<>(agent.panel());
+                                    if (api != null) {
+                                        lines.addAll(api.panelLines());
+                                    }
+                                    for (String line : lines) {
+                                        ctx.getSource().sendSuccess(
+                                                () -> Component.literal("[CoveMCP] " + line), false);
+                                    }
+                                    return 1;
+                                }))
+                        .then(Commands.literal("personality")
+                                .then(Commands.argument("nombre", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String name = StringArgumentType.getString(ctx, "nombre");
+                                            if (agent.updateSetting("agentPersonality", name)) {
+                                                return feedback(ctx.getSource(), "personalidad=" + name);
+                                            }
+                                            return failure(ctx.getSource(),
+                                                    "personalidad desconocida: usa companion, curioso, cauteloso, bromista o callado");
+                                        })))
+                        .then(Commands.literal("language")
+                                .then(Commands.argument("codigo", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String code = StringArgumentType.getString(ctx, "codigo");
+                                            if (agent.updateSetting("agentLanguage", code)) {
+                                                return feedback(ctx.getSource(), "idioma=" + code);
+                                            }
+                                            return failure(ctx.getSource(), "idioma invalido");
                                         })))
                         .then(Commands.literal("goals")
                                 .executes(ctx -> {

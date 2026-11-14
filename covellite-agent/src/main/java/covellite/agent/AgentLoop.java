@@ -31,7 +31,7 @@ public final class AgentLoop {
     private static final int MAX_TOOL_PAYLOAD = 3000;
     private static final int MAX_CONSECUTIVE_TOOL_ERRORS = 3;
 
-    private final AgentSettings settings;
+    private volatile AgentSettings settings;
     private final AgentProvider provider;
     private final AgentToolRegistry tools;
     private final AgentContext context;
@@ -44,6 +44,11 @@ public final class AgentLoop {
         this.tools = tools;
         this.context = context;
         this.memory = memory;
+    }
+
+    /** Applies personality/language changes without rebuilding the loop. */
+    public void setSettings(AgentSettings settings) {
+        this.settings = settings;
     }
 
     public Result run(ConversationManager conversation, Consumer<String> speak,

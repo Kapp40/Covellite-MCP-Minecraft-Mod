@@ -95,7 +95,8 @@ public final class CovelliteAI {
         // In-process AI runtime. It shares the same dispatcher as the MCP bridge,
         // so an internal turn and an external agent execute identical tools, but
         // it never depends on OpenCode or any other external process.
-        this.agentBridge = new AgentBridge(config, FMLPaths.GAMEDIR.get().resolve("covemcp"));
+        this.agentBridge = new AgentBridge(config, FMLPaths.GAMEDIR.get().resolve("covemcp"),
+                FMLPaths.CONFIGDIR.get());
 
         Path prototypeMarker = FMLPaths.CONFIGDIR.get().resolve("covemcp-prototype-test.flag");
         this.prototype = Files.exists(prototypeMarker) ? new PrototypeScenario(this.companion) : null;
@@ -242,7 +243,8 @@ public final class CovelliteAI {
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
-        CompanionCommands.register(event.getDispatcher(), this.companion, this.agentBridge);
+        CompanionCommands.register(event.getDispatcher(), this.companion, this.agentBridge,
+                this.bridgeApi);
     }
 
     // ------------------------------------------------------------------

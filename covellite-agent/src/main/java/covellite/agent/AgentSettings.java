@@ -65,6 +65,22 @@ public record AgentSettings(
                 0.4, "companion", "auto", true, true, 24, dataDir);
     }
 
+    /** Copy of these settings with another personality profile. */
+    public AgentSettings withPersonality(String value) {
+        return new AgentSettings(this.enabled, this.provider, this.model, this.baseUrl,
+                this.apiKeyFile, this.maxSteps, this.timeoutMs, this.maxTokens, this.temperature,
+                value == null ? this.personality : value, this.language, this.replyInChat,
+                this.wakeOnJoin, this.historyLimit, this.dataDir);
+    }
+
+    /** Copy of these settings with another response language. */
+    public AgentSettings withLanguage(String value) {
+        return new AgentSettings(this.enabled, this.provider, this.model, this.baseUrl,
+                this.apiKeyFile, this.maxSteps, this.timeoutMs, this.maxTokens, this.temperature,
+                this.personality, value == null ? this.language : value, this.replyInChat,
+                this.wakeOnJoin, this.historyLimit, this.dataDir);
+    }
+
     /** Copy of these settings with the runtime flag overridden. */
     public AgentSettings withEnabled(boolean value) {
         return new AgentSettings(value, this.provider, this.model, this.baseUrl, this.apiKeyFile,

@@ -859,6 +859,17 @@ Todas consumen ítems reales del inventario: si faltan semillas, flechas o combu
 
 Pendiente de esta fase: construcción por planos, copia de estructuras, comercio con aldeanos y expediciones multi-etapa.
 
+### Personalidad y aprendizaje (Fase 5)
+
+- **Cambio de personalidad en vivo**: `/cove personality curioso` cambia el perfil del turno siguiente y queda guardado en `config/covemcp.properties`. Perfiles: `companion`, `curioso`, `cauteloso`, `bromista`, `callado`.
+- **Idioma**: `/cove language auto` (imita al jugador) o un código fijo (`es`, `en`, ...), también persistido.
+- **Aprendizaje sin modelo**: cuando el jugador dice "me gusta", "prefiero", "odio", "mi favorito es" y similares, la frase se guarda como memoria `PREFERENCE` etiquetada con su nombre. Funciona **aunque el proveedor esté apagado**, y se recupera en los turnos siguientes junto al contexto.
+- **Silencio inteligente**: cada perfil tiene locuacidad (`callado` 0.15, `bromista` 0.9) y el prompt la usa para decidir cuánto hablar; el compañero no comenta todo lo que hace.
+- **Reconocimiento de jugador**: las preferencias y los recuerdos conversacionales van etiquetados con el nombre del jugador, y la recuperación contextual los prioriza por la frase actual.
+- **Panel en el juego**: `/cove panel` imprime estado del agente (proveedor, modelo, personalidad, idioma, turnos, objetivos) y del compañero (posición, vida, comida, mapa, manos, tarea, parada de emergencia).
+
+La **voz** (TTS/STT) no está implementada: requiere un servicio externo y quedó fuera de esta fase.
+
 ### Alcance implementado y pendiente
 
 Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
@@ -869,7 +880,9 @@ Fase 3 implementada: loadout de combate (arma, escudo, consumibles, arco, evasi�
 
 Fase 4 implementada: mapa persistente por mundo con auto-cartografía, puntos de interés, escaneo y clasificación de terreno, regreso a la base y auditoría de cofres.
 
-Pendiente: ballesta y tridente a distancia, pociones lanzables, pesca, reparación con yunque, construcción por planos, comercio con aldeanos, dividir `BridgeApi` en servicios, interfaz gráfica dentro del juego, sistema de extensiones y voz.
+Fase 5 implementada: personalidad e idioma cambiables en vivo, aprendizaje de preferencias sin modelo, silencio por locuacidad y panel de estado en el juego.
+
+Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, ballesta y tridente a distancia, pesca, construcción por planos, comercio con aldeanos, dividir `BridgeApi` en servicios y sistema de extensiones.
 
 ---
 

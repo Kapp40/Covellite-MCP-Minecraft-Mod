@@ -22,12 +22,11 @@ import java.util.function.Consumer;
  */
 public final class AgentRuntime implements AutoCloseable {
 
-    private final AgentSettings settings;
+    private volatile AgentSettings settings;
     private final AgentProvider provider;
     private final AgentMemory memory;
     private final AgentGoals goals;
     private final AgentToolRegistry tools;
-    private final AgentPersonality personality;
     private final AgentContext context;
     private final ConversationManager conversation;
     private final AgentLoop loop;
@@ -57,7 +56,6 @@ public final class AgentRuntime implements AutoCloseable {
         this.memory = memory;
         this.goals = goals;
         this.tools = tools;
-        this.personality = AgentPersonality.of(settings.personality());
         this.context = new AgentContext(memory);
         this.conversation = new ConversationManager(settings.historyLimit());
         this.loop = new AgentLoop(settings, provider, tools, this.context, memory);
@@ -99,6 +97,9 @@ public final class AgentRuntime implements AutoCloseable {
         String clean = text.trim();
         this.memory.remember(AgentMemory.Kind.CONVERSATION,
                 "jugador " + sender + ": " + clean, List.of("player", sender));
+        // Learning that does not need the model: explicit likes and dislikes are
+        // remembered immediately, even while the provider is offline.
+        learnPreferences(sender, clean, this.memory);
         if (!providerReady()) {
             this.state = "no_provider";
             return;
@@ -172,6 +173,55 @@ public final class AgentRuntime implements AutoCloseable {
         }
     }
 
+    /**
+     * Switches personality profile at runtime. The loop reads it on the next
+     * turn, so no restart is needed.
+     */
+    public boolean setPersonality(String name) {
+        if (!AgentPersonality.exists(name)) {
+            return false;
+        }
+        this.settings = this.settings.withPersonality(name.trim());
+        this.loop.setSettings(this.settings);
+        return true;
+    }
+
+    /** Switches response language ({@code auto} mirrors the player). */
+    public boolean setLanguage(String language) {
+        if (language == null || language.isBlank()) {
+            return false;
+        }
+        this.settings = this.settings.withLanguage(language.trim());
+        this.loop.setSettings(this.settings);
+        return true;
+    }
+
+    /**
+     * Heuristic learning from plain chat: "me gusta X", "prefiero X", "odio X"
+     * and similar become PREFERENCE memories tagged with the speaker.
+     */
+    static void learnPreferences(String sender, String text, AgentMemory memory) {
+        if (text == null || text.isBlank()) {
+            return;
+        }
+        String lower = text.toLowerCase(java.util.Locale.ROOT);
+        String[] markers = {"me gusta", "me encanta", "prefiero", "quiero siempre",
+                "no me gusta", "no me gustan", "odio", "detesto", "nunca quiero",
+                "siempre quiero", "mi favorito es", "mi favorita es"};
+        for (String marker : markers) {
+            if (!lower.contains(marker)) {
+                continue;
+            }
+            String clean = text.trim();
+            if (clean.length() > 240) {
+                clean = clean.substring(0, 240);
+            }
+            memory.remember(AgentMemory.Kind.PREFERENCE, sender + ": " + clean,
+                    List.of("player", sender));
+            return;
+        }
+    }
+
     /** Requests cooperative cancellation of the running turn. */
     public void cancel() {
         this.cancelled.set(true);
@@ -218,7 +268,8 @@ public final class AgentRuntime implements AutoCloseable {
         map.put("provider_ready", providerReady());
         map.put("model", this.settings.model());
         map.put("base_url", this.settings.effectiveBaseUrl());
-        map.put("personality", this.personality.name());
+        map.put("personality", AgentPersonality.of(this.settings.personality()).name());
+        map.put("language", this.settings.language());
         map.put("busy", this.busy.get());
         map.put("turns", this.turns.get());
         map.put("last_turn_ms", this.lastTurnMs);

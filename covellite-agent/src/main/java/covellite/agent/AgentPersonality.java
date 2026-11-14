@@ -44,6 +44,11 @@ public record AgentPersonality(String name, String description, String instructi
                 0.15));
     }
 
+    /** True when the name matches a real profile (used to validate commands). */
+    public static boolean exists(String raw) {
+        return raw != null && PROFILES.containsKey(raw.trim().toLowerCase(Locale.ROOT));
+    }
+
     public static AgentPersonality of(String raw) {
         String key = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
         return PROFILES.getOrDefault(key, PROFILES.get("companion"));

@@ -1493,6 +1493,28 @@ public final class BridgeApi {
     // Fase 4: exploracion y cartografia
     // ------------------------------------------------------------------
 
+    /** Compact world panel for {@code /cove panel}. */
+    public java.util.List<String> panelLines() {
+        java.util.List<String> lines = new ArrayList<>();
+        CompanionPlayer player = this.companion.player();
+        if (player == null) {
+            lines.add("Companero: ausente");
+            return lines;
+        }
+        int[] chunk = ExplorationMap.chunkOf(player.getBlockX(), player.getBlockZ());
+        Map<String, Object> map = exploration(player.server).status(chunk[0], chunk[1]);
+        lines.add(String.format(Locale.ROOT, "Posicion: %d %d %d - vida %d - comida %d",
+                player.getBlockX(), player.getBlockY(), player.getBlockZ(),
+                Math.round(player.getHealth()), player.getFoodData().getFoodLevel()));
+        lines.add("Mapa: " + map.get("explored_chunks") + " chunks (" + map.get("coverage")
+                + ") - lugares " + map.get("pois"));
+        lines.add("Mano: " + player.getMainHandItem().getHoverName().getString()
+                + " - offhand: " + player.getOffhandItem().getHoverName().getString());
+        lines.add("Tarea: " + (this.activeTask == null ? "ninguna" : "activa")
+                + " - paro de emergencia: " + isEmergencyStopped());
+        return lines;
+    }
+
     /** Persists cartography state; called when the world stops. */
     public void flushExploration() {
         if (this.exploration != null) {

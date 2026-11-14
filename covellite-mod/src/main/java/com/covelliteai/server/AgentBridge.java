@@ -3,8 +3,16 @@ package com.covelliteai.server;
 import com.covelliteai.CovelliteAI;
 import com.covelliteai.CovelliteConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Properties;
+
 import covellite.agent.AgentGoals;
 import covellite.agent.AgentMemory;
+import covellite.agent.AgentPersonality;
 import covellite.agent.AgentPlanner;
 import covellite.agent.AgentProvider;
 import covellite.agent.AgentRuntime;
@@ -51,6 +59,7 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
 
     private final CovelliteConfig config;
     private final Path dataDir;
+    private final Path configDir;
     private final ConcurrentLinkedQueue<Pending> outbound = new ConcurrentLinkedQueue<>();
     private final AtomicLong requestIds = new AtomicLong();
 
@@ -61,9 +70,10 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     private volatile String state = "disabled";
     private volatile String lastError = "";
 
-    public AgentBridge(CovelliteConfig config, Path dataDir) {
+    public AgentBridge(CovelliteConfig config, Path dataDir, Path configDir) {
         this.config = config;
         this.dataDir = dataDir;
+        this.configDir = configDir;
     }
 
     /** The dispatcher that owns every world tool. Must be called once at boot. */
@@ -301,6 +311,81 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         }
         current.remember(AgentMemory.Kind.SEMANTIC, text, List.of("command"));
         return true;
+    }
+
+    /**
+     * Changes one personality/language setting at runtime and persists it to
+     * {@code covemcp.properties}, so the decision survives a restart.
+     */
+    public boolean updateSetting(String key, String value) {
+        if (key == null || key.isBlank() || value == null || value.isBlank()) {
+            return false;
+        }
+        String clean = value.trim();
+        AgentRuntime current = this.runtime;
+        switch (key) {
+            case "agentPersonality" -> {
+                if (!AgentPersonality.exists(clean)) {
+                    return false;
+                }
+                if (current != null) {
+                    current.setPersonality(clean);
+                }
+            }
+            case "agentLanguage" -> {
+                if (current != null && !current.setLanguage(clean)) {
+                    return false;
+                }
+            }
+            default -> {
+                return false;
+            }
+        }
+        persist(key, clean);
+        return true;
+    }
+
+    private void persist(String key, String value) {
+        Path file = this.configDir.resolve("covemcp.properties");
+        Properties properties = new Properties();
+        try {
+            if (Files.exists(file)) {
+                try (InputStream in = Files.newInputStream(file)) {
+                    properties.load(in);
+                }
+            }
+            properties.setProperty(key, value);
+            Files.createDirectories(this.configDir);
+            try (OutputStream out = Files.newOutputStream(file)) {
+                properties.store(out, "CoveMCP client configuration");
+            }
+        } catch (IOException e) {
+            CovelliteAI.LOGGER.warn("Could not persist {}={}: {}", key, value, e.getMessage());
+        }
+    }
+
+    /** Compact status panel for {@code /cove panel}. */
+    public List<String> panel() {
+        List<String> lines = new ArrayList<>();
+        AgentRuntime current = this.runtime;
+        if (current == null) {
+            lines.add("Agente: apagado (" + this.state
+                    + (this.lastError.isBlank() ? "" : " - " + this.lastError) + ")");
+            return lines;
+        }
+        Map<String, Object> status = current.status();
+        lines.add("Agente: " + status.get("state") + " - " + status.get("provider")
+                + " / " + status.get("model"));
+        lines.add("Personalidad: " + status.get("personality")
+                + " - idioma: " + status.get("language"));
+        lines.add("Turnos: " + status.get("turns")
+                + " - conversacion: " + status.get("conversation_size"));
+        List<String> goals = activeGoals();
+        lines.add("Objetivos: " + (goals.isEmpty() ? "ninguno" : String.join(" | ", goals)));
+        if (!this.lastError.isBlank()) {
+            lines.add("Ultimo error: " + this.lastError);
+        }
+        return lines;
     }
 
     /** One line per active goal, for the in-game command. */

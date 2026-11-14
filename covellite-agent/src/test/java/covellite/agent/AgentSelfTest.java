@@ -25,6 +25,7 @@ public final class AgentSelfTest {
 
         memoryTest(dir.resolve("memory"));
         goalsTest(dir.resolve("goals"));
+        personalityTest(dir.resolve("personality"));
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -87,6 +88,58 @@ public final class AgentSelfTest {
         check("summary lists active goals", goals.summary().contains("refugio"));
         check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
         check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Personality and learning
+    // ------------------------------------------------------------------
+
+    private static void personalityTest(Path dir) {
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("agentEnabled", "true");
+        values.put("agentProvider", "lmstudio");
+        values.put("agentModel", "fake-model");
+        AgentSettings settings = AgentSettings.from(values, dir);
+        AgentMemory memory = new AgentMemory(dir.resolve("memory"), 100);
+        AgentToolRegistry registry = new AgentToolRegistry();
+
+        AgentProvider offline = new AgentProvider() {
+            @Override
+            public String id() {
+                return "offline";
+            }
+
+            @Override
+            public boolean ready() {
+                return false;
+            }
+
+            @Override
+            public Response complete(Request request) throws ProviderException {
+                throw new ProviderException("offline");
+            }
+        };
+
+        AgentRuntime runtime = new AgentRuntime(settings, offline, registry, memory,
+                new AgentGoals(dir.resolve("goals")));
+        runtime.start();
+        runtime.onHumanChat("T45_", "me gusta el oro y las espadas");
+
+        List<AgentMemory.Entry> preferences = memory.search("oro", 5);
+        check("preference learned from chat", preferences.stream()
+                .anyMatch(entry -> entry.kind() == AgentMemory.Kind.PREFERENCE));
+        check("preference tagged with the player", preferences.stream()
+                .anyMatch(entry -> entry.tags().contains("T45_")));
+        check("offline chat does not start a turn",
+                "no_provider".equals(runtime.status().get("state")));
+
+        check("personality switch accepted", runtime.setPersonality("curioso"));
+        check("personality reflected in status",
+                "curioso".equals(runtime.status().get("personality")));
+        check("unknown personality rejected", !runtime.setPersonality("inventada"));
+        check("language switch accepted", runtime.setLanguage("en"));
+        check("language reflected in status", "en".equals(runtime.status().get("language")));
+        runtime.close();
     }
 
     // ------------------------------------------------------------------
