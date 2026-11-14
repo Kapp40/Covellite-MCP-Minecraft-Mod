@@ -232,6 +232,7 @@ public final class CovelliteAI {
     private void onServerStopping(ServerStoppingEvent event) {
         this.companion.despawn(event.getServer());
         this.agentBridge.stop();
+        this.bridgeApi.flushExploration();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {

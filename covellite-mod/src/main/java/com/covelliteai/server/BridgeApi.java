@@ -193,6 +193,10 @@ public final class BridgeApi {
     private static final int BLOCKED_TTL_TICKS = 1200;
     private final Map<Long, Long> blockedCells = new HashMap<>();
 
+    // Cartography: persistent per-world map, opened lazily on first use.
+    private ExplorationMap exploration;
+    private long explorationTicks;
+
     /** Cells remembered as blocked, pruned by TTL. Call on the server thread. */
     private Set<Long> avoidCells() {
         this.blockedCells.entrySet().removeIf(entry -> entry.getValue() <= this.autopilotTicks);
@@ -290,6 +294,13 @@ public final class BridgeApi {
         dispatcher.register("furnace_status", this::furnaceStatusTool);
         dispatcher.register("furnace_load", this::furnaceLoadTool);
         dispatcher.register("furnace_collect", this::furnaceCollectTool);
+        // Fase 4: exploracion, cartografia y logistica
+        dispatcher.register("map_status", this::mapStatusTool);
+        dispatcher.register("mark_place", this::markPlaceTool);
+        dispatcher.register("list_places", this::listPlacesTool);
+        dispatcher.register("explore_scan", this::exploreScanTool);
+        dispatcher.register("return_home", this::returnHomeTool);
+        dispatcher.register("chest_audit", this::chestAuditTool);
         dispatcher.register("eat", this::eat);
         dispatcher.register("place_block", this::placeBlock);
         dispatcher.register("break_block", this::breakBlock);
@@ -358,6 +369,7 @@ public final class BridgeApi {
     }
 
     public void tick(MinecraftServer server) {
+        trackExploration(server);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             // Screenshots are asynchronous; this releases one whose frame
             // never rendered (paused/minimised window) and marks it failed.
@@ -1477,6 +1489,124 @@ public final class BridgeApi {
     }
 
     /** Melee attack against a nearby entity, with a fully charged swing. */
+    // ------------------------------------------------------------------
+    // Fase 4: exploracion y cartografia
+    // ------------------------------------------------------------------
+
+    /** Persists cartography state; called when the world stops. */
+    public void flushExploration() {
+        if (this.exploration != null) {
+            this.exploration.save();
+        }
+    }
+
+    private ExplorationMap exploration(MinecraftServer server) {
+        if (this.exploration == null) {
+            this.exploration = ExplorationMap.forWorld(server);
+        }
+        return this.exploration;
+    }
+
+    /** Auto-cartography: marks the chunk under the companion twice per second. */
+    private void trackExploration(MinecraftServer server) {
+        this.explorationTicks++;
+        if (this.explorationTicks % 40L != 0L) {
+            return;
+        }
+        CompanionPlayer player = this.companion.player();
+        if (player == null) {
+            return;
+        }
+        int[] chunk = ExplorationMap.chunkOf(player.getBlockX(), player.getBlockZ());
+        exploration(server).markChunk(chunk[0], chunk[1]);
+    }
+
+    private Map<String, Object> mapStatusTool(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        int[] chunk = ExplorationMap.chunkOf(player.getBlockX(), player.getBlockZ());
+        return exploration(player.server).status(chunk[0], chunk[1]);
+    }
+
+    private Map<String, Object> markPlaceTool(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        String name = str(params, "name");
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("name is required");
+        }
+        ExplorationMap.Poi poi = exploration(player.server).markPoi(name, str(params, "kind"),
+                player.getBlockX(), player.getBlockY(), player.getBlockZ(),
+                player.level().dimension().location().toString());
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("place", poi.toMap());
+        return out;
+    }
+
+    private Map<String, Object> listPlacesTool(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        String kind = str(params, "kind");
+        List<Object> places = new ArrayList<>();
+        for (ExplorationMap.Poi poi : exploration(player.server).pois()) {
+            if (kind != null && !kind.isBlank() && !poi.kind().equalsIgnoreCase(kind)) {
+                continue;
+            }
+            places.add(poi.toMap());
+            if (places.size() >= 60) {
+                break;
+            }
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("count", places.size());
+        out.put("places", places);
+        return out;
+    }
+
+    private Map<String, Object> exploreScanTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 10.0D), 2.0D, 16.0D);
+        return ExplorationMap.scan(player, radius, exploration(player.server));
+    }
+
+    private Map<String, Object> returnHomeTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        WorldMemory memory = WorldMemory.forWorld(player.server);
+        WorldMemory.Place home = memory.find("base");
+        if (home == null) {
+            home = memory.find("casa");
+        }
+        if (home == null) {
+            home = memory.find("home");
+        }
+        if (home == null) {
+            List<WorldMemory.Place> all = memory.all();
+            if (all.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "no saved place: save one with remember before asking to return");
+            }
+            home = all.get(0);
+        }
+        String dimension = player.level().dimension().location().toString();
+        if (home.dim() != null && !home.dim().isBlank() && !home.dim().equals(dimension)) {
+            throw new IllegalArgumentException("saved place " + home.name()
+                    + " is in " + home.dim() + ", not in " + dimension);
+        }
+        String id = newAction("return_home", "running");
+        startTask(new GotoTask(id, home.x(), home.y(), home.z(), 2.0D), player);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("place", home.name());
+        out.put("x", home.x());
+        out.put("y", home.y());
+        out.put("z", home.z());
+        return out;
+    }
+
+    private Map<String, Object> chestAuditTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 8.0D), 1.0D, 24.0D);
+        return SurvivalService.auditChests(player, radius);
+    }
+
     // ------------------------------------------------------------------
     // Fase 3: combate
     // ------------------------------------------------------------------
@@ -6060,9 +6190,7 @@ public final class BridgeApi {
             this.idleTicks = 0;
         }
 
-        int idle() {
-            return this.idleTicks;
-        }
+
     }
 
     /**

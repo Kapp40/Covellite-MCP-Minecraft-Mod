@@ -845,15 +845,31 @@ Los objetivos viven en `<mundo>/goals.json` con sus pasos y progreso, así que s
 
 Todas consumen ítems reales del inventario: si faltan semillas, flechas o combustible, la herramienta falla y lo dice en vez de simularlo.
 
+### Exploración y logística (Fase 4)
+
+**Mapa persistente** (`ExplorationMap.java`), un archivo por mundo en `mods/covemcp/maps/<mundo>.json`:
+
+- Auto-cartografía: cada 40 ticks se marca el chunk que ocupa el compañero; se guarda cada 25 chunks nuevos y al cerrar el mundo.
+- Límites explícitos: 40.000 chunks y 400 puntos de interés, podando el lugar más viejo cuando se llena.
+- `map_status`: chunks explorados, cobertura (`casi_sin_explorar`, `zona_inicial`, `region_conocida`, `ampliamente_explorado`), lugares guardados y el chunk sin explorar más cercano, en coordenadas de bloque.
+- `mark_place` y `list_places`: lugares con nombre y tipo (base, mina, cueva, aldea, agua, peligro).
+- `explore_scan`: muestrea el terreno alrededor, cuenta agua, lava, troncos, hojas, piedra y menas por tags, clasifica la zona (cueva, mena, bosque, agua, lava, montaña) y la anota sola si es relevante.
+- `return_home`: camina a la base guardada en `WorldMemory` con el pathfinder, rechazando coordenadas de otra dimensión en vez de cruzar el mundo a ciegas.
+- `chest_audit`: resume cofres y contenedores cercanos con totales por ítem, útil para decidir si hace falta recolectar antes de una expedición.
+
+Pendiente de esta fase: construcción por planos, copia de estructuras, comercio con aldeanos y expediciones multi-etapa.
+
 ### Alcance implementado y pendiente
 
 Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
 
 Fase 2 implementada: navegación con pasajes y escalada, memoria de obstáculos, movimiento suavizado con rotación interpolada y objetivos persistentes con pasos.
 
-Fase 3 implementada: loadout de combate (arma, escudo, consumibles, arco, evasión) y supervivencia real (horno, agricultura con replante, cría de animales).
+Fase 3 implementada: loadout de combate (arma, escudo, consumibles, arco, evasión) y supervivencia real (horno, agricultura con replante por cultivo, cría de animales).
 
-Pendiente: ballesta y tridente a distancia, pociones lanzables, pesca, reparación con yunque, dividir `BridgeApi` en servicios, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
+Fase 4 implementada: mapa persistente por mundo con auto-cartografía, puntos de interés, escaneo y clasificación de terreno, regreso a la base y auditoría de cofres.
+
+Pendiente: ballesta y tridente a distancia, pociones lanzables, pesca, reparación con yunque, construcción por planos, comercio con aldeanos, dividir `BridgeApi` en servicios, interfaz gráfica dentro del juego, sistema de extensiones y voz.
 
 ---
 

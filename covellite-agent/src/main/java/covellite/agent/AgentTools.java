@@ -192,6 +192,30 @@ public final class AgentTools {
                 schema(props("radius", integer("1-16, por defecto 4.")), List.of()));
 
         // ----------------------------------------------------------
+        // Exploration, cartography and logistics
+        // ----------------------------------------------------------
+        add(registry, remote, "map_status",
+                "Chunks explorados, cobertura, puntos de interes y el chunk sin explorar mas cercano.",
+                schema(props(), List.of()));
+        add(registry, remote, "mark_place",
+                "Guarda un lugar con nombre en la posicion actual.",
+                schema(props(
+                        "name", string("Nombre del lugar."),
+                        "kind", string("base, mina, cueva, aldea, agua, peligro...")), List.of("name")));
+        add(registry, remote, "list_places",
+                "Lista los lugares guardados, opcionalmente por tipo.",
+                schema(props("kind", string("Filtrar por tipo.")), List.of()));
+        add(registry, remote, "explore_scan",
+                "Clasifica el terreno alrededor (cueva, mena, bosque, agua, lava, montana) y lo anota en el mapa.",
+                schema(props("radius", integer("2-16, por defecto 10.")), List.of()));
+        add(registry, remote, "return_home",
+                "Camina de vuelta a la base guardada con el pathfinder.",
+                schema(props(), List.of()));
+        add(registry, remote, "chest_audit",
+                "Resume el contenido de los cofres y contenedores cercanos.",
+                schema(props("radius", integer("1-24, por defecto 8.")), List.of()));
+
+        // ----------------------------------------------------------
         // Communication
         // ----------------------------------------------------------
         add(registry, remote, "send_chat",

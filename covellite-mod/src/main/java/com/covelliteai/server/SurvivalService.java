@@ -11,10 +11,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
@@ -191,13 +192,15 @@ public final class SurvivalService {
             if (!isMature(state)) {
                 continue;
             }
-            String name = state.getBlock().getName().getString();
+            Block cropBlock = state.getBlock();
+            String name = cropBlock.getName().getString();
             level.destroyBlock(immutable, true, player);
             harvested++;
             if (names.size() < 6) {
                 names.add(name);
             }
-            if (replant && plantAt(player, level, immutable)) {
+            // Replant the SAME crop that was just harvested, not always wheat.
+            if (replant && replantAt(player, level, immutable, cropBlock)) {
                 replanted++;
             }
         }
@@ -224,7 +227,7 @@ public final class SurvivalService {
             if (!level.isEmptyBlock(above)) {
                 continue;
             }
-            if (plantAt(player, level, above)) {
+            if (plantAnySeed(player, level, above)) {
                 planted++;
             }
         }
@@ -243,18 +246,35 @@ public final class SurvivalService {
         return false;
     }
 
-    /** Plants the matching seed when the player carries one. */
-    private static boolean plantAt(ServerPlayer player, ServerLevel level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos.below());
+    /**
+     * Replants the exact crop that was harvested, consuming its seed. Carrots
+     * and potatoes are planted with the vegetable itself, which is what vanilla
+     * does.
+     */
+    private static boolean replantAt(ServerPlayer player, ServerLevel level, BlockPos pos,
+                                     Block cropBlock) {
         Item seed;
         BlockState planted;
-        if (state.getBlock() == Blocks.WHEAT || state.getBlock() instanceof FarmBlock) {
+        if (cropBlock == Blocks.WHEAT) {
             seed = Items.WHEAT_SEEDS;
             planted = Blocks.WHEAT.defaultBlockState();
+        } else if (cropBlock == Blocks.CARROTS) {
+            seed = Items.CARROT;
+            planted = Blocks.CARROTS.defaultBlockState();
+        } else if (cropBlock == Blocks.POTATOES) {
+            seed = Items.POTATO;
+            planted = Blocks.POTATOES.defaultBlockState();
+        } else if (cropBlock == Blocks.BEETROOTS) {
+            seed = Items.BEETROOT_SEEDS;
+            planted = Blocks.BEETROOTS.defaultBlockState();
+        } else if (cropBlock == Blocks.NETHER_WART) {
+            // Nether wart goes back on soul sand, not farmland.
+            if (!level.getBlockState(pos.below()).is(Blocks.SOUL_SAND)) {
+                return false;
+            }
+            seed = Items.NETHER_WART;
+            planted = Blocks.NETHER_WART.defaultBlockState();
         } else {
-            return false;
-        }
-        if (state.getBlock() == Blocks.WHEAT) {
             return false;
         }
         if (!take(player, seed, 1)) {
@@ -262,6 +282,30 @@ public final class SurvivalService {
         }
         level.setBlockAndUpdate(pos, planted);
         return true;
+    }
+
+    /**
+     * Plants whichever seed the player actually carries, in a fixed priority
+     * order. Returns false when the inventory holds no plantable seed.
+     */
+    private static boolean plantAnySeed(ServerPlayer player, ServerLevel level, BlockPos pos) {
+        if (take(player, Items.WHEAT_SEEDS, 1)) {
+            level.setBlockAndUpdate(pos, Blocks.WHEAT.defaultBlockState());
+            return true;
+        }
+        if (take(player, Items.CARROT, 1)) {
+            level.setBlockAndUpdate(pos, Blocks.CARROTS.defaultBlockState());
+            return true;
+        }
+        if (take(player, Items.POTATO, 1)) {
+            level.setBlockAndUpdate(pos, Blocks.POTATOES.defaultBlockState());
+            return true;
+        }
+        if (take(player, Items.BEETROOT_SEEDS, 1)) {
+            level.setBlockAndUpdate(pos, Blocks.BEETROOTS.defaultBlockState());
+            return true;
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------
@@ -330,22 +374,46 @@ public final class SurvivalService {
         return stack.getHoverName().getString() + " x" + stack.getCount();
     }
 
-    /** Summary used by status output. */
-    public static Map<String, Object> describeInventory(ServerPlayer player) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("food", player.getFoodData().getFoodLevel());
-        int seeds = 0;
-        for (ItemStack stack : player.getInventory().items) {
-            if (stack.is(Items.WHEAT_SEEDS)) {
-                seeds += stack.getCount();
+    /**
+     * Summarises the contents of nearby containers so the companion can decide
+     * what is already in stock before gathering more.
+     */
+    public static Map<String, Object> auditChests(ServerPlayer player, int radius) {
+        ServerLevel level = player.serverLevel();
+        BlockPos origin = player.blockPosition();
+        Map<String, Integer> totals = new LinkedHashMap<>();
+        int containers = 0;
+        List<String> scanned = new ArrayList<>();
+
+        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -2, -radius),
+                origin.offset(radius, 2, radius))) {
+            if (containers >= 24) {
+                break;
+            }
+            if (!(level.getBlockEntity(pos) instanceof Container container)) {
+                continue;
+            }
+            // Skip the companion's own handled screens: only world blocks count.
+            BlockState state = level.getBlockState(pos);
+            containers++;
+            if (scanned.size() < 12) {
+                scanned.add(state.getBlock().getName().getString()
+                        + " @ " + pos.getX() + " " + pos.getY() + " " + pos.getZ());
+            }
+            for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                ItemStack stack = container.getItem(slot);
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                String key = stack.getHoverName().getString();
+                totals.merge(key, stack.getCount(), Integer::sum);
             }
         }
-        map.put("wheat_seeds", seeds);
-        return map;
-    }
 
-    /** True when the animal is a breeding candidate the player can feed. */
-    public static boolean breedable(AgeableMob mob) {
-        return mob.getAge() == 0 && !mob.isBaby();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("containers", containers);
+        out.put("scanned", scanned);
+        out.put("totals", new LinkedHashMap<String, Object>(totals));
+        return out;
     }
 }

@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -317,14 +316,5 @@ public final class AgentGoals {
         } catch (IOException | RuntimeException e) {
             System.err.println("[agent] cannot save goals " + this.file + ": " + e.getMessage());
         }
-    }
-
-    /** Debug helper for logs. */
-    public synchronized String describe() {
-        StringBuilder builder = new StringBuilder();
-        for (Goal goal : active()) {
-            builder.append(goal.text()).append(" [").append(goal.progressPercent()).append("%] ");
-        }
-        return builder.toString().trim().toLowerCase(Locale.ROOT);
     }
 }

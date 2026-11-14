@@ -157,12 +157,6 @@ public final class CombatKit {
         return arrows;
     }
 
-    public static boolean isRangedReady(ServerPlayer player) {
-        ItemStack held = player.getMainHandItem();
-        boolean weapon = held.getItem() instanceof BowItem || held.getItem() instanceof CrossbowItem;
-        return weapon && arrowCount(player) > 0;
-    }
-
     // ------------------------------------------------------------------
     // Consumables
     // ------------------------------------------------------------------
@@ -254,18 +248,6 @@ public final class CombatKit {
             return new double[]{0.0D, 1.0D};
         }
         return new double[]{dx / length, dz / length};
-    }
-
-    /** Hostiles already targeting the companion. */
-    public static int hostilesOn(ServerPlayer player, List<Entity> nearby) {
-        int count = 0;
-        for (Entity entity : nearby) {
-            if (entity instanceof net.minecraft.world.entity.monster.Monster monster
-                    && monster.isAlive()) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /** Ids of the weapons available, for status output. */
