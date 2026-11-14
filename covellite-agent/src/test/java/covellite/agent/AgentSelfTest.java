@@ -26,6 +26,7 @@ public final class AgentSelfTest {
         memoryTest(dir.resolve("memory"));
         goalsTest(dir.resolve("goals"));
         personalityTest(dir.resolve("personality"));
+        extensionTest(dir.resolve("extensions"));
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -88,6 +89,101 @@ public final class AgentSelfTest {
         check("summary lists active goals", goals.summary().contains("refugio"));
         check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
         check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Extensions
+    // ------------------------------------------------------------------
+
+    private static void extensionTest(Path dir) {
+        AgentMemory memory = new AgentMemory(dir.resolve("memory"), 100);
+        AgentGoals goals = new AgentGoals(dir.resolve("goals"));
+        AgentToolRegistry registry = new AgentToolRegistry();
+        List<String> calls = new ArrayList<>();
+        AgentToolRegistry.ToolExecutor remote = (name, args) -> {
+            calls.add(name + "@" + args.get("x") + "," + args.get("y") + "," + args.get("z"));
+            return Map.of("ok", true);
+        };
+        AgentExtensionContext context = new AgentExtensionContext(registry, remote, memory, goals, null);
+
+        AgentExtension good = new AgentExtension() {
+            @Override
+            public String id() {
+                return "good";
+            }
+
+            @Override
+            public void register(AgentExtensionContext ctx) {
+                ctx.tool(new AgentProvider.ToolSpec("ping", "probe", Map.of("type", "object")),
+                        (name, args) -> Map.of("pong", true));
+            }
+        };
+        AgentExtension broken = new AgentExtension() {
+            @Override
+            public String id() {
+                return "broken";
+            }
+
+            @Override
+            public void register(AgentExtensionContext ctx) {
+                throw new IllegalStateException("boom");
+            }
+        };
+
+        AgentExtensions extensions = new AgentExtensions().add(good).add(broken)
+                .add(new ConstructionExtension());
+        extensions.applyAll(context);
+
+        check("extension tools registered", registry.has("ping"));
+        check("extension tool executes",
+                Boolean.TRUE.equals(invoke(registry, "ping").get("pong")));
+        check("failing extension is isolated", extensions.failures().size() == 1
+                && extensions.failures().get(0).startsWith("broken"));
+        check("construction tools registered", registry.has("build_wall") && registry.has("build_box"));
+        check("tool counts are tracked", extensions.toolCounts().getOrDefault("good", -1) == 1);
+
+        calls.clear();
+        Map<String, Object> wall = new LinkedHashMap<>();
+        wall.put("x", 0);
+        wall.put("y", 64);
+        wall.put("z", 0);
+        wall.put("length", 3);
+        wall.put("height", 2);
+        wall.put("axis", "x");
+        wall.put("block", "minecraft:stone");
+        Map<String, Object> wallResult = invoke(registry, "build_wall", wall);
+        check("build_wall places length*height blocks", wallResult.get("placed").equals(6));
+        check("build_wall walks the requested axis", calls.contains("place_block@2,65,0"));
+
+        calls.clear();
+        Map<String, Object> tunnel = new LinkedHashMap<>();
+        tunnel.put("x", 5);
+        tunnel.put("y", 40);
+        tunnel.put("z", 7);
+        tunnel.put("length", 2);
+        tunnel.put("axis", "z");
+        Map<String, Object> tunnelResult = invoke(registry, "mine_tunnel", tunnel);
+        check("mine_tunnel breaks two layers", tunnelResult.get("broken").equals(4));
+        check("mine_tunnel follows the axis", calls.contains("break_block@5,41,8"));
+
+        Map<String, Object> clamped = new LinkedHashMap<>(wall);
+        clamped.put("length", 500);
+        Map<String, Object> clampedResult = invoke(registry, "build_wall", clamped);
+        Integer placed = (Integer) clampedResult.get("placed");
+        check("block budget caps runaway builds", placed != null && placed <= 256);
+    }
+
+    private static Map<String, Object> invoke(AgentToolRegistry registry, String tool) {
+        return invoke(registry, tool, Map.of());
+    }
+
+    private static Map<String, Object> invoke(AgentToolRegistry registry, String tool,
+                                              Map<String, Object> args) {
+        try {
+            return registry.invoke(tool, args);
+        } catch (Exception e) {
+            return Map.of("error", String.valueOf(e.getMessage()));
+        }
     }
 
     // ------------------------------------------------------------------

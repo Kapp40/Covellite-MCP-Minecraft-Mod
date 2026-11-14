@@ -11,8 +11,12 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import covellite.agent.AgentGoals;
+import covellite.agent.AgentExtensionContext;
+import covellite.agent.AgentExtensions;
 import covellite.agent.AgentMemory;
 import covellite.agent.AgentPersonality;
+import covellite.agent.ConstructionExtension;
+import covellite.agent.CoreToolsExtension;
 import covellite.agent.AgentPlanner;
 import covellite.agent.AgentProvider;
 import covellite.agent.AgentRuntime;
@@ -60,6 +64,7 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     private final CovelliteConfig config;
     private final Path dataDir;
     private final Path configDir;
+    private volatile AgentExtensions extensions;
     private final ConcurrentLinkedQueue<Pending> outbound = new ConcurrentLinkedQueue<>();
     private final AtomicLong requestIds = new AtomicLong();
 
@@ -127,7 +132,11 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
             AgentGoals goals = new AgentGoals(settings.dataDir());
             AgentPlanner planner = new AgentPlanner(settings, provider, memory);
             AgentToolRegistry tools = new AgentToolRegistry();
-            AgentTools.registerAll(tools, this, memory, planner, goals);
+            AgentExtensions extensions = new AgentExtensions()
+                    .add(new CoreToolsExtension())
+                    .add(new ConstructionExtension());
+            extensions.applyAll(new AgentExtensionContext(tools, this, memory, goals, planner));
+            this.extensions = extensions;
 
             AgentRuntime created = new AgentRuntime(settings, provider, tools, memory, goals);
             created.setChatSink(this::speak);
@@ -135,8 +144,11 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
             this.runtime = created;
             this.state = "idle";
             this.lastError = "";
-            CovelliteAI.LOGGER.info("Cove agent ready: provider={} model={} world={} tools={}",
-                    provider.id(), settings.model(), this.worldId, tools.names().size());
+            CovelliteAI.LOGGER.info("Cove agent ready: provider={} model={} world={} tools={} extensions={}",
+                    provider.id(), settings.model(), this.worldId, tools.names().size(), extensions.ids());
+            if (!extensions.failures().isEmpty()) {
+                CovelliteAI.LOGGER.warn("Cove extensions with failures: {}", extensions.failures());
+            }
             return true;
         } catch (ProviderException | RuntimeException e) {
             this.runtime = null;
@@ -380,6 +392,15 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
                 + " - idioma: " + status.get("language"));
         lines.add("Turnos: " + status.get("turns")
                 + " - conversacion: " + status.get("conversation_size"));
+        AgentExtensions packs = this.extensions;
+        if (packs != null) {
+            StringBuilder text = new StringBuilder("Extensiones: ");
+            packs.toolCounts().forEach((id, count) -> text.append(id).append('(').append(count).append(") "));
+            if (!packs.failures().isEmpty()) {
+                text.append("- fallos: ").append(String.join("; ", packs.failures()));
+            }
+            lines.add(text.toString().trim());
+        }
         List<String> goals = activeGoals();
         lines.add("Objetivos: " + (goals.isEmpty() ? "ninguno" : String.join(" | ", goals)));
         if (!this.lastError.isBlank()) {

@@ -870,6 +870,37 @@ Pendiente de esta fase: construcción por planos, copia de estructuras, comercio
 
 La **voz** (TTS/STT) no está implementada: requiere un servicio externo y quedó fuera de esta fase.
 
+### Sistema de extensiones (Fase 6)
+
+Agregar una capacidad ya no obliga a tocar `BridgeApi` ni el catálogo central: cada paquete de funciones es un `AgentExtension`.
+
+```java
+public final class MiExtension implements AgentExtension {
+    @Override
+    public String id() { return "mi-extension"; }
+
+    @Override
+    public void register(AgentExtensionContext ctx) {
+        ctx.tool(new AgentProvider.ToolSpec("mi_tool", "Que hace", esquema),
+                (nombre, args) -> ctx.remote().execute("place_block", args));
+    }
+}
+```
+
+- **Contexto compartido** (`AgentExtensionContext`): registro de tools, `remote()` para ejecutar tools del mod en el hilo del servidor, memoria, objetivos y planificador. Una extensión nunca toca el mundo directamente.
+- **Aislamiento**: si una extensión lanza una excepción, se registra en `failures()` y se descarta; las demás siguen funcionando y el compañero arranca igual.
+- **Descubrimiento**: registro explícito desde el mod (como los paquetes incluidos) y además `ServiceLoader` para jars que traigan `META-INF/services/covellite.agent.AgentExtension`.
+- **Visibilidad**: `/cove panel` muestra el conteo real de tools por extensión (`Extensiones: core(<n>) construction(3)`) y cualquier fallo, así se ve qué cargó de verdad.
+
+Paquetes incluidos:
+
+| Extensión | Tools | Qué aporta |
+|---|---|---|
+| `core` | catálogo completo | percepción, movimiento, combate, supervivencia, mapa y memoria |
+| `construction` | `build_wall`, `build_box`, `mine_tunnel` | construcción y excavación componiendo `place_block` y `break_block` |
+
+`construction` es la prueba de que el sistema sirve: no agrega código de mundo, solo orquesta tools existentes, y aun así entrega paredes, cajas huecas y túneles con tope de 256 bloques por llamada para que un prompt malo no arrase el terreno.
+
 ### Alcance implementado y pendiente
 
 Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
@@ -882,7 +913,9 @@ Fase 4 implementada: mapa persistente por mundo con auto-cartografía, puntos de
 
 Fase 5 implementada: personalidad e idioma cambiables en vivo, aprendizaje de preferencias sin modelo, silencio por locuacidad y panel de estado en el juego.
 
-Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, ballesta y tridente a distancia, pesca, construcción por planos, comercio con aldeanos, dividir `BridgeApi` en servicios y sistema de extensiones.
+Fase 6 implementada: sistema de extensiones con aislamiento de fallos, descubrimiento por `ServiceLoader` y el paquete `construction` (paredes, cajas y túneles) como prueba de que se puede crecer sin tocar el catálogo central.
+
+Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, planos de construcción complejos, comercio con aldeanos, ballesta y tridente a distancia, pesca, y partir `BridgeApi` en servicios (su lógica ya vive en `CombatKit`, `SurvivalService` y `ExplorationMap`; los handlers siguen siendo adaptadores finos).
 
 ---
 
