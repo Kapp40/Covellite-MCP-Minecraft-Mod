@@ -277,6 +277,19 @@ public final class BridgeApi {
         dispatcher.register("use_item", this::useItem);
         dispatcher.register("sleep", this::sleep);
         dispatcher.register("attack", this::attack);
+        // Fase 3: combate tactico y supervivencia
+        dispatcher.register("equip_best_weapon", this::equipBestWeaponTool);
+        dispatcher.register("shield", this::shieldTool);
+        dispatcher.register("use_consumable", this::useConsumableTool);
+        dispatcher.register("evade", this::evadeTool);
+        dispatcher.register("shoot", this::shootTool);
+        dispatcher.register("combat_loadout", params -> combatLoadout());
+        dispatcher.register("harvest_farm", this::harvestFarm);
+        dispatcher.register("plant_seeds", this::plantSeeds);
+        dispatcher.register("feed_animals", this::feedAnimals);
+        dispatcher.register("furnace_status", this::furnaceStatusTool);
+        dispatcher.register("furnace_load", this::furnaceLoadTool);
+        dispatcher.register("furnace_collect", this::furnaceCollectTool);
         dispatcher.register("eat", this::eat);
         dispatcher.register("place_block", this::placeBlock);
         dispatcher.register("break_block", this::breakBlock);
@@ -1464,9 +1477,161 @@ public final class BridgeApi {
     }
 
     /** Melee attack against a nearby entity, with a fully charged swing. */
+    // ------------------------------------------------------------------
+    // Fase 3: combate
+    // ------------------------------------------------------------------
+
+    private Map<String, Object> equipBestWeaponTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String weapon = CombatKit.equipBestWeapon(player);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("weapon", weapon);
+        out.put("loadout", CombatKit.loadout(player));
+        return out;
+    }
+
+    private Map<String, Object> shieldTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        boolean enabled = bool(params, "enabled", true);
+        if (!CombatKit.ensureShield(player)) {
+            throw new IllegalArgumentException("no shield in the inventory");
+        }
+        CombatKit.setShieldBlocking(player, enabled);
+        return Map.of("ok", true, "blocking", enabled);
+    }
+
+    private Map<String, Object> useConsumableTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String used = CombatKit.useConsumable(player, str(params, "kind"));
+        if (used == null) {
+            // No potion or golden apple: eat real food instead of failing.
+            Map<String, Object> fed = eat(Map.of());
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("ok", true);
+            out.put("used", "comida");
+            out.put("detail", fed);
+            out.put("health", Math.round(player.getHealth()));
+            return out;
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("used", used);
+        out.put("health", Math.round(player.getHealth()));
+        return out;
+    }
+
+    private Map<String, Object> evadeTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int ticks = (int) clamp(num(params, "ticks", 20.0D), 1.0D, 200.0D);
+        Entity threat = nearestHostile(player, num(params, "radius", 16.0D));
+        CompanionController controller = this.companion.controller();
+        Map<String, Object> out = new LinkedHashMap<>();
+        if (threat == null) {
+            controller.look(player.getYRot(), 0.0F);
+            controller.move(-1.0D, 0.0D, true, ticks);
+            out.put("ok", true);
+            out.put("ticks", ticks);
+            out.put("reason", "no_hostile");
+            return out;
+        }
+        double[] away = CombatKit.awayFrom(player, threat);
+        float yaw = (float) Math.toDegrees(Math.atan2(-away[0], away[1]));
+        controller.look(yaw, 0.0F);
+        // Back off while weaving, so arrows and melee both miss more often.
+        double strafe = this.autopilotTicks % 40L < 20L ? 0.8D : -0.8D;
+        controller.move(1.0D, strafe, true, ticks);
+        out.put("ok", true);
+        out.put("ticks", ticks);
+        out.put("from", threat.getName().getString());
+        return out;
+    }
+
+    private Map<String, Object> shootTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String query = str(params, "entity");
+        if (query == null || query.isBlank()) {
+            throw new IllegalArgumentException("entity is required");
+        }
+        if (CombatKit.arrowCount(player) <= 0) {
+            throw new IllegalArgumentException("no arrows in the inventory");
+        }
+        if (!(player.getMainHandItem().getItem() instanceof net.minecraft.world.item.BowItem)
+                && !CombatKit.equipRanged(player)) {
+            throw new IllegalArgumentException("no bow in the inventory");
+        }
+        if (!(player.getMainHandItem().getItem() instanceof net.minecraft.world.item.BowItem)) {
+            throw new IllegalArgumentException("shoot supports bows; crossbows need the two-step charge");
+        }
+        Entity target = findEntity(player, query, 32.0D);
+        int charge = (int) clamp(num(params, "charge_ticks", 22.0D), 5.0D, 60.0D);
+        String id = newAction("shoot", "running");
+        startTask(new RangedTask(target.getUUID(), charge), player);
+        return actionResult(id, "running");
+    }
+
+    private Map<String, Object> combatLoadout() {
+        CompanionPlayer player = requireControl();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("weapons", CombatKit.loadout(player));
+        out.put("holding", player.getMainHandItem().getHoverName().getString());
+        out.put("offhand", player.getOffhandItem().getHoverName().getString());
+        out.put("arrows", CombatKit.arrowCount(player));
+        out.put("health", player.getHealth());
+        out.put("food", player.getFoodData().getFoodLevel());
+        out.put("retreat_recommended", CombatKit.shouldRetreat(player, 1));
+        return out;
+    }
+
+    // ------------------------------------------------------------------
+    // Fase 3: supervivencia
+    // ------------------------------------------------------------------
+
+    private Map<String, Object> harvestFarm(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 6.0D), 1.0D, 16.0D);
+        return SurvivalService.harvest(player, radius, bool(params, "replant", true));
+    }
+
+    private Map<String, Object> plantSeeds(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 6.0D), 1.0D, 16.0D);
+        return SurvivalService.plant(player, radius);
+    }
+
+    private Map<String, Object> feedAnimals(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 8.0D), 1.0D, 24.0D);
+        return SurvivalService.feedAnimals(player, radius);
+    }
+
+    private Map<String, Object> furnaceStatusTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 4.0D), 1.0D, 16.0D);
+        return SurvivalService.furnaceStatus(player, radius);
+    }
+
+    private Map<String, Object> furnaceLoadTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 4.0D), 1.0D, 16.0D);
+        int count = (int) clamp(num(params, "count", 64.0D), 1.0D, 64.0D);
+        return SurvivalService.furnaceLoad(player, radius, str(params, "item"),
+                str(params, "fuel"), count);
+    }
+
+    private Map<String, Object> furnaceCollectTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        int radius = (int) clamp(num(params, "radius", 4.0D), 1.0D, 16.0D);
+        return SurvivalService.furnaceCollect(player, radius);
+    }
+
     private Map<String, Object> attack(Map<String, Object> params) {
         CompanionPlayer player = requireControl();
         String query = str(params, "entity");
+        // Never punch a zombie bare-handed if a sword is in the bag.
+        if (CombatKit.bestWeaponSlot(player) >= 0 && !CombatKit.holdingBestWeapon(player)) {
+            CombatKit.equipBestWeapon(player);
+        }
         Entity target = findEntity(player, query, 8.0D);
 
         double range = player.entityInteractionRange() + 0.5D;
@@ -5930,6 +6095,50 @@ public final class BridgeApi {
         }
         controller.moveSmooth(1.0D, strafe, horizontal > 5.0D);
         watch.update(horizontal);
+    }
+
+    /**
+     * Draws a bow at one entity and releases after the charge. Vanilla handles
+     * the arrow, its spread and its damage; nothing is spawned by hand.
+     */
+    private final class RangedTask implements Task {
+        private final java.util.UUID targetId;
+        private final int chargeTicks;
+        private int ticks;
+        private boolean drawing;
+
+        RangedTask(java.util.UUID targetId, int chargeTicks) {
+            this.targetId = targetId;
+            this.chargeTicks = chargeTicks;
+        }
+
+        @Override
+        public boolean tick(CompanionPlayer player, MinecraftServer server) {
+            Entity target = player.serverLevel().getEntity(this.targetId);
+            if (target == null || !target.isAlive()) {
+                return true;
+            }
+            if (player.distanceToSqr(target) > 32.0D * 32.0D) {
+                return true;
+            }
+            lookAtPoint(player, target.getEyePosition());
+            if (!this.drawing) {
+                player.startUsingItem(InteractionHand.MAIN_HAND);
+                this.drawing = true;
+            }
+            this.ticks++;
+            if (this.ticks < this.chargeTicks) {
+                return false;
+            }
+            player.releaseUsingItem();
+            player.stopUsingItem();
+            return true;
+        }
+
+        @Override
+        public void cleanup(CompanionPlayer player) {
+            player.stopUsingItem();
+        }
     }
 
     private final class MoveTask implements Task {

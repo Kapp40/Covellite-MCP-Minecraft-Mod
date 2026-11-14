@@ -826,13 +826,34 @@ Los objetivos viven en `<mundo>/goals.json` con sus pasos y progreso, así que s
 - *Exacto* (`move`, `look`): entrada aplicada al instante durante N ticks. Lo usan la tool `move` y la puntería de combate, así las distancias no cambian.
 - *Suave* (`moveSmooth`, `lookSmooth`): aceleración y frenado por tick, giro de cabeza limitado a 22,5°/tick, sprint solo con velocidad suficiente y `setClimb` para escaleras. Lo usa la navegación (`PathWalker`, `driveTowards`), que refresca el input cada tick.
 
+### Combate y supervivencia (Fase 3)
+
+**Loadout** (`CombatKit.java`):
+
+- `equip_best_weapon` puntúa espadas, hachas y tridentes por daño base, material y durabilidad restante, y mueve el mejor al inventario rápido sin tirar nada. `attack` lo aplica solo antes de golpear.
+- `shield` pasa un escudo a la mano secundaria y mantiene el bloqueo con la entrada real de uso.
+- `use_consumable` usa manzana dorada, poción (`finishUsingItem`, el camino vanilla) o comida si no hay nada mejor.
+- `shoot` dibuja el arco durante `charge_ticks` y lo suelta apuntando a la entidad; la flecha, la dispersión y el daño son los de vanilla. Requiere arco y flechas en el inventario.
+- `evade` retrocede del hostil más cercano mientras zigzaguea, y `combat_loadout` informa arma, offhand, flechas, vida y si conviene retirarse.
+
+**Supervivencia** (`SurvivalService.java`):
+
+- `furnace_status`, `furnace_load` y `furnace_collect` operan el horno, ahumador o alto horno más cercano: mueven entrada y combustible reales y retiran la salida al inventario.
+- `harvest_farm` cosecha cultivos maduros (trigo, zanahoria, patata, remolacha, verruga del Nether) y replanta si hay semillas.
+- `plant_seeds` siembra en la tierra de cultivo libre alrededor.
+- `feed_animals` alimenta animales adultos con la comida que el jugador lleva encima para que críen.
+
+Todas consumen ítems reales del inventario: si faltan semillas, flechas o combustible, la herramienta falla y lo dice en vez de simularlo.
+
 ### Alcance implementado y pendiente
 
 Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
 
 Fase 2 implementada: navegación con pasajes y escalada, memoria de obstáculos, movimiento suavizado con rotación interpolada y objetivos persistentes con pasos.
 
-Pendiente para las fases siguientes: dividir `BridgeApi` en servicios, combate y supervivencia ampliados, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
+Fase 3 implementada: loadout de combate (arma, escudo, consumibles, arco, evasión) y supervivencia real (horno, agricultura con replante, cría de animales).
+
+Pendiente: ballesta y tridente a distancia, pociones lanzables, pesca, reparación con yunque, dividir `BridgeApi` en servicios, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
 
 ---
 

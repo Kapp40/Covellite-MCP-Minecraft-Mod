@@ -138,6 +138,60 @@ public final class AgentTools {
                         "count", integer("Cantidad, por defecto 1.")), List.of("item")));
 
         // ----------------------------------------------------------
+        // Combat loadout and tactics
+        // ----------------------------------------------------------
+        add(registry, remote, "equip_best_weapon",
+                "Equipa el mejor arma del inventario (espada, hacha o tridente) y devuelve el loadout.",
+                schema(props(), List.of()));
+        add(registry, remote, "combat_loadout",
+                "Arma en mano, offhand, flechas, vida, comida y si conviene retirarse.",
+                schema(props(), List.of()));
+        add(registry, remote, "shield",
+                "Equipa el escudo en la mano secundaria y empieza o deja de bloquear.",
+                schema(props("enabled", bool("true = bloquear.")), List.of("enabled")));
+        add(registry, remote, "use_consumable",
+                "Usa la mejor cura disponible: manzana dorada, poción o comida.",
+                schema(props("kind", string("heal, potion o any.")), List.of()));
+        add(registry, remote, "evade",
+                "Se retira del hostil mas cercano mientras zigzaguea.",
+                schema(props(
+                        "ticks", integer("1-200, por defecto 20."),
+                        "radius", number("Radio de busqueda del hostil.")), List.of()));
+        add(registry, remote, "shoot",
+                "Dispara una flecha con arco a una entidad. Requiere arco y flechas.",
+                schema(props(
+                        "entity", string("Nombre o UUID de la entidad."),
+                        "charge_ticks", integer("Ticks de carga, por defecto 22.")), List.of("entity")));
+
+        // ----------------------------------------------------------
+        // Survival
+        // ----------------------------------------------------------
+        add(registry, remote, "harvest_farm",
+                "Cosecha los cultivos maduros alrededor y replanta si hay semillas.",
+                schema(props(
+                        "radius", integer("1-16, por defecto 6."),
+                        "replant", bool("true = replantar.")), List.of()));
+        add(registry, remote, "plant_seeds",
+                "Planta semillas en la tierra de cultivo libre alrededor.",
+                schema(props("radius", integer("1-16, por defecto 6.")), List.of()));
+        add(registry, remote, "feed_animals",
+                "Alimenta animales cercanos para que crien.",
+                schema(props("radius", integer("1-24, por defecto 8.")), List.of()));
+        add(registry, remote, "furnace_status",
+                "Contenido de entrada, combustible y salida del horno mas cercano.",
+                schema(props("radius", integer("1-16, por defecto 4.")), List.of()));
+        add(registry, remote, "furnace_load",
+                "Carga minerales y combustible en el horno cercano.",
+                schema(props(
+                        "item", string("Texto del id, por ejemplo iron_ore."),
+                        "fuel", string("Texto del combustible. Omitir = carbon, tablones o troncos."),
+                        "count", integer("Maximo a cargar, por defecto 64."),
+                        "radius", integer("1-16, por defecto 4.")), List.of("item")));
+        add(registry, remote, "furnace_collect",
+                "Recoge lo fundido en el horno mas cercano.",
+                schema(props("radius", integer("1-16, por defecto 4.")), List.of()));
+
+        // ----------------------------------------------------------
         // Communication
         // ----------------------------------------------------------
         add(registry, remote, "send_chat",
