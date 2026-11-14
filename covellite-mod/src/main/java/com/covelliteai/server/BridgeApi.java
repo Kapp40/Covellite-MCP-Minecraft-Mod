@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 
 import com.covelliteai.CovelliteAI;
 
+import covellite.agent.FishingSignal;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.Event;
 import covellite.core.event.EventLog;
@@ -6312,12 +6313,11 @@ public final class BridgeApi {
             FishingHook hook = player.fishing;
             if (hook == null) {
                 // The bobber vanished (reeled or lost): nothing left to wait for.
-                return this.ticks > 20;
+                return FishingSignal.castLost(this.ticks);
             }
-            // A bite moves the bobber downwards for a moment; that is the only
-            // signal exposed without reflection, and it is enough to reel in time.
-            boolean dipping = hook.getDeltaMovement().y < -0.05D;
-            if (!dipping && this.ticks < this.maxTicks) {
+            // A bite pulls the bobber down for a moment; the rules live in
+            // FishingSignal so they are covered by tests instead of a comment.
+            if (!FishingSignal.shouldReel(hook.getDeltaMovement().y, this.ticks, this.maxTicks)) {
                 return false;
             }
             player.gameMode.useItem(player, player.serverLevel(),

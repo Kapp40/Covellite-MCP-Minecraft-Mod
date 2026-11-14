@@ -27,6 +27,8 @@ public final class AgentSelfTest {
         goalsTest(dir.resolve("goals"));
         personalityTest(dir.resolve("personality"));
         extensionTest(dir.resolve("extensions"));
+        fishingTest();
+        ledgerTest();
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -89,6 +91,50 @@ public final class AgentSelfTest {
         check("summary lists active goals", goals.summary().contains("refugio"));
         check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
         check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Fishing and trade payment
+    // ------------------------------------------------------------------
+
+    private static void fishingTest() {
+        check("calm water keeps waiting", !FishingSignal.shouldReel(0.0D, 10, 400));
+        check("a dip reels in", FishingSignal.shouldReel(-0.2D, 10, 400));
+        check("dip threshold is exact",
+                FishingSignal.dipped(FishingSignal.DIP_THRESHOLD - 0.001D)
+                        && !FishingSignal.dipped(FishingSignal.DIP_THRESHOLD));
+        check("the wait budget forces a reel", FishingSignal.shouldReel(0.0D, 400, 400));
+        check("a lost bobber stops after the grace",
+                FishingSignal.castLost(25) && !FishingSignal.castLost(5));
+    }
+
+    private static void ledgerTest() {
+        List<ItemLedger.Slot> slots = List.of(
+                new ItemLedger.Slot("minecraft:emerald", 3),
+                new ItemLedger.Slot("minecraft:emerald", 5),
+                new ItemLedger.Slot("minecraft:bread", 2));
+
+        ItemLedger.Plan split = ItemLedger.plan(slots,
+                ItemLedger.costs(new ItemLedger.Slot("minecraft:emerald", 6)));
+        check("affordable cost is accepted", split.affordable());
+        check("cost spreads across partial stacks",
+                split.takeBySlot().get(0) == 3 && split.takeBySlot().get(1) == 3);
+        check("plan takes exactly what it needs", split.taken() == 6);
+
+        ItemLedger.Plan short_ = ItemLedger.plan(slots,
+                ItemLedger.costs(new ItemLedger.Slot("minecraft:emerald", 9)));
+        check("short payment is refused", !short_.affordable() && short_.takeBySlot().isEmpty());
+        check("refusal names the missing item", short_.missing().equals("minecraft:emerald"));
+
+        ItemLedger.Plan two = ItemLedger.plan(slots, ItemLedger.costs(
+                new ItemLedger.Slot("minecraft:emerald", 2),
+                new ItemLedger.Slot("minecraft:bread", 1)));
+        check("two-cost trades are planned together",
+                two.affordable() && two.taken() == 3);
+
+        check("empty cost is a no-op",
+                ItemLedger.plan(slots, ItemLedger.costs()).affordable()
+                        && ItemLedger.plan(slots, ItemLedger.costs()).taken() == 0);
     }
 
     // ------------------------------------------------------------------

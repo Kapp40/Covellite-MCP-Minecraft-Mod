@@ -872,9 +872,9 @@ La **voz** (TTS/STT) no está implementada: requiere un servicio externo y qued�
 
 ### Pesca y comercio (pulido final)
 
-- **`fish`**: equipa la caña, lanza el corcho, espera la picada (detectada por el descenso del corcho) y recoge. La tabla de botín, el tiempo de picada y los tesoros son los de vanilla: no se fabrican ítems.
+- **`fish`**: equipa la caña, lanza el corcho, espera la picada (detectada por el descenso del corcho) y recoge. La tabla de botín, el tiempo de picada y los tesoros son los de vanilla: no se fabrican ítems. Las reglas de cuándo recoger viven en `FishingSignal` y están cubiertas por tests: umbral de picada, presupuesto de espera y corte cuando el corcho desaparece.
 - **`trade_scan`**: aldeanos cercanos con profesión, nivel, XP y hasta 20 ofertas por aldeano (coste, resultado, usos, agotado).
-- **`villager_trade`**: ejecuta una oferta concreta. Verifica que el coste esté en el inventario, descuenta los ítems reales, entrega el resultado, incrementa `uses` y deja el resultado en el suelo si no cabe.
+- **`villager_trade`**: ejecuta una oferta concreta. El reparto del pago lo decide `ItemLedger` (puro y testeado): suma montones parciales, rechaza si no alcanza y dice qué ítem falta. Después descuenta exactamente lo planeado, entrega el resultado, incrementa `uses` y deja el resultado en el suelo si no cabe.
   - **Límite honesto**: se habla con la entidad `Villager`, no con la pantalla de comercio, así que el aldeano no repone stock ni sube de nivel desde aquí. Para eso hace falta la mesa real.
 - **`shoot` con ballesta**: además del arco, dispara ballestas usando `CrossbowItem.getChargeDuration` en vez de un tiempo fijo, porque soltar antes cancela el disparo.
 

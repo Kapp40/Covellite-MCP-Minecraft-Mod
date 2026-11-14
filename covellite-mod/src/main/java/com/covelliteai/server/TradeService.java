@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import covellite.agent.ItemLedger;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
@@ -76,11 +78,14 @@ public final class TradeService {
         }
         ItemStack costA = offer.getCostA();
         ItemStack costB = offer.getCostB();
-        if (!has(player, costA) || !has(player, costB)) {
-            throw new IllegalArgumentException("missing cost: " + describeCost(costA, costB));
+        ItemLedger.Plan plan = ItemLedger.plan(slots(player), ItemLedger.costs(
+                new ItemLedger.Slot(name(costA), costA.getCount()),
+                new ItemLedger.Slot(name(costB), costB.getCount())));
+        if (!plan.affordable()) {
+            throw new IllegalArgumentException("missing cost: " + plan.missing()
+                    + " (needs " + describeCost(costA, costB) + ")");
         }
-        remove(player, costA);
-        remove(player, costB);
+        applyPlan(player, plan);
         ItemStack result = offer.getResult().copy();
         offer.increaseUses();
         if (!player.getInventory().add(result)) {
@@ -146,49 +151,31 @@ public final class TradeService {
         return text;
     }
 
-    private static boolean has(ServerPlayer player, ItemStack wanted) {
-        if (wanted.isEmpty()) {
-            return true;
-        }
-        int found = 0;
+    /** Snapshot of main inventory followed by offhand, as ledger slots. */
+    private static List<ItemLedger.Slot> slots(ServerPlayer player) {
+        List<ItemLedger.Slot> slots = new ArrayList<>();
         for (ItemStack stack : player.getInventory().items) {
-            if (ItemStack.isSameItem(stack, wanted)) {
-                found += stack.getCount();
-            }
+            slots.add(new ItemLedger.Slot(stack.isEmpty() ? "" : name(stack), stack.getCount()));
         }
         for (ItemStack stack : player.getInventory().offhand) {
-            if (ItemStack.isSameItem(stack, wanted)) {
-                found += stack.getCount();
-            }
+            slots.add(new ItemLedger.Slot(stack.isEmpty() ? "" : name(stack), stack.getCount()));
         }
-        return found >= wanted.getCount();
+        return slots;
     }
 
-    private static void remove(ServerPlayer player, ItemStack wanted) {
-        if (wanted.isEmpty()) {
-            return;
-        }
-        int remaining = wanted.getCount();
-        for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
-            ItemStack stack = player.getInventory().items.get(i);
-            if (!ItemStack.isSameItem(stack, wanted)) {
-                continue;
-            }
-            int take = Math.min(remaining, stack.getCount());
-            stack.shrink(take);
-            remaining -= take;
-        }
-        if (remaining > 0) {
-            for (ItemStack stack : player.getInventory().offhand) {
-                if (remaining <= 0) {
-                    break;
+    /** Removes exactly what the ledger planned, never more. */
+    private static void applyPlan(ServerPlayer player, ItemLedger.Plan plan) {
+        int mainSize = player.getInventory().items.size();
+        for (Map.Entry<Integer, Integer> entry : plan.takeBySlot().entrySet()) {
+            int index = entry.getKey();
+            int amount = entry.getValue();
+            if (index < mainSize) {
+                player.getInventory().items.get(index).shrink(amount);
+            } else {
+                int offhand = index - mainSize;
+                if (offhand < player.getInventory().offhand.size()) {
+                    player.getInventory().offhand.get(offhand).shrink(amount);
                 }
-                if (!ItemStack.isSameItem(stack, wanted)) {
-                    continue;
-                }
-                int take = Math.min(remaining, stack.getCount());
-                stack.shrink(take);
-                remaining -= take;
             }
         }
     }

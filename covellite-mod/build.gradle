@@ -35,6 +35,11 @@ tasks.named('jar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName = 'Cove_MCP_AI_BetaReview4'
     archiveVersion = ''
+    // Old builds used to linger next to the new jar, so the mods folder could
+    // keep loading a stale version. Each build now clears previous archives.
+    doFirst {
+        destinationDirectory.getAsFileTree().matching { include 'Cove_MCP_AI_*.jar' }.each { it.delete() }
+    }
 }
 
 tasks.withType(ProcessResources).configureEach {
