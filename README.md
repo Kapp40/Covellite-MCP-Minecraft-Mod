@@ -4,8 +4,8 @@
 Jugador artificial autónomo para Minecraft 1.21.1. Controlado mediante un agente de IA y herramientas MCP, integrado como un `ServerPlayer` real en una partida singleplayer.
 
 - Nombre oficial: **CoveMCP's**
-- Build / artefacto: **Cove_MCP_AI_BetaReview3**
-- Versión del mod: **1.0.0-BetaReview3**
+- Build / artefacto: **Cove_MCP_AI_BetaReview4**
+- Versión del mod: **1.0.0-BetaReview4**
 - Jugador dentro del juego: **AIPlayer65**
 
 ## 1. Identidad y objetivo
@@ -653,7 +653,7 @@ Compilación:
 
 El JAR se genera en:
 
-`covellite-mod/build/libs/Cove_MCP_AI_BetaReview3.jar`
+`covellite-mod/build/libs/Cove_MCP_AI_BetaReview4.jar`
 
 El bridge se instala en:
 
@@ -870,6 +870,14 @@ Pendiente de esta fase: construcción por planos, copia de estructuras, comercio
 
 La **voz** (TTS/STT) no está implementada: requiere un servicio externo y quedó fuera de esta fase.
 
+### Pesca y comercio (pulido final)
+
+- **`fish`**: equipa la caña, lanza el corcho, espera la picada (detectada por el descenso del corcho) y recoge. La tabla de botín, el tiempo de picada y los tesoros son los de vanilla: no se fabrican ítems.
+- **`trade_scan`**: aldeanos cercanos con profesión, nivel, XP y hasta 20 ofertas por aldeano (coste, resultado, usos, agotado).
+- **`villager_trade`**: ejecuta una oferta concreta. Verifica que el coste esté en el inventario, descuenta los ítems reales, entrega el resultado, incrementa `uses` y deja el resultado en el suelo si no cabe.
+  - **Límite honesto**: se habla con la entidad `Villager`, no con la pantalla de comercio, así que el aldeano no repone stock ni sube de nivel desde aquí. Para eso hace falta la mesa real.
+- **`shoot` con ballesta**: además del arco, dispara ballestas usando `CrossbowItem.getChargeDuration` en vez de un tiempo fijo, porque soltar antes cancela el disparo.
+
 ### Sistema de extensiones (Fase 6)
 
 Agregar una capacidad ya no obliga a tocar `BridgeApi` ni el catálogo central: cada paquete de funciones es un `AgentExtension`.
@@ -915,7 +923,9 @@ Fase 5 implementada: personalidad e idioma cambiables en vivo, aprendizaje de pr
 
 Fase 6 implementada: sistema de extensiones con aislamiento de fallos, descubrimiento por `ServiceLoader` y el paquete `construction` (paredes, cajas y túneles) como prueba de que se puede crecer sin tocar el catálogo central.
 
-Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, planos de construcción complejos, comercio con aldeanos, ballesta y tridente a distancia, pesca, y partir `BridgeApi` en servicios (su lógica ya vive en `CombatKit`, `SurvivalService` y `ExplorationMap`; los handlers siguen siendo adaptadores finos).
+Extra de pulido posterior: `shoot` dispara ballesta además de arco (usa el tiempo de carga real de vanilla), `fish` pesca con caña y `trade_scan` / `villager_trade` negocian con aldeanos pagando desde el inventario real.
+
+Pendiente: voz (TTS/STT), interfaz gráfica con pantalla propia, planos de construcción complejos, tridentes, y partir `BridgeApi` en servicios (su lógica ya vive en `CombatKit`, `SurvivalService`, `TradeService` y `ExplorationMap`; los handlers siguen siendo adaptadores finos).
 
 ---
 

@@ -216,6 +216,22 @@ public final class AgentTools {
                 schema(props("radius", integer("1-24, por defecto 8.")), List.of()));
 
         // ----------------------------------------------------------
+        // Fishing and trading
+        // ----------------------------------------------------------
+        add(registry, remote, "fish",
+                "Pesca con la cana: lanza, espera la picada y recoge.",
+                schema(props("max_ticks", integer("Espera maxima en ticks (60-1200).")), List.of()));
+        add(registry, remote, "trade_scan",
+                "Lista aldeanos cercanos con su profesion y sus ofertas.",
+                schema(props("radius", integer("2-48, por defecto 16.")), List.of()));
+        add(registry, remote, "villager_trade",
+                "Compra una oferta de un aldeano, pagando desde el inventario.",
+                schema(props(
+                        "villager", string("uuid, profesion o nearest."),
+                        "index", integer("Indice de la oferta segun trade_scan."),
+                        "radius", integer("2-48, por defecto 16.")), List.of("index")));
+
+        // ----------------------------------------------------------
         // Communication
         // ----------------------------------------------------------
         add(registry, remote, "send_chat",

@@ -136,10 +136,15 @@ public final class CombatKit {
 
     /** Moves a bow or crossbow to the main hand. */
     public static boolean equipRanged(ServerPlayer player) {
+        return equipItem(player, stack -> stack.getItem() instanceof BowItem
+                || stack.getItem() instanceof CrossbowItem);
+    }
+
+    /** Moves the first inventory item matching the predicate to the main hand. */
+    public static boolean equipItem(ServerPlayer player, java.util.function.Predicate<ItemStack> match) {
         List<ItemStack> items = player.getInventory().items;
         for (int i = 0; i < items.size(); i++) {
-            ItemStack stack = items.get(i);
-            if (stack.getItem() instanceof BowItem || stack.getItem() instanceof CrossbowItem) {
+            if (match.test(items.get(i))) {
                 selectOrSwap(player, i);
                 return true;
             }

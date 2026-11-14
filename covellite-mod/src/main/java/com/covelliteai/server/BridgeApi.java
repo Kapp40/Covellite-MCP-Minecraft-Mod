@@ -42,8 +42,12 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -301,6 +305,9 @@ public final class BridgeApi {
         dispatcher.register("explore_scan", this::exploreScanTool);
         dispatcher.register("return_home", this::returnHomeTool);
         dispatcher.register("chest_audit", this::chestAuditTool);
+        dispatcher.register("fish", this::fishTool);
+        dispatcher.register("trade_scan", this::tradeScanTool);
+        dispatcher.register("villager_trade", this::villagerTradeTool);
         dispatcher.register("eat", this::eat);
         dispatcher.register("place_block", this::placeBlock);
         dispatcher.register("break_block", this::breakBlock);
@@ -1623,6 +1630,31 @@ public final class BridgeApi {
         return out;
     }
 
+    private Map<String, Object> fishTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        if (!CombatKit.equipItem(player, stack -> stack.getItem() instanceof FishingRodItem)) {
+            throw new IllegalArgumentException("no fishing rod in the inventory");
+        }
+        int maxTicks = (int) clamp(num(params, "max_ticks", 400.0D), 60.0D, 1200.0D);
+        String id = newAction("fish", "running");
+        startTask(new FishingTask(id, maxTicks), player);
+        return actionResult(id, "running");
+    }
+
+    private Map<String, Object> tradeScanTool(Map<String, Object> params) {
+        CompanionPlayer player = requirePlayer();
+        int radius = (int) clamp(num(params, "radius", 16.0D), 2.0D, 48.0D);
+        return TradeService.scan(player, radius);
+    }
+
+    private Map<String, Object> villagerTradeTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String query = str(params, "villager");
+        int index = (int) clamp(num(params, "index", 0.0D), 0.0D, 40.0D);
+        int radius = (int) clamp(num(params, "radius", 16.0D), 2.0D, 48.0D);
+        return TradeService.buy(player, query, index, radius);
+    }
+
     private Map<String, Object> chestAuditTool(Map<String, Object> params) {
         CompanionPlayer player = requireControl();
         int radius = (int) clamp(num(params, "radius", 8.0D), 1.0D, 24.0D);
@@ -1708,15 +1740,21 @@ public final class BridgeApi {
         if (CombatKit.arrowCount(player) <= 0) {
             throw new IllegalArgumentException("no arrows in the inventory");
         }
-        if (!(player.getMainHandItem().getItem() instanceof net.minecraft.world.item.BowItem)
+        if (!(player.getMainHandItem().getItem() instanceof BowItem)
+                && !(player.getMainHandItem().getItem() instanceof CrossbowItem)
                 && !CombatKit.equipRanged(player)) {
-            throw new IllegalArgumentException("no bow in the inventory");
-        }
-        if (!(player.getMainHandItem().getItem() instanceof net.minecraft.world.item.BowItem)) {
-            throw new IllegalArgumentException("shoot supports bows; crossbows need the two-step charge");
+            throw new IllegalArgumentException("no bow or crossbow in the inventory");
         }
         Entity target = findEntity(player, query, 32.0D);
-        int charge = (int) clamp(num(params, "charge_ticks", 22.0D), 5.0D, 60.0D);
+        int charge;
+        if (player.getMainHandItem().getItem() instanceof CrossbowItem crossbow) {
+            // Vanilla charges a crossbow at a fixed rate; releasing early cancels the shot.
+            charge = CrossbowItem.getChargeDuration(player.getMainHandItem(), player) + 2;
+        } else if (player.getMainHandItem().getItem() instanceof BowItem) {
+            charge = (int) clamp(num(params, "charge_ticks", 22.0D), 5.0D, 60.0D);
+        } else {
+            throw new IllegalArgumentException("hold a bow or crossbow to shoot");
+        }
         String id = newAction("shoot", "running");
         startTask(new RangedTask(target.getUUID(), charge), player);
         return actionResult(id, "running");
@@ -6245,6 +6283,52 @@ public final class BridgeApi {
         }
         controller.moveSmooth(1.0D, strafe, horizontal > 5.0D);
         watch.update(horizontal);
+    }
+
+    /**
+     * Casts a fishing rod, waits for the bobber to dip and reels in. Vanilla owns
+     * the loot table, the bite timing and the treasure chance.
+     */
+    private final class FishingTask implements Task {
+        private final String id;
+        private final int maxTicks;
+        private int ticks;
+        private boolean cast;
+
+        FishingTask(String id, int maxTicks) {
+            this.id = id;
+            this.maxTicks = maxTicks;
+        }
+
+        @Override
+        public boolean tick(CompanionPlayer player, MinecraftServer server) {
+            if (!this.cast) {
+                player.gameMode.useItem(player, player.serverLevel(),
+                        player.getMainHandItem(), InteractionHand.MAIN_HAND);
+                this.cast = true;
+                return false;
+            }
+            this.ticks++;
+            FishingHook hook = player.fishing;
+            if (hook == null) {
+                // The bobber vanished (reeled or lost): nothing left to wait for.
+                return this.ticks > 20;
+            }
+            // A bite moves the bobber downwards for a moment; that is the only
+            // signal exposed without reflection, and it is enough to reel in time.
+            boolean dipping = hook.getDeltaMovement().y < -0.05D;
+            if (!dipping && this.ticks < this.maxTicks) {
+                return false;
+            }
+            player.gameMode.useItem(player, player.serverLevel(),
+                    player.getMainHandItem(), InteractionHand.MAIN_HAND);
+            return true;
+        }
+
+        @Override
+        public void cleanup(CompanionPlayer player) {
+            player.stopUsingItem();
+        }
     }
 
     /**

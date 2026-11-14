@@ -33,7 +33,7 @@ sourceSets.main.java.srcDir project(':covellite-agent').file('src/main/java')
 
 tasks.named('jar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    archiveBaseName = 'Cove_MCP_AI_BetaReview3'
+    archiveBaseName = 'Cove_MCP_AI_BetaReview4'
     archiveVersion = ''
 }
 
