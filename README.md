@@ -802,11 +802,37 @@ agentHistoryLimit=24
 
 `<instancia>/covemcp/agent/<mundo>/`, un archivo `.jsonl` por tipo de memoria, acotado por cantidad de entradas. El identificador es el nombre del mundo, así que las partidas no mezclan recuerdos.
 
+### Objetivos persistentes
+
+Los objetivos viven en `<mundo>/goals.json` con sus pasos y progreso, así que sobreviven a un reinicio y a que la ventana de conversación se recorte:
+
+- Tools locales `goal_create`, `goal_list`, `goal_advance`, `goal_complete`.
+- `/cove goals` muestra los activos con su porcentaje y el paso siguiente.
+- El resumen de objetivos se inyecta en el prompt de cada turno.
+- `goal_advance` solo se usa cuando el resultado está verificado: decir que se hizo no marca el paso.
+
+### Navegación y control (Fase 2)
+
+**Pathfinder** (`Pathfinder.java`): A* sobre celdas caminables con costes de terreno y riesgo.
+
+- Puertas y rejas de madera cuentan como transitables con coste extra; el caminante las abre con `openPassage`. Las de hierro quedan sólidas.
+- Escalada vertical con `BlockTags.CLIMBABLE` (escaleras de mano, enredaderas, andamios).
+- Penalización por caminar junto a lava o fuego, y coste mayor en agua.
+- **Memoria de obstáculos**: cuando un tramo se traba, `BridgeApi` recuerda esa celda 1200 ticks y el siguiente plan la evita (y penaliza sus alrededores).
+- Sigue devolviendo el camino parcial más cercano al objetivo cuando no lo alcanza, para caminar y replanificar.
+
+**Controlador** (`CompanionController.java`) con dos modos que conviven:
+
+- *Exacto* (`move`, `look`): entrada aplicada al instante durante N ticks. Lo usan la tool `move` y la puntería de combate, así las distancias no cambian.
+- *Suave* (`moveSmooth`, `lookSmooth`): aceleración y frenado por tick, giro de cabeza limitado a 22,5°/tick, sprint solo con velocidad suficiente y `setClimb` para escaleras. Lo usa la navegación (`PathWalker`, `driveTowards`), que refresca el input cada tick.
+
 ### Alcance implementado y pendiente
 
 Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
 
-Pendiente para las fases siguientes: dividir `BridgeApi` en servicios, pathfinder avanzado, combate y supervivencia ampliados, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
+Fase 2 implementada: navegación con pasajes y escalada, memoria de obstáculos, movimiento suavizado con rotación interpolada y objetivos persistentes con pasos.
+
+Pendiente para las fases siguientes: dividir `BridgeApi` en servicios, combate y supervivencia ampliados, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
 
 ---
 

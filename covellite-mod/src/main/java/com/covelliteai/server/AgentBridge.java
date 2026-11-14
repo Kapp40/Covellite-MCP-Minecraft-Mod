@@ -3,6 +3,7 @@ package com.covelliteai.server;
 import com.covelliteai.CovelliteAI;
 import com.covelliteai.CovelliteConfig;
 
+import covellite.agent.AgentGoals;
 import covellite.agent.AgentMemory;
 import covellite.agent.AgentPlanner;
 import covellite.agent.AgentProvider;
@@ -113,11 +114,12 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         try {
             AgentProvider provider = ProviderFactory.create(settings);
             AgentMemory memory = new AgentMemory(settings.dataDir(), 800);
+            AgentGoals goals = new AgentGoals(settings.dataDir());
             AgentPlanner planner = new AgentPlanner(settings, provider, memory);
             AgentToolRegistry tools = new AgentToolRegistry();
-            AgentTools.registerAll(tools, this, memory, planner);
+            AgentTools.registerAll(tools, this, memory, planner, goals);
 
-            AgentRuntime created = new AgentRuntime(settings, provider, tools, memory);
+            AgentRuntime created = new AgentRuntime(settings, provider, tools, memory, goals);
             created.setChatSink(this::speak);
             created.start();
             this.runtime = created;
@@ -299,6 +301,17 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         }
         current.remember(AgentMemory.Kind.SEMANTIC, text, List.of("command"));
         return true;
+    }
+
+    /** One line per active goal, for the in-game command. */
+    public List<String> activeGoals() {
+        AgentRuntime current = this.runtime;
+        if (current == null) {
+            return List.of();
+        }
+        return current.goals().active().stream()
+                .map(goal -> goal.text() + " [" + goal.progressPercent() + "%] " + goal.nextStep())
+                .toList();
     }
 
     public List<String> recentMemory(String kind, int limit) {

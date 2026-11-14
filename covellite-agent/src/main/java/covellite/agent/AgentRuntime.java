@@ -25,6 +25,7 @@ public final class AgentRuntime implements AutoCloseable {
     private final AgentSettings settings;
     private final AgentProvider provider;
     private final AgentMemory memory;
+    private final AgentGoals goals;
     private final AgentToolRegistry tools;
     private final AgentPersonality personality;
     private final AgentContext context;
@@ -50,10 +51,11 @@ public final class AgentRuntime implements AutoCloseable {
      * {@link ProviderFactory}); this class never reads configuration files.
      */
     public AgentRuntime(AgentSettings settings, AgentProvider provider,
-                        AgentToolRegistry tools, AgentMemory memory) {
+                        AgentToolRegistry tools, AgentMemory memory, AgentGoals goals) {
         this.settings = settings;
         this.provider = provider;
         this.memory = memory;
+        this.goals = goals;
         this.tools = tools;
         this.personality = AgentPersonality.of(settings.personality());
         this.context = new AgentContext(memory);
@@ -137,6 +139,9 @@ public final class AgentRuntime implements AutoCloseable {
         this.busy.set(true);
         this.cancelled.set(false);
         this.state = "thinking";
+        // Goals travel with every turn: the model must see what is still pending
+        // even after the conversation window dropped the original request.
+        this.context.setExtraContext(this.goals.summary());
         try {
             this.conversation.add(AgentProvider.Message.user(text));
             AgentLoop.Result result = this.loop.run(this.conversation, this.chatSink,
@@ -222,6 +227,7 @@ public final class AgentRuntime implements AutoCloseable {
         map.put("conversation_size", this.conversation.size());
         map.put("tools", new ArrayList<Object>(this.tools.names()));
         map.put("memory", this.memory.counts());
+        map.put("goals", this.goals.status());
         return map;
     }
 
@@ -235,6 +241,10 @@ public final class AgentRuntime implements AutoCloseable {
 
     public AgentMemory memory() {
         return this.memory;
+    }
+
+    public AgentGoals goals() {
+        return this.goals;
     }
 
     public AgentToolRegistry tools() {

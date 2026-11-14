@@ -24,6 +24,7 @@ public final class AgentSelfTest {
         Path dir = Files.createTempDirectory("covemcp-agent-test");
 
         memoryTest(dir.resolve("memory"));
+        goalsTest(dir.resolve("goals"));
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -54,6 +55,38 @@ public final class AgentSelfTest {
 
         AgentMemory reloaded = new AgentMemory(dir, 100);
         check("memory persists to disk", reloaded.all(AgentMemory.Kind.SEMANTIC).size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Goals
+    // ------------------------------------------------------------------
+
+    private static void goalsTest(Path dir) {
+        AgentGoals goals = new AgentGoals(dir);
+        AgentGoals.Goal goal = goals.create("conseguir 10 hierro",
+                List.of("encontrar veta", "minar", "volver a la base"));
+        check("goal created active", goal.status() == AgentGoals.Status.ACTIVE);
+        check("goal has steps", goal.steps().size() == 3);
+
+        AgentGoals.Goal first = goals.advance(goal.id());
+        check("advance marks one step", first != null && first.doneCount() == 1);
+        check("advance reports progress", first.progressPercent() == 33);
+        check("advance exposes next step", first.nextStep().equals("minar"));
+
+        goals.advance(goal.id());
+        AgentGoals.Goal done = goals.advance(goal.id());
+        check("last step completes the goal", done != null && done.status() == AgentGoals.Status.DONE);
+        check("completed goal leaves the active list", goals.active().isEmpty());
+
+        AgentGoals reloaded = new AgentGoals(dir);
+        check("goals persist to disk", reloaded.all().size() == 1);
+        check("persisted goal keeps its progress",
+                reloaded.all().get(0).progressPercent() == 100);
+
+        AgentGoals.Goal second = goals.create("construir un refugio", List.of("juntar madera"));
+        check("summary lists active goals", goals.summary().contains("refugio"));
+        check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
+        check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
     }
 
     // ------------------------------------------------------------------
@@ -108,7 +141,8 @@ public final class AgentSelfTest {
                         Map.of("type", "object", "properties", Map.of())),
                 (name, arguments) -> Map.of("hp", 20.0, "food", 18.0));
 
-        AgentRuntime runtime = new AgentRuntime(settings, fake, registry, memory);
+        AgentRuntime runtime = new AgentRuntime(settings, fake, registry, memory,
+                new AgentGoals(settings.dataDir().resolve("goals")));
         List<String> spoken = new ArrayList<>();
         runtime.setChatSink(spoken::add);
         runtime.start();

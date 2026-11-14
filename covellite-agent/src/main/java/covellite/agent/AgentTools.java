@@ -29,7 +29,8 @@ public final class AgentTools {
     public static void registerAll(AgentToolRegistry registry,
                                    AgentToolRegistry.ToolExecutor remote,
                                    AgentMemory memory,
-                                   AgentPlanner planner) {
+                                   AgentPlanner planner,
+                                   AgentGoals goals) {
         // ----------------------------------------------------------
         // Perception
         // ----------------------------------------------------------
@@ -195,6 +196,57 @@ public final class AgentTools {
                 (name, args) -> Map.of("removed",
                         memory.forget(String.valueOf(args.getOrDefault("id", "")))));
 
+        // ----------------------------------------------------------
+        // Local tools: goals
+        // ----------------------------------------------------------
+        registry.register(new AgentProvider.ToolSpec("goal_create",
+                        "Registra un objetivo persistente y sus pasos. Usalo cuando el pedido lleva mas de una accion.",
+                        schema(props(
+                                "goal", string("Objetivo en lenguaje natural."),
+                                "steps", arrayOfStrings("Pasos concretos, en orden.")), List.of("goal"))),
+                (name, args) -> {
+                    List<String> steps = new ArrayList<>();
+                    if (args.get("steps") instanceof List<?> raw) {
+                        for (Object item : raw) {
+                            steps.add(String.valueOf(item));
+                        }
+                    }
+                    AgentGoals.Goal goal = goals.create(String.valueOf(args.getOrDefault("goal", "")), steps);
+                    Map<String, Object> out = new LinkedHashMap<>();
+                    out.put("id", goal.id());
+                    out.put("steps", goal.steps().size());
+                    return out;
+                });
+
+        registry.register(new AgentProvider.ToolSpec("goal_list",
+                        "Lista los objetivos activos con su progreso y el paso siguiente.",
+                        schema(props(), List.of())),
+                (name, args) -> goals.status());
+
+        registry.register(new AgentProvider.ToolSpec("goal_advance",
+                        "Marca como hecho el paso siguiente del objetivo. Llamalo solo cuando el resultado esta verificado.",
+                        schema(props("id", string("Id del objetivo.")), List.of("id"))),
+                (name, args) -> {
+                    AgentGoals.Goal goal = goals.advance(String.valueOf(args.getOrDefault("id", "")));
+                    Map<String, Object> out = new LinkedHashMap<>();
+                    if (goal == null) {
+                        out.put("ok", false);
+                        out.put("error", "unknown goal");
+                        return out;
+                    }
+                    out.put("ok", true);
+                    out.put("status", goal.status().name().toLowerCase(java.util.Locale.ROOT));
+                    out.put("progress", goal.progressPercent());
+                    out.put("next", goal.nextStep());
+                    return out;
+                });
+
+        registry.register(new AgentProvider.ToolSpec("goal_complete",
+                        "Cierra un objetivo como completado.",
+                        schema(props("id", string("Id del objetivo.")), List.of("id"))),
+                (name, args) -> Map.of("ok",
+                        goals.complete(String.valueOf(args.getOrDefault("id", "")))));
+
         registry.register(new AgentProvider.ToolSpec("plan_goal",
                         "Descompone un objetivo complejo en pasos concretos y lo guarda como objetivo activo.",
                         schema(props("goal", string("Objetivo en lenguaje natural.")), List.of("goal"))),
@@ -252,6 +304,11 @@ public final class AgentTools {
 
     private static Map<String, Object> string(String description) {
         return Map.of("type", "string", "description", description);
+    }
+
+    private static Map<String, Object> arrayOfStrings(String description) {
+        return Map.of("type", "array", "description", description,
+                "items", Map.of("type", "string"));
     }
 
     private static int intArg(Map<String, Object> args, String key, int fallback) {

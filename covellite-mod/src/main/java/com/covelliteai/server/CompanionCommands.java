@@ -140,6 +140,13 @@ public final class CompanionCommands {
                                                     ? "sin recuerdos de tipo " + kind
                                                     : String.join(" | ", lines));
                                         })))
+                        .then(Commands.literal("goals")
+                                .executes(ctx -> {
+                                    java.util.List<String> goals = agent.activeGoals();
+                                    return feedback(ctx.getSource(), goals.isEmpty()
+                                            ? "sin objetivos activos"
+                                            : String.join(" | ", goals));
+                                }))
                         .then(Commands.literal("on")
                                 .executes(ctx -> feedback(ctx.getSource(), "agent=" + agent.start(
                                         ctx.getSource().getServer(),

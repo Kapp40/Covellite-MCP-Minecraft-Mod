@@ -2,6 +2,7 @@ package com.covelliteai.server;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -186,6 +187,30 @@ public final class BridgeApi {
     // Preventive durability: warn once per tool, swap to a compatible spare.
     private final Set<Item> warnedTools = new HashSet<>();
     private long lastDurabilityNotice = -10000L;
+
+    // Obstacle memory: cells that blocked a walk, with an expiry tick. Fed back
+    // into the pathfinder so a replan routes around instead of retrying.
+    private static final int BLOCKED_TTL_TICKS = 1200;
+    private final Map<Long, Long> blockedCells = new HashMap<>();
+
+    /** Cells remembered as blocked, pruned by TTL. Call on the server thread. */
+    private Set<Long> avoidCells() {
+        this.blockedCells.entrySet().removeIf(entry -> entry.getValue() <= this.autopilotTicks);
+        return new HashSet<>(this.blockedCells.keySet());
+    }
+
+    /** Remembers the cell the companion could not walk out of. */
+    private void markBlocked(CompanionPlayer player) {
+        if (player == null) {
+            return;
+        }
+        this.blockedCells.put(player.blockPosition().asLong(),
+                this.autopilotTicks + BLOCKED_TTL_TICKS);
+        // The map is small and bounded by world size in practice; cap it anyway.
+        if (this.blockedCells.size() > 512) {
+            this.blockedCells.clear();
+        }
+    }
 
     // Inventory capacity during gathering.
     private boolean inventoryFullWarned;
@@ -2231,7 +2256,7 @@ public final class BridgeApi {
                 Pathfinder.Result result = Pathfinder.find(level, player.blockPosition(),
                         pos -> new Vec3(pos.getX() + 0.5D, pos.getY() + 1.62D, pos.getZ() + 0.5D)
                                 .distanceTo(center) <= reach,
-                        center, 4000);
+                        center, 4000, avoidCells());
                 if (result.path().size() < 2) {
                     this.pathFailures++;
                     return false;
@@ -5869,6 +5894,10 @@ public final class BridgeApi {
             this.best = distance;
             this.idleTicks = 0;
         }
+
+        int idle() {
+            return this.idleTicks;
+        }
     }
 
     /**
@@ -5889,7 +5918,7 @@ public final class BridgeApi {
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(horizontal, 0.01D)));
         CompanionController controller = BridgeApi.this.companion.controller();
-        controller.look(yaw, (float) clamp(pitch, -45.0D, 45.0D));
+        controller.lookSmooth(yaw, (float) clamp(pitch, -45.0D, 45.0D));
 
         double strafe = 0.0D;
         if (player.horizontalCollision) {
@@ -5899,7 +5928,7 @@ public final class BridgeApi {
                 controller.jump();
             }
         }
-        controller.move(1.0D, strafe, horizontal > 5.0D, 3);
+        controller.moveSmooth(1.0D, strafe, horizontal > 5.0D);
         watch.update(horizontal);
     }
 
@@ -5987,7 +6016,7 @@ public final class BridgeApi {
                 return PathStatus.ARRIVED;
             }
             if (this.ticks > this.path.size() * 25 + 100) {
-                return PathStatus.STUCK;
+                return stuck(player);
             }
 
             BlockPos wp = this.path.get(this.index);
@@ -5997,7 +6026,7 @@ public final class BridgeApi {
             double horizontal = Math.sqrt(dx * dx + dz * dz);
             if (dy < -4.0D) {
                 // Fell off the route.
-                return PathStatus.STUCK;
+                return stuck(player);
             }
             if (this.shownIndex != this.index) {
                 this.shownIndex = this.index;
@@ -6011,10 +6040,24 @@ public final class BridgeApi {
                 this.idle++;
             }
             if (this.idle > 40) {
-                return PathStatus.STUCK;
+                return stuck(player);
             }
 
-            controller.look((float) Math.toDegrees(Math.atan2(-dx, dz)), 0.0F);
+            // Passages the pathfinder routed through: open them before walking in.
+            Pathfinder.openPassage(player.serverLevel(), wp);
+            Pathfinder.openPassage(player.serverLevel(), player.blockPosition());
+            Pathfinder.openPassage(player.serverLevel(), player.blockPosition().above());
+
+            float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+            float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(horizontal, 0.01D)));
+            controller.lookSmooth(yaw, (float) clamp(pitch, -35.0D, 35.0D));
+
+            boolean climbing = player.serverLevel().getBlockState(player.blockPosition())
+                    .is(BlockTags.CLIMBABLE)
+                    || player.serverLevel().getBlockState(player.blockPosition().above())
+                    .is(BlockTags.CLIMBABLE);
+            controller.setClimb(climbing && dy > 0.2D);
+
             if (player.onGround() && dy > 0.6D && horizontal < 1.3D) {
                 controller.jump();
             } else if (player.isInWater() && dy > -0.5D) {
@@ -6022,8 +6065,14 @@ public final class BridgeApi {
             } else if (this.idle > 0 && this.idle % 12 == 0 && player.onGround()) {
                 controller.jump();
             }
-            controller.move(1.0D, 0.0D, sprintAhead(), 3);
+            controller.moveSmooth(1.0D, 0.0D, sprintAhead());
             return PathStatus.RUNNING;
+        }
+
+        /** Reports STUCK and remembers this cell so the next plan avoids it. */
+        private PathStatus stuck(CompanionPlayer player) {
+            BridgeApi.this.markBlocked(player);
+            return PathStatus.STUCK;
         }
 
         /** Sprint only on a straight, flat run of at least three waypoints (no overshooting turns or edges). */
@@ -6121,7 +6170,7 @@ public final class BridgeApi {
                         return Math.sqrt(dx * dx + dz * dz) <= 2.4D
                                 && Math.abs(pos.getY() - this.bed.getY()) <= 2.0D;
                     },
-                    Vec3.atCenterOf(this.bed), 3000);
+                    Vec3.atCenterOf(this.bed), 3000, avoidCells());
             if (result.path().size() < 2) {
                 return false;
             }
@@ -6205,7 +6254,7 @@ public final class BridgeApi {
                         return Math.sqrt(gx * gx + gz * gz) <= slack
                                 && (!useY || Math.abs(pos.getY() - this.y) <= 2.0D);
                     },
-                    goalPoint, 6000);
+                    goalPoint, 6000, avoidCells());
             if (result.path().size() < 2) {
                 return false;
             }
@@ -6276,7 +6325,7 @@ public final class BridgeApi {
                                 return Math.sqrt(gx * gx + gz * gz) <= slack
                                         && Math.abs(pos.getY() - target.getY()) <= 2.0D;
                             },
-                            target.position(), 3000);
+                            target.position(), 3000, avoidCells());
                     if (result.path().size() >= 2) {
                         this.walker = new PathWalker(result.path());
                         this.planEnd = target.position();
