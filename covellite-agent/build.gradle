@@ -1,0 +1,15 @@
+// Pure-Java AI runtime: providers, agent loop, memory and tool registry.
+// No third-party dependency on purpose, so the mod can compile these sources
+// directly into its own jar exactly like covellite-core.
+dependencies {
+    implementation project(':covellite-core')
+}
+
+// Self-test for the agent runtime, memory, conversation window and planner.
+// No JUnit: it is a plain main() so it also runs from any shell.
+tasks.register('agentTest', JavaExec) {
+    group = 'verification'
+    description = 'Run the agent self-test (fake provider, memory, loop)'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'covellite.agent.AgentSelfTest'
+}

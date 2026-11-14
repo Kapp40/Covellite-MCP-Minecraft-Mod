@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -23,11 +25,17 @@ public final class CovelliteConfig {
     public final int maxChatHistory;
     public final boolean autoConnect;
     public final String serverAddress;
+    /**
+     * Every value read from {@code covemcp.properties}. The AI runtime parses
+     * its own {@code agent*} keys from here so new provider options do not
+     * require a new field in this class.
+     */
+    public final Map<String, String> properties;
 
     private CovelliteConfig(String playerName, int port, int maxActions,
                             int maxActionHistory, int stateUpdateTicks,
                             int maxChatHistory, boolean autoConnect,
-                            String serverAddress) {
+                            String serverAddress, Map<String, String> properties) {
         this.playerName = playerName;
         this.port = port;
         this.maxActions = maxActions;
@@ -36,6 +44,7 @@ public final class CovelliteConfig {
         this.maxChatHistory = maxChatHistory;
         this.autoConnect = autoConnect;
         this.serverAddress = serverAddress;
+        this.properties = Map.copyOf(properties);
     }
 
     public static CovelliteConfig load(Path configDir) {
@@ -95,8 +104,12 @@ public final class CovelliteConfig {
         int maxChat = clampInt(p.getProperty("maxChatHistory"), 256, 1, 4096);
         boolean autoConnect = Boolean.parseBoolean(p.getProperty("autoConnect", "false").trim());
         String serverAddress = p.getProperty("serverAddress", "").trim();
+        Map<String, String> all = new LinkedHashMap<>();
+        for (String key : p.stringPropertyNames()) {
+            all.put(key, p.getProperty(key));
+        }
         return new CovelliteConfig(name, port, maxActions, maxHistory, stateTicks, maxChat,
-                autoConnect, serverAddress);
+                autoConnect, serverAddress, all);
     }
 
     private static int clampInt(String raw, int fallback, int min, int max) {

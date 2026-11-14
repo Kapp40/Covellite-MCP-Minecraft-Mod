@@ -7,6 +7,7 @@ pluginManagement {
 }
 
 rootProject.name = 'covemcp'
+include 'covellite-agent'
 include 'covellite-core'
 include 'covellite-mod'
 include 'covellite-bridge'

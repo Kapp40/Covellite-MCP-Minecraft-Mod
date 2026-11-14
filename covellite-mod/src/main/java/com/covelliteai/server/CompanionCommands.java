@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -16,6 +17,14 @@ import net.minecraft.network.chat.Component;
 public final class CompanionCommands {
 
     private CompanionCommands() {
+    }
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher,
+                                CompanionManager manager, AgentBridge agent) {
+        register(dispatcher, manager);
+        if (agent != null) {
+            registerAgent(dispatcher, agent);
+        }
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CompanionManager manager) {
@@ -81,6 +90,65 @@ public final class CompanionCommands {
                                     }
                                     manager.controller().setSneak(BoolArgumentType.getBool(ctx, "enabled"));
                                     return feedback(ctx.getSource(), "sneak=" + BoolArgumentType.getBool(ctx, "enabled"));
+                                }))));
+    }
+
+    /**
+     * {@code /cove ai ...}: manage the in-process AI runtime from the game chat.
+     * This is the first in-game surface of the agent; it works without editing
+     * any file.
+     */
+    private static void registerAgent(CommandDispatcher<CommandSourceStack> dispatcher, AgentBridge agent) {
+        dispatcher.register(Commands.literal("cove")
+                .then(Commands.literal("ai")
+                        .then(Commands.literal("status")
+                                .executes(ctx -> feedback(ctx.getSource(), agent.status().toString())))
+                        .then(Commands.literal("ask")
+                                .then(Commands.argument("texto", StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            String text = StringArgumentType.getString(ctx, "texto");
+                                            if (agent.ask(text)) {
+                                                return feedback(ctx.getSource(), "enviado al agente");
+                                            }
+                                            return failure(ctx.getSource(),
+                                                    "agente deshabilitado o proveedor no configurado");
+                                        })))
+                        .then(Commands.literal("plan")
+                                .then(Commands.argument("objetivo", StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            String goal = StringArgumentType.getString(ctx, "objetivo");
+                                            if (agent.plan(goal)) {
+                                                return feedback(ctx.getSource(), "planificando: " + goal);
+                                            }
+                                            return failure(ctx.getSource(),
+                                                    "agente deshabilitado o proveedor no configurado");
+                                        })))
+                        .then(Commands.literal("remember")
+                                .then(Commands.argument("texto", StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            String text = StringArgumentType.getString(ctx, "texto");
+                                            return agent.remember(text)
+                                                    ? feedback(ctx.getSource(), "recordado")
+                                                    : failure(ctx.getSource(), "agente deshabilitado");
+                                        })))
+                        .then(Commands.literal("memory")
+                                .then(Commands.argument("tipo", StringArgumentType.word())
+                                        .executes(ctx -> {
+                                            String kind = StringArgumentType.getString(ctx, "tipo");
+                                            java.util.List<String> lines = agent.recentMemory(kind, 5);
+                                            return feedback(ctx.getSource(), lines.isEmpty()
+                                                    ? "sin recuerdos de tipo " + kind
+                                                    : String.join(" | ", lines));
+                                        })))
+                        .then(Commands.literal("on")
+                                .executes(ctx -> feedback(ctx.getSource(), "agent=" + agent.start(
+                                        ctx.getSource().getServer(),
+                                        ctx.getSource().getServer().getWorldData().getLevelName(),
+                                        true))))
+                        .then(Commands.literal("off")
+                                .executes(ctx -> {
+                                    agent.stop();
+                                    return feedback(ctx.getSource(), "agente detenido");
                                 }))));
     }
 

@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.covelliteai.server.AgentBridge;
 import com.covelliteai.server.BridgeApi;
 import com.covelliteai.server.ChatLog;
 import com.covelliteai.server.CompanionManager;
@@ -73,6 +74,7 @@ public final class CovelliteAI {
     private final ConcurrentLinkedQueue<Map<String, Object>> inbound = new ConcurrentLinkedQueue<>();
     private final CompanionManager companion;
     private final BridgeApi bridgeApi;
+    private final AgentBridge agentBridge;
     private final PrototypeScenario prototype;
 
     private volatile BridgeServer bridge;
@@ -90,6 +92,10 @@ public final class CovelliteAI {
         this.companion.setReviveHook(this.bridgeApi::onCompanionRevived);
         this.actions = new ActionQueue(config.maxActions, config.maxActionHistory,
                 status -> { }, () -> this.companion.controller().stop());
+        // In-process AI runtime. It shares the same dispatcher as the MCP bridge,
+        // so an internal turn and an external agent execute identical tools, but
+        // it never depends on OpenCode or any other external process.
+        this.agentBridge = new AgentBridge(config, FMLPaths.GAMEDIR.get().resolve("covemcp"));
 
         Path prototypeMarker = FMLPaths.CONFIGDIR.get().resolve("covemcp-prototype-test.flag");
         this.prototype = Files.exists(prototypeMarker) ? new PrototypeScenario(this.companion) : null;
@@ -98,6 +104,7 @@ public final class CovelliteAI {
         }
 
         registerHandlers();
+        this.agentBridge.attach(this.dispatcher);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
         NeoForge.EVENT_BUS.addListener(this::onServerTick);
         NeoForge.EVENT_BUS.addListener(this::onServerStopping);
@@ -129,6 +136,8 @@ public final class CovelliteAI {
     private void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
         this.companion.spawn(event.getServer());
+        this.agentBridge.start(event.getServer(),
+                event.getServer().getWorldData().getLevelName());
     }
 
     private void onServerTick(ServerTickEvent.Post event) {
@@ -141,6 +150,10 @@ public final class CovelliteAI {
             ensureBridge();
         }
         processInbound();
+        this.agentBridge.tick(current);
+        if (this.serverTicks % 100L == 0L) {
+            this.agentBridge.updateSnapshot(snapshot());
+        }
         this.actions.pump(System.currentTimeMillis());
         this.bridgeApi.tick(current);
         this.companion.tick(current);
@@ -151,8 +164,12 @@ public final class CovelliteAI {
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            this.events.add("player_joined",
-                    Map.of("name", player.getGameProfile().getName()));
+            String name = player.getGameProfile().getName();
+            this.events.add("player_joined", Map.of("name", name));
+            if (this.companion.player() != player) {
+                // Only humans wake the agent; the companion rejoining is not a user event.
+                this.agentBridge.onPlayerJoin(name);
+            }
             if (this.prototype != null && this.server != null) {
                 this.prototype.onPlayerLogin(player, this.server);
             }
@@ -179,6 +196,9 @@ public final class CovelliteAI {
         this.events.add("chat", Map.of("sender", name, "message", text));
         if (!fromCompanion) {
             relayHumanChat(name, text);
+            // Internal channel: the in-process agent hears the same line without
+            // going through ChatRelay, which stays exclusive to MCP clients.
+            this.agentBridge.onHumanChat(name, text);
         }
     }
 
@@ -211,6 +231,7 @@ public final class CovelliteAI {
 
     private void onServerStopping(ServerStoppingEvent event) {
         this.companion.despawn(event.getServer());
+        this.agentBridge.stop();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {
@@ -220,7 +241,7 @@ public final class CovelliteAI {
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
-        CompanionCommands.register(event.getDispatcher(), this.companion);
+        CompanionCommands.register(event.getDispatcher(), this.companion, this.agentBridge);
     }
 
     // ------------------------------------------------------------------
@@ -248,6 +269,18 @@ public final class CovelliteAI {
     private void shutdown() {
         BridgeServer b = bridge;
         if (b != null) b.close();
+        this.agentBridge.close();
+    }
+
+    /** Compact world view fed to the agent every 5 seconds. */
+    private Map<String, Object> snapshot() {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("companion", this.companion.state());
+        map.put("autopilot", this.bridgeApi.autopilotState());
+        map.put("emergency_stop", this.bridgeApi.isEmergencyStopped());
+        map.put("recent_events", this.events.recent(5));
+        map.put("chat_messages", this.chatLog.size());
+        return map;
     }
 
     private static String loadOrCreateToken() throws IOException {
@@ -328,6 +361,7 @@ public final class CovelliteAI {
         map.put("autopilot", this.bridgeApi.autopilotState());
         map.put("recent_events", this.events.recent(10).size());
         map.put("chat_messages", this.chatLog.size());
+        map.put("agent", this.agentBridge.status());
         return map;
     }
 }

@@ -743,10 +743,70 @@ Verificado en Minecraft 1.21.1 y NeoForge 21.1.265:
 ## 23. Estructura del proyecto
 
 - `covellite-core`
+- `covellite-agent` (runtime de IA en proceso, sin agente externo)
 - `covellite-mod`
 - `covellite-bridge`
 - `opencode-plugin/covemcp-relay` (despertar automático, copiar a `~/.config/opencode/plugins/`)
 - `assets`
+
+## 24. Agente interno (`covellite-agent`)
+
+Cove puede jugar **sin OpenCode, Codex, Claude Code ni ningún agente externo**. El módulo `covellite-agent` es Java puro, sin dependencias, y se compila dentro del jar del mod: el modelo corre en el proceso de Minecraft y ejecuta exactamente las mismas herramientas que el bridge MCP.
+
+### Componentes
+
+- `AgentRuntime`: hilo daemon propio, turnos en serie, cancelación, estado observable.
+- `AgentLoop`: ciclo modelo → tools → resultados → modelo, con `agentMaxSteps`, timeout por llamada y deadline total. Aborta tras 3 fallos de tool consecutivos y registra el error en memoria.
+- `AgentProvider`: interfaz común. Implementaciones: `OpenAiCompatibleProvider` (OpenAI, Ollama, LM Studio, llama.cpp y cualquier gateway compatible), `AnthropicProvider`, `GeminiProvider`.
+- `AgentToolRegistry` + `AgentTools`: más de 30 tools con esquema JSON, todas existentes en el `Dispatcher` del mod, más tools locales de memoria (`memory_remember`, `memory_search`, `memory_forget`) y planificación (`plan_goal`).
+- `AgentMemory`: siete memorias separadas (conversación, episódica, semántica, preferencias, objetivos, errores, diario), en un directorio por mundo.
+- `AgentContext`, `ConversationManager`, `AgentPlanner` y `AgentPersonality` con los perfiles `companion`, `curioso`, `cauteloso`, `bromista` y `callado`.
+
+### Hilos
+
+Las llamadas al modelo y los round-trips de tools corren en el hilo `CoveMCP-agent`. Cada tool que toca el mundo se encola y la ejecuta `AgentBridge.tick()` **dentro del tick del servidor**, así que nunca se accede al nivel fuera de su hilo. Si el proveedor no responde o está apagado, el servidor sigue funcionando: los reflejos Java y el bridge MCP no dependen del agente.
+
+### Configuración (`config/covemcp.properties`)
+
+```properties
+agentEnabled=false
+agentProvider=ollama
+agentModel=llama3.1:8b
+agentBaseUrl=
+agentApiKeyFile=
+agentMaxSteps=8
+agentTimeoutMs=45000
+agentMaxTokens=1200
+agentTemperature=0.4
+agentPersonality=companion
+agentLanguage=auto
+agentReplyInChat=true
+agentWakeOnJoin=true
+agentHistoryLimit=24
+```
+
+- `agentProvider`: `ollama`, `lmstudio`, `llamacpp`, `openai`, `anthropic`, `gemini` o `openai-compatible`.
+- `agentBaseUrl` vacío usa la URL por defecto del proveedor: Ollama `http://127.0.0.1:11434/v1`, LM Studio `http://127.0.0.1:1234/v1`, llama.cpp `http://127.0.0.1:8080/v1`.
+- La clave de API **nunca** va en el repositorio: se lee de `agentApiKeyFile` o de las variables `COVEMCP_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`.
+- `agentEnabled=false` no rompe nada: el agente queda apagado y todo lo anterior sigue igual.
+
+### Comandos en el juego
+
+- `/cove ai status` — estado del runtime, proveedor, memoria y tools.
+- `/cove ai on` / `/cove ai off` — arranca o detiene el agente **sin editar archivos**.
+- `/cove ai ask <texto>` — un turno manual.
+- `/cove ai plan <objetivo>` — descompone el objetivo y lo guarda como objetivo activo.
+- `/cove ai remember <texto>` y `/cove ai memory <tipo>` — memoria semántica.
+
+### Memoria en disco
+
+`<instancia>/covemcp/agent/<mundo>/`, un archivo `.jsonl` por tipo de memoria, acotado por cantidad de entradas. El identificador es el nombre del mundo, así que las partidas no mezclan recuerdos.
+
+### Alcance implementado y pendiente
+
+Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
+
+Pendiente para las fases siguientes: dividir `BridgeApi` en servicios, pathfinder avanzado, combate y supervivencia ampliados, construcción/cartografía/economía, interfaz gráfica dentro del juego, sistema de extensiones y voz.
 
 ---
 
