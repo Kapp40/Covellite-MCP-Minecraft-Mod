@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import covellite.agent.reflex.ReflexEngine;
+import covellite.agent.reflex.ReflexInputs;
+import covellite.agent.reflex.SurvivalReflexes;
+
 /**
  * Self-test for the agent module. Runs without JUnit so it can be executed from
  * the Gradle {@code agentTest} task or from any shell during development.
@@ -29,6 +33,7 @@ public final class AgentSelfTest {
         extensionTest(dir.resolve("extensions"));
         fishingTest();
         ledgerTest();
+        reflexTest();
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
@@ -91,6 +96,56 @@ public final class AgentSelfTest {
         check("summary lists active goals", goals.summary().contains("refugio"));
         check("pause stops an active goal", goals.pause(second.id()) && goals.active().isEmpty());
         check("resume reactivates it", goals.resume(second.id()) && goals.active().size() == 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Layer-0 reflexes
+    // ------------------------------------------------------------------
+
+    private static void reflexTest() {
+        check("calm inputs trigger nothing",
+                new ReflexEngine(SurvivalReflexes.layer0()).evaluate(ReflexInputs.calm(), 0).isEmpty());
+        check("ten survival reflexes", SurvivalReflexes.layer0().size() == 10);
+        check("reflexes outrank every task", SurvivalReflexes.layer0().stream()
+                .allMatch(reflex -> reflex.priority() >= 91));
+
+        check("lava flees", fires(ReflexInputs.builder().lavaAdjacent(true), "lava_flee"));
+        check("lava ahead flees", fires(ReflexInputs.builder().lavaAhead(true), "lava_flee"));
+        check("lava under the target stops mining",
+                fires(ReflexInputs.builder().lavaBelowTarget(true), "lava_below"));
+        check("lava above the target stops mining",
+                fires(ReflexInputs.builder().lavaAboveTarget(true), "lava_above"));
+        check("ledge brakes", fires(ReflexInputs.builder().solidAhead(false).waterBelow(10), "ledge_brake"));
+        check("no ledge reflex with solid ground ahead",
+                !fires(ReflexInputs.builder().solidAhead(true).waterBelow(10), "ledge_brake"));
+        check("long fall with water uses the bucket",
+                fires(ReflexInputs.builder().fall(4.0D, true, 2), "mlg_water"));
+        check("long fall without a bucket does nothing",
+                !fires(ReflexInputs.builder().fall(4.0D, false, 2), "mlg_water"));
+        check("low air swims up", fires(ReflexInputs.builder().air(40), "drown"));
+        check("levitation holds still", fires(ReflexInputs.builder().levitating(true), "levitation"));
+        check("freezing backs off", fires(ReflexInputs.builder().freezing(true), "freezing"));
+        check("cobweb breaks", fires(ReflexInputs.builder().inCobweb(true), "cobweb"));
+        check("primed tnt flees", fires(ReflexInputs.builder().primedTnt(6), "tnt_fuse"));
+        check("distant tnt is ignored", !fires(ReflexInputs.builder().primedTnt(12), "tnt_fuse"));
+
+        ReflexEngine engine = new ReflexEngine(SurvivalReflexes.layer0());
+        ReflexEngine.Shot shot = engine.evaluate(
+                ReflexInputs.builder().lavaAdjacent(true).primedTnt(2).build(), 100).orElseThrow();
+        check("lava outranks tnt", shot.id().equals("lava_flee"));
+        check("cooldown blocks an immediate repeat", engine.evaluate(
+                ReflexInputs.builder().lavaAdjacent(true).build(), 105).isEmpty());
+        check("history keeps the shot with its tick",
+                engine.history().size() == 1 && engine.history().get(0).tick() == 100L);
+        check("cooldown expires", engine.evaluate(
+                ReflexInputs.builder().lavaAdjacent(true).build(), 130).isPresent());
+    }
+
+    private static boolean fires(ReflexInputs.Builder inputs, String expected) {
+        ReflexEngine engine = new ReflexEngine(SurvivalReflexes.layer0());
+        return engine.evaluate(inputs.build(), 10L)
+                .map(shot -> shot.id().equals(expected))
+                .orElse(false);
     }
 
     // ------------------------------------------------------------------

@@ -153,6 +153,17 @@ public final class CompanionCommands {
                                     }
                                     return 1;
                                 }))
+                        .then(Commands.literal("reflexes")
+                                .executes(ctx -> {
+                                    if (api == null) {
+                                        return failure(ctx.getSource(), "el compañero no está disponible");
+                                    }
+                                    for (String line : api.reflexReport()) {
+                                        ctx.getSource().sendSuccess(
+                                                () -> Component.literal("[CoveMCP] " + line), false);
+                                    }
+                                    return 1;
+                                }))
                         .then(Commands.literal("personality")
                                 .then(Commands.argument("nombre", StringArgumentType.word())
                                         .executes(ctx -> {

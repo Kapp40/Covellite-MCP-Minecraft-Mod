@@ -870,6 +870,48 @@ Pendiente de esta fase: construcción por planos, copia de estructuras, comercio
 
 La **voz** (TTS/STT) no está implementada: requiere un servicio externo y quedó fuera de esta fase.
 
+### Reflejos de supervivencia (capa 0)
+
+Diez reflejos corren en el tick del servidor **sin llamar al modelo**, cada 5 ticks. Sus condiciones son funciones puras sobre `ReflexInputs`, así que están cubiertas por tests sin abrir un mundo.
+
+| Reflejo | Prioridad | Disparador | Acción |
+|---|---|---|---|
+| `lava_flee` | 100 | lava pegada o adelante | girar a la dirección sin lava y retroceder |
+| `lava_below` | 99 | el bloque apuntado tiene lava debajo | cancelar el minado |
+| `lava_above` | 98 | lava sobre el bloque apuntado | no cavar hacia arriba |
+| `ledge_brake` | 97 | sin suelo adelante y caída larga | frenar el avance |
+| `mlg_water` | 96 | caída ≥ 3 y agua a ≤ 2 bloques | lanzar el cubo de agua |
+| `drown` | 95 | aire < 80 ticks | mirar arriba y nadar |
+| `levitation` | 94 | efecto de levitación | quedarse quieto |
+| `freezing` | 93 | polvo de nieve o congelamiento | retroceder |
+| `cobweb` | 92 | atrapado en telaraña | romperla |
+| `tnt_fuse` | 91 | TNT encendida a ≤ 8 | huir en perpendicular |
+
+- `/cove reflexes` muestra los últimos 8 disparos con su tick, la tarea activa, cuántas esperan y cuánto dura el bloqueo del reflejo.
+- Si dos reflejos se disparan juntos gana el de mayor prioridad; un reflejo en cooldown se saltea para no bloquear a los demás.
+- Un reflejo **interrumpe cualquier tarea** y bloquea al cuerpo 40 ticks; lo que llega en ese lapso queda en cola.
+
+### Prioridades de tareas
+
+`Task.priority()` decide quién manda. Una tarea que llega con menos prioridad que la activa **no interrumpe**: espera en cola y arranca cuando la actual termina.
+
+| Prioridad | Tarea |
+|---|---|
+| 91-100 | reflejos de supervivencia |
+| 70 | combate a distancia |
+| 60 | ir a un punto, recolectar |
+| 55 | seguir al jugador, dormir |
+| 50 | craftear |
+| 40 | pescar |
+| 30 | movimiento suelto |
+| 10 | **mirar al jugador** (`GlanceTask`) |
+
+`/cove reflexes` y el estado muestran cuántas tareas esperan. El «mirarme» dejó de pelear con el pathfinding: es prioridad 10, sólo arranca cuando no hay nada activo, y se repite cada 500-900 ticks, así que el compañero se detiene a mirarte de vez en cuando en lugar de interrumpir lo que está haciendo.
+
+### Pathfinding más preciso
+
+El pathfinder comprime la ruta antes de devolverla: descarta waypoints que una caminata recta puede saltear, verificando columna por columna que haya suelo firme y paso libre (hasta 24 bloques de salto). Menos nodos, menos giros y menos bamboleo al seguir el camino.
+
 ### Pesca y comercio (pulido final)
 
 - **`fish`**: equipa la caña, lanza el corcho, espera la picada (detectada por el descenso del corcho) y recoge. La tabla de botín, el tiempo de picada y los tesoros son los de vanilla: no se fabrican ítems. Las reglas de cuándo recoger viven en `FishingSignal` y están cubiertas por tests: umbral de picada, presupuesto de espera y corte cuando el corcho desaparece.

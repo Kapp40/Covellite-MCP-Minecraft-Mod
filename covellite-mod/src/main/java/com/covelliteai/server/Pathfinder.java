@@ -154,7 +154,7 @@ public final class Pathfinder {
             current.closed = true;
             explored++;
             if (goal.test(current.pos)) {
-                return new Result(trace(current), true, explored);
+                return new Result(compress(trace(current)), true, explored);
             }
             if (current.h < best.h) {
                 best = current;
@@ -175,7 +175,69 @@ public final class Pathfinder {
                 open.add(next);
             }
         }
-        return new Result(trace(best), false, explored);
+        return new Result(compress(trace(best)), false, explored);
+    }
+
+    /**
+     * Drops waypoints a straight walk can skip. Fewer nodes means fewer turns,
+     * less wobble and a path that matches what the walker actually does.
+     */
+    private List<BlockPos> compress(List<BlockPos> path) {
+        if (path.size() <= 2) {
+            return path;
+        }
+        List<BlockPos> out = new ArrayList<>();
+        out.add(path.get(0));
+        int index = 0;
+        while (index < path.size() - 1) {
+            int next = index + 1;
+            for (int jump = path.size() - 1; jump > index + 1; jump--) {
+                if (straightWalkable(path.get(index), path.get(jump))) {
+                    next = jump;
+                    break;
+                }
+            }
+            out.add(path.get(next));
+            index = next;
+        }
+        return out;
+    }
+
+    /** True when every column of the straight line has standable ground. */
+    private boolean straightWalkable(BlockPos from, BlockPos to) {
+        int dx = to.getX() - from.getX();
+        int dz = to.getZ() - from.getZ();
+        int steps = Math.max(Math.abs(dx), Math.abs(dz));
+        if (steps == 0 || steps > 24) {
+            return false;
+        }
+        int lastY = from.getY();
+        for (int step = 1; step <= steps; step++) {
+            int x = from.getX() + Math.round((float) dx * step / steps);
+            int z = from.getZ() + Math.round((float) dz * step / steps);
+            int y = alignedY(new BlockPos(x, lastY, z), lastY);
+            if (y == Integer.MIN_VALUE) {
+                return false;
+            }
+            lastY = y;
+        }
+        return true;
+    }
+
+    /** First standable height near {@code column} within two blocks of {@code referenceY}. */
+    private int alignedY(BlockPos column, int referenceY) {
+        for (int dy = 0; dy <= 2; dy++) {
+            for (int sign = -1; sign <= 1; sign += 2) {
+                BlockPos candidate = new BlockPos(column.getX(), referenceY + dy * sign, column.getZ());
+                if (Math.abs(candidate.getY() - referenceY) > 2) {
+                    continue;
+                }
+                if (solidGround(candidate.below()) && passable(candidate)) {
+                    return candidate.getY();
+                }
+            }
+        }
+        return Integer.MIN_VALUE;
     }
 
     private static List<BlockPos> trace(Node end) {

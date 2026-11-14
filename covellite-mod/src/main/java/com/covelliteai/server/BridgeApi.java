@@ -16,6 +16,9 @@ import java.util.function.Predicate;
 import com.covelliteai.CovelliteAI;
 
 import covellite.agent.FishingSignal;
+import covellite.agent.reflex.ReflexEngine;
+import covellite.agent.reflex.ReflexInputs;
+import covellite.agent.reflex.SurvivalReflexes;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.Event;
 import covellite.core.event.EventLog;
@@ -202,6 +205,16 @@ public final class BridgeApi {
     private ExplorationMap exploration;
     private long explorationTicks;
 
+    // Layer-0 reflexes: pure rules, applied on the server tick without the model.
+    private final ReflexEngine reflexes = new ReflexEngine(SurvivalReflexes.layer0());
+    private long reflexScanTicks;
+    private long reflexLockUntil;
+    private long glanceAtTick;
+
+    // Tasks that arrived while something more important was running.
+    private final java.util.ArrayDeque<QueuedTask> pendingTasks = new java.util.ArrayDeque<>();
+    private boolean startingTask;
+
     /** Cells remembered as blocked, pruned by TTL. Call on the server thread. */
     private Set<Long> avoidCells() {
         this.blockedCells.entrySet().removeIf(entry -> entry.getValue() <= this.autopilotTicks);
@@ -384,12 +397,16 @@ public final class BridgeApi {
             com.covelliteai.client.PovCapture.watchdog();
         }
         autopilotTick(server);
-        if (this.activeTask == null) {
-            return;
-        }
+        reflexTick();
         CompanionPlayer player = this.companion.player();
         if (player == null) {
-            finishTask("cancelled", "companion_missing");
+            if (this.activeTask != null) {
+                finishTask("cancelled", "companion_missing");
+            }
+            return;
+        }
+        maybeGlance(player);
+        if (this.activeTask == null) {
             return;
         }
         String interruptReason = checkInterrupt(player);
@@ -2284,6 +2301,11 @@ public final class BridgeApi {
      * met or nothing reachable is left.
      */
     private final class GatherTask implements Task {
+
+        @Override
+        public int priority() {
+            return 60;
+        }
         private final String id;
         private final String what;
         private final Predicate<BlockState> matcher;
@@ -3365,6 +3387,11 @@ public final class BridgeApi {
 
     /** Gathers the missing logs, then plans again and crafts. */
     private final class CraftTask implements Task {
+
+        @Override
+        public int priority() {
+            return 50;
+        }
         private final String id;
         private final Item target;
         private final int count;
@@ -6193,6 +6220,16 @@ public final class BridgeApi {
     // ------------------------------------------------------------------
 
     private interface Task {
+        /**
+         * Urgency of the task. Higher wins: a reflex (91-100) always preempts,
+         * navigation (60) beats a glance (10) and chores (55-60) beat nothing.
+         * A task that arrives with less priority than the running one waits in
+         * {@link #pendingTasks} instead of interrupting it.
+         */
+        default int priority() {
+            return 40;
+        }
+
         boolean tick(CompanionPlayer player, MinecraftServer server);
 
         /** Extra fields merged into the action status when the task ends. */
@@ -6205,11 +6242,247 @@ public final class BridgeApi {
         }
     }
 
-    private void startTask(Task task, CompanionPlayer player) {
-        cancelActive("replaced");
+    /** One task waiting for the running one to finish. */
+    private record QueuedTask(Task task, int priority) {
+    }
+
+    /**
+     * Starts a task when it outranks the current one; otherwise queues it.
+     * While a reflex holds the lock, everything below reflex priority waits.
+     *
+     * @return true when the task started now
+     */
+    private boolean startTask(Task task, CompanionPlayer player) {
+        int incoming = task.priority();
+        boolean locked = this.autopilotTicks < this.reflexLockUntil;
+        if (this.activeTask != null) {
+            boolean outranked = incoming < this.activeTask.priority();
+            boolean reflexBlocked = locked && incoming < 91;
+            if (outranked || reflexBlocked) {
+                if (this.pendingTasks.size() < 8) {
+                    this.pendingTasks.addLast(new QueuedTask(task, incoming));
+                }
+                return false;
+            }
+            this.startingTask = true;
+            cancelActive("preempted");
+            this.startingTask = false;
+        }
         this.activeTask = task;
         this.interruptOn = false;
         this.interruptExtra = null;
+        return true;
+    }
+
+    /** Starts the most urgent waiting task, if any. */
+    private void startNextPending() {
+        if (this.pendingTasks.isEmpty() || this.autopilotTicks < this.reflexLockUntil) {
+            return;
+        }
+        CompanionPlayer player = this.companion.player();
+        if (player == null) {
+            return;
+        }
+        QueuedTask best = null;
+        for (QueuedTask queued : this.pendingTasks) {
+            if (best == null || queued.priority() > best.priority()) {
+                best = queued;
+            }
+        }
+        if (best == null) {
+            return;
+        }
+        this.pendingTasks.remove(best);
+        this.activeTask = best.task();
+        this.interruptOn = false;
+        this.interruptExtra = null;
+    }
+
+    // ------------------------------------------------------------------
+    // Reflexes (layer 0): survival without the model, priority 91-100
+    // ------------------------------------------------------------------
+
+    private void reflexTick() {
+        if (this.emergency) {
+            return;
+        }
+        CompanionPlayer player = this.companion.player();
+        if (player == null) {
+            return;
+        }
+        this.reflexScanTicks++;
+        if (this.reflexScanTicks % 5L != 0L) {
+            return;
+        }
+        ReflexInputs inputs = ReflexSensor.sense(player);
+        this.reflexes.evaluate(inputs, this.autopilotTicks).ifPresent(shot -> applyReflex(shot, player));
+    }
+
+    private void applyReflex(ReflexEngine.Shot shot, CompanionPlayer player) {
+        // Reflexes own the body for a moment: queued work resumes after this.
+        this.reflexLockUntil = this.autopilotTicks + 40L;
+        if (this.activeTask != null) {
+            finishTask("interrupted", "reflex:" + shot.id());
+        }
+        CompanionController controller = this.companion.controller();
+        switch (shot.action()) {
+            case "back_off" -> {
+                controller.look(fleeYaw(player), player.getXRot());
+                controller.move(1.0D, 0.0D, false, 12);
+            }
+            case "brake" -> controller.move(0.0D, 0.0D, false, 3);
+            case "stop_mining" -> controller.stop();
+            case "hold_still" -> controller.stop();
+            case "swim_up" -> {
+                controller.look(player.getYRot(), -80.0F);
+                controller.move(1.0D, 0.0D, true, 20);
+            }
+            case "water_drop" -> dropWaterBucket(player);
+            case "step_aside" -> controller.move(0.0D, 1.0D, false, 8);
+            case "flee_tnt" -> {
+                controller.look(fleeYaw(player), player.getXRot());
+                controller.move(1.0D, 0.0D, true, 16);
+            }
+            case "break_web" -> breakCobweb(player);
+            default -> controller.stop();
+        }
+    }
+
+    /** Yaw pointing at the nearest horizontal direction without lava. */
+    private float fleeYaw(CompanionPlayer player) {
+        ServerLevel level = player.serverLevel();
+        BlockPos feet = player.blockPosition();
+        float bestYaw = player.getYRot();
+        double bestX = 0.0D;
+        double bestZ = 0.0D;
+        boolean found = false;
+        for (int step = 0; step < 8; step++) {
+            double angle = Math.PI * 2.0D * step / 8.0D;
+            double dx = Math.cos(angle);
+            double dz = Math.sin(angle);
+            BlockPos probe = feet.offset((int) Math.round(dx * 2.0D), 0, (int) Math.round(dz * 2.0D));
+            if (level.getFluidState(probe).is(FluidTags.LAVA)
+                    || level.getFluidState(probe.above()).is(FluidTags.LAVA)) {
+                continue;
+            }
+            if (!found || Math.abs(dz) + Math.abs(dx) > Math.abs(bestZ) + Math.abs(bestX)) {
+                bestX = dx;
+                bestZ = dz;
+                found = true;
+            }
+        }
+        if (found) {
+            bestYaw = (float) Math.toDegrees(Math.atan2(-bestX, bestZ));
+        }
+        return bestYaw;
+    }
+
+    private void dropWaterBucket(CompanionPlayer player) {
+        if (!CombatKit.equipItem(player, stack -> stack.is(Items.WATER_BUCKET))) {
+            return;
+        }
+        this.companion.controller().look(player.getYRot(), 85.0F);
+        player.gameMode.useItem(player, player.serverLevel(), player.getMainHandItem(),
+                InteractionHand.MAIN_HAND);
+    }
+
+    private void breakCobweb(CompanionPlayer player) {
+        BlockPos feet = player.blockPosition();
+        BlockPos target = player.serverLevel().getBlockState(feet).is(Blocks.COBWEB) ? feet : feet.above();
+        if (!player.serverLevel().getBlockState(target).is(Blocks.COBWEB)) {
+            return;
+        }
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("x", target.getX());
+        params.put("y", target.getY());
+        params.put("z", target.getZ());
+        try {
+            breakBlock(params);
+        } catch (RuntimeException e) {
+            CovelliteAI.LOGGER.debug("reflex could not break cobweb: {}", e.getMessage());
+        }
+    }
+
+    /** Low-priority idle behaviour: glance at the owner now and then. */
+    private void maybeGlance(CompanionPlayer player) {
+        if (this.activeTask != null || this.emergency) {
+            return;
+        }
+        if (this.autopilotTicks < this.glanceAtTick) {
+            return;
+        }
+        ServerPlayer owner = nearestOwner(player);
+        if (owner == null) {
+            return;
+        }
+        this.glanceAtTick = this.autopilotTicks + 500L + (long) (Math.random() * 400.0D);
+        startTask(new GlanceTask(owner.getUUID(), 40), player);
+    }
+
+    private ServerPlayer nearestOwner(CompanionPlayer player) {
+        ServerPlayer best = null;
+        for (ServerPlayer candidate : player.server.getPlayerList().getPlayers()) {
+            if (candidate instanceof CompanionPlayer || candidate.level() != player.level()) {
+                continue;
+            }
+            double distance = candidate.distanceToSqr(player);
+            if (distance > 12.0D * 12.0D) {
+                continue;
+            }
+            if (best == null || distance < best.distanceToSqr(player)) {
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
+    /** What fired and when, for {@code /cove reflexes}. */
+    public java.util.List<String> reflexReport() {
+        java.util.List<String> lines = new ArrayList<>();
+        lines.add("Reflejos capa 0: " + this.reflexes.reflexes().size()
+                + " armados (prioridad 91-100), escaneo cada 5 ticks");
+        java.util.List<ReflexEngine.Shot> history = this.reflexes.history();
+        if (history.isEmpty()) {
+            lines.add("Ninguno se disparo todavia.");
+        } else {
+            int from = Math.max(0, history.size() - 8);
+            for (int i = from; i < history.size(); i++) {
+                ReflexEngine.Shot shot = history.get(i);
+                lines.add("t" + shot.tick() + "  " + shot.id() + " -> " + shot.action()
+                        + "  (" + shot.description() + ")");
+            }
+        }
+        lines.add("Tarea activa: " + (this.activeTask == null ? "ninguna" : "si")
+                + " - en espera: " + this.pendingTasks.size()
+                + " - bloqueo de reflejo: " + Math.max(0L, this.reflexLockUntil - this.autopilotTicks) + "t");
+        return lines;
+    }
+
+    /** A one-off look at the owner; the lowest priority there is. */
+    private final class GlanceTask implements Task {
+        private final java.util.UUID targetId;
+        private final int total;
+        private int ticks;
+
+        GlanceTask(java.util.UUID targetId, int total) {
+            this.targetId = targetId;
+            this.total = total;
+        }
+
+        @Override
+        public int priority() {
+            return 10;
+        }
+
+        @Override
+        public boolean tick(CompanionPlayer player, MinecraftServer server) {
+            Entity target = player.serverLevel().getEntity(this.targetId);
+            if (target == null) {
+                return true;
+            }
+            lookAtPoint(player, target.getEyePosition());
+            return ++this.ticks >= this.total;
+        }
     }
 
     /**
@@ -6336,6 +6609,11 @@ public final class BridgeApi {
      * the arrow, its spread and its damage; nothing is spawned by hand.
      */
     private final class RangedTask implements Task {
+
+        @Override
+        public int priority() {
+            return 70;
+        }
         private final java.util.UUID targetId;
         private final int chargeTicks;
         private int ticks;
@@ -6376,6 +6654,11 @@ public final class BridgeApi {
     }
 
     private final class MoveTask implements Task {
+
+        @Override
+        public int priority() {
+            return 30;
+        }
         private final String id;
         private final double forward;
         private final double strafe;
@@ -6534,6 +6817,11 @@ public final class BridgeApi {
     }
 
     private final class SleepTask implements Task {
+
+        @Override
+        public int priority() {
+            return 55;
+        }
         private final String id;
         private final double radius;
         private final ProgressWatch progress = new ProgressWatch();
@@ -6633,6 +6921,11 @@ public final class BridgeApi {
     }
 
     private final class GotoTask implements Task {
+
+        @Override
+        public int priority() {
+            return 60;
+        }
         private final String id;
         private final double x;
         private final double y;
@@ -6714,6 +7007,11 @@ public final class BridgeApi {
     }
 
     private final class FollowTask implements Task {
+
+        @Override
+        public int priority() {
+            return 55;
+        }
         private final String id;
         private final String playerName;
         private final double distance;
@@ -6886,6 +7184,9 @@ public final class BridgeApi {
             // finished combat chase. Only "para" cancels it.
             this.followResume = true;
             this.followResumeAt = this.autopilotTicks + 20L;
+        }
+        if (!this.startingTask) {
+            startNextPending();
         }
     }
 
