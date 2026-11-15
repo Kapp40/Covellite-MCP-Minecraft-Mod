@@ -131,7 +131,20 @@ public final class OfflineBrain {
                                              String player) {
         Map<String, Object> args = new LinkedHashMap<>();
         switch (tool) {
-            case "mine" -> args.put("what", material(reading));
+            // A chore must have a real amount: the old call let the bridge
+            // default to 8 blocks, so mining looked like it "stopped by itself".
+            case "mine", "gather" -> {
+                args.put("what", material(reading, tool));
+                args.put("count", reading.number() == null ? 32
+                        : Math.max(1, Math.min(128, reading.number())));
+                args.put("radius", 32);
+                args.put("timeout_ticks", 6000);
+            }
+            case "chop_tree" -> {
+                args.put("max_logs", reading.number() == null ? 64
+                        : Math.max(1, Math.min(128, reading.number())));
+                args.put("radius", 32);
+            }
             case "craft_item" -> {
                 String item = craftable(reading);
                 if (item == null) {
@@ -157,7 +170,10 @@ public final class OfflineBrain {
         return args;
     }
 
-    private static String material(Parser.Reading reading) {
+    private static String material(Parser.Reading reading, String tool) {
+        if (reading.items().isEmpty()) {
+            return "gather".equals(tool) ? "wood" : "stone";
+        }
         if (reading.items().contains("hierro")) {
             return "iron";
         }
@@ -170,10 +186,22 @@ public final class OfflineBrain {
         if (reading.items().contains("oro")) {
             return "gold";
         }
-        if (reading.items().contains("madera")) {
+        if (reading.items().contains("madera") || reading.items().contains("arbol")) {
             return "wood";
         }
-        return "stone";
+        if (reading.items().contains("tierra")) {
+            return "dirt";
+        }
+        if (reading.items().contains("arena")) {
+            return "sand";
+        }
+        if (reading.items().contains("esmeralda")) {
+            return "emerald";
+        }
+        if (reading.items().contains("redstone")) {
+            return "redstone";
+        }
+        return "gather".equals(tool) ? "wood" : "stone";
     }
 
     private static String craftable(Parser.Reading reading) {

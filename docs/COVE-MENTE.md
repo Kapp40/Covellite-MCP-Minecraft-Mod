@@ -205,6 +205,22 @@ Si la tool no está registrada en ese turno, Cove lo dice en vez de inventar una
 acción. Los argumentos se validan antes de llamar; `follow` sin nombre de jugador
 no se emite.
 
+### Las órdenes duran
+
+Tres reglas del mod sostienen una orden en el tiempo, porque antes morían solas:
+
+- **`seguime` / `vení` persisten.** La tarea de seguimiento ya no se marca terminada al
+  llegar a tres bloques: se detiene, espera, y vuelve a caminar cuando el jugador se
+  aleja. Solo `pará`, `quedate` o una orden nueva la cancelan.
+- **`mine` y `gather` pidén cantidad real.** El cerebro envía `count=32`, `radius=32` y
+  `timeout_ticks=6000` (y `max_logs=64` al talar). Antes la tool usaba su valor por
+  defecto de 8 bloques y parecía que "se detenía de la nada".
+- **Reflejo cuidador de tareas.** Si un reflejo de supervivencia (pelear, huir, comer)
+  interrumpe una tarea de recolección, el mod la reanuda hasta tres veces, 80 ticks
+  después de que el reflejo termina. Una orden explícita la cancela.
+
+Si el material no existe cerca, la tool falla y Cove lo dice: no inventa éxito.
+
 ## 8. Integración
 
 `CoveProvider.complete` responde a los tres prompts que el runtime ya enviaba:
@@ -268,6 +284,14 @@ Errores encontrados al revisar el motor y cómo quedaron:
     planes cuyas ranuras se pueden completar; si falta el bioma, hay variantes sin bioma.
 15. **La confirmación no demostraba comprensión.** Ahora nombra la acción entendida: "dale, voy a
     talar", en vez de solo "ya voy".
+16. **`seguime` terminaba al llegar.** La tarea devolvía "completada" a tres bloques, así que
+    había que repetir la orden. Ahora sigue viva hasta que se la cancele.
+17. **`mine` minaba ocho bloques y paraba.** El cerebro no mandaba `count`; el valor por
+    defecto de la tool era 8. Ahora manda 32 bloques, radio 32 y timeout amplio.
+18. **`conseguime X` ignoraba X.** El planificador no pasaba `what` a `gather`, así que siempre
+    talaba madera. Ahora traduce hierro, piedra, tierra, arena, esmeralda, redstone y madera.
+19. **La recolección moría cuando un reflejo la interrumpía.** Se agregó el reflejo cuidador de
+    tareas, con tope de reintentos y cancelación explícita.
 
 ## 11. Límites honestos
 
@@ -281,11 +305,11 @@ Errores encontrados al revisar el motor y cómo quedaron:
 - No recuerda hechos nuevos por sí sola salvo los que el runtime guarda (memoria,
   estado social, identidad).
 - Nada de esto está verificado todavía dentro de una partida: está compilado y
-  cubierto por 185 checks unitarios, no por juego real.
+  cubierto por 187 checks unitarios, no por juego real.
 
 ## 12. Cómo probar y extender
 
-- Pruebas: `./gradlew :covellite-agent:agentTest` (185 checks).
+- Pruebas: `./gradlew :covellite-agent:agentTest` (187 checks).
 - En juego: `/cove mind` muestra proveedor, autoridad, último motivo, pregunta
   pendiente, ánimo y rasgos.
 - Extender el vocabulario: editar `covemcp/lexicon-extra.txt` en la instancia (sin recompilar).

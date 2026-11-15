@@ -159,6 +159,11 @@ public final class BridgeApi {
 
     // Persistent follow, so a chat line or a finished task does not break it.
     private String followTarget = null;
+    /** Last gathering chore, resumed if a survival reflex interrupts it. */
+    private String choreTool = null;
+    private Map<String, Object> choreParams = new LinkedHashMap<>();
+    private int choreAttempts = 0;
+    private long choreRetryAt = 0L;
     private double followDistance = 3.0D;
     private boolean followResume = false;
     private long followResumeAt = 0L;
@@ -1067,6 +1072,7 @@ public final class BridgeApi {
         double z = params.containsKey("z") ? num(params, "z", player.getZ()) : player.getZ();
         this.staying = true;
         this.stayAnchor = new Vec3(x, y, z);
+        clearChore();
         this.guardAnchor = null;
         this.defendPlayer = null;
         this.followTarget = null;
@@ -1087,6 +1093,7 @@ public final class BridgeApi {
         double y = params.containsKey("y") ? num(params, "y", player.getY()) : player.getY();
         double z = params.containsKey("z") ? num(params, "z", player.getZ()) : player.getZ();
         this.guardAnchor = new Vec3(x, y, z);
+        clearChore();
         this.guardDim = dimName(player.serverLevel());
         this.guardRadius = clamp(num(params, "radius", 8.0D), 4.0D, 32.0D);
         this.staying = false;
@@ -1406,9 +1413,63 @@ public final class BridgeApi {
     }
 
     private Map<String, Object> stop() {
+        clearChore();
         cancelActive("stopped");
         this.companion.controller().stop();
         return Map.of("ok", true);
+    }
+
+    // ------------------------------------------------------------------
+    // Chore keeper: a gathering order survives survival reflexes
+    // ------------------------------------------------------------------
+
+    /** Remembers the current chore so an interrupted run can pick it up again. */
+    private void rememberChore(String tool, Map<String, Object> params) {
+        this.choreTool = tool;
+        this.choreParams = new LinkedHashMap<>(params);
+        this.choreAttempts = 0;
+        this.choreRetryAt = this.autopilotTicks + 60L;
+    }
+
+    private void clearChore() {
+        this.choreTool = null;
+        this.choreParams = new LinkedHashMap<>();
+        this.choreAttempts = 0;
+    }
+
+    /**
+     * Resumes a gathering chore that a survival reflex (fight, flee, eat) cut
+     * short. Without this, "mina hierro" died the moment a zombie showed up and
+     * the player had to repeat the order. Explicit orders still cancel it.
+     */
+    private void choreKeeperTick(CompanionPlayer player) {
+        if (this.choreTool == null || this.activeTask != null || this.emergency) {
+            return;
+        }
+        if (this.staying || this.guardAnchor != null) {
+            clearChore();
+            return;
+        }
+        if (this.autopilotTicks < this.choreRetryAt) {
+            return;
+        }
+        if (this.choreAttempts >= 3) {
+            clearChore();
+            return;
+        }
+        String tool = this.choreTool;
+        Map<String, Object> params = new LinkedHashMap<>(this.choreParams);
+        this.choreAttempts++;
+        this.choreRetryAt = this.autopilotTicks + 80L;
+        try {
+            switch (tool) {
+                case "gather" -> gatherWith(params, "wood");
+                case "chop_tree" -> chopTree(params);
+                default -> clearChore();
+            }
+        } catch (RuntimeException e) {
+            clearChore();
+        }
     }
 
     private Map<String, Object> gotoBlock(Map<String, Object> params) {
@@ -2250,12 +2311,14 @@ public final class BridgeApi {
         if (what == null || what.isBlank()) {
             what = defaultWhat;
         }
-        int count = (int) clamp(num(params, "count", 8.0D), 1.0D, 256.0D);
-        double radius = clamp(num(params, "radius", 24.0D), 4.0D, 32.0D);
-        int timeout = (int) clamp(num(params, "timeout_ticks", 3600.0D), 100.0D, 12000.0D);
+        int count = (int) clamp(num(params, "count", 32.0D), 1.0D, 256.0D);
+        double radius = clamp(num(params, "radius", 32.0D), 4.0D, 32.0D);
+        int timeout = (int) clamp(num(params, "timeout_ticks", 6000.0D), 100.0D, 12000.0D);
         boolean allowPlayerBlocks = bool(params, "allow_player_blocks", false);
         String id = newAction("gather", "running");
         startTask(new GatherTask(id, what, count, radius, timeout, false, allowPlayerBlocks, null), player);
+        rememberChore("gather", Map.of("what", what, "count", count, "radius", radius,
+                "timeout_ticks", timeout));
         armInterrupts(params, player);
         return actionResult(id, "running");
     }
@@ -2284,6 +2347,7 @@ public final class BridgeApi {
         String id = newAction("chop_tree", "running");
         startTask(new GatherTask(id, "wood", maxLogs, Math.max(radius, 4.0D), 2400, true,
                 bool(params, "allow_player_blocks", false), focus), player);
+        rememberChore("chop_tree", Map.of("max_logs", maxLogs, "radius", radius));
         armInterrupts(params, player);
         return actionResult(id, "running");
     }
@@ -4577,6 +4641,7 @@ public final class BridgeApi {
 
     private Map<String, Object> emergencyStop() {
         this.emergency = true;
+        clearChore();
         cancelActive("cancelled");
         this.companion.controller().stop();
         return Map.of("ok", true, "emergency_stop", true);
@@ -4800,6 +4865,7 @@ public final class BridgeApi {
         if (this.autoDefend && this.autopilotTicks % 10L == 0L) {
             maybeAutoDefend(player);
         }
+        choreKeeperTick(player);
         if (this.followResume && this.activeTask == null
                 && this.autopilotTicks >= this.followResumeAt) {
             ServerPlayer target = this.followTarget == null ? null
@@ -7245,6 +7311,9 @@ public final class BridgeApi {
             double dz = target.getZ() - player.getZ();
             double distance = Math.sqrt(dx * dx + dz * dz);
             if (distance <= this.distance) {
+                // Close enough: stop walking but KEEP the order alive. Returning
+                // true here ended "seguime" the moment Cove reached the player,
+                // which forced the player to repeat the order every few seconds.
                 BridgeApi.this.companion.controller().stop();
                 this.walker = null;
                 this.progress.reset(distance);
@@ -7390,6 +7459,11 @@ public final class BridgeApi {
             // finished combat chase. Only "para" cancels it.
             this.followResume = true;
             this.followResumeAt = this.autopilotTicks + 20L;
+        }
+        boolean interrupted = "preempted".equals(reason)
+                || (reason != null && reason.startsWith("reflex"));
+        if (!interrupted) {
+            clearChore();
         }
         if (!this.startingTask) {
             startNextPending();

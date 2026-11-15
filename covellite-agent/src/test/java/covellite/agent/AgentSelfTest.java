@@ -755,6 +755,19 @@ public final class AgentSelfTest {
         check("parser: a negative order is recognised and negated",
                 negatedOrder.order() && negatedOrder.negated());
 
+        List<AgentProvider.ToolCall> gathering = brain.toolsFor("conseguime hierro", world, "Lorex",
+                List.of("gather", "mine", "chop_tree"));
+        check("brain: gathering passes material, amount and radius",
+                gathering.size() == 1
+                        && "iron".equals(gathering.get(0).arguments().get("what"))
+                        && ((Number) gathering.get(0).arguments().get("count")).intValue() == 32
+                        && gathering.get(0).arguments().containsKey("radius"));
+        List<AgentProvider.ToolCall> chopping = brain.toolsFor("tala estos arboles", world, "Lorex",
+                List.of("chop_tree"));
+        check("brain: chopping asks for a full tree load",
+                chopping.size() == 1
+                        && ((Number) chopping.get(0).arguments().get("max_logs")).intValue() == 64);
+
         List<AgentProvider.ToolCall> initiative = brain.toolsFor("comer algo del inventario",
                 world, "Lorex", tools);
         check("brain: an initiative verb phrase resolves its tool",
