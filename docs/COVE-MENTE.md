@@ -209,9 +209,11 @@ no se emite.
 
 Tres reglas del mod sostienen una orden en el tiempo, porque antes morían solas:
 
-- **`seguime` / `vení` persisten.** La tarea de seguimiento ya no se marca terminada al
-  llegar a tres bloques: se detiene, espera, y vuelve a caminar cuando el jugador se
-  aleja. Solo `pará`, `quedate` o una orden nueva la cancelan.
+- **`seguime` persiste; `vení` termina.** Son dos órdenes distintas. `seguime`
+  (acompañame, quedate conmigo) mantiene la tarea viva: al llegar se detiene y vuelve a
+  caminar si el jugador se aleja, hasta que se la cancele. `vení` / `ven acá` /
+  `acercate` manda `once=true`: camina hasta el jugador y ahí la tarea termina, sin
+  quedar pegado siguiendo para siempre.
 - **`mine` y `gather` pidén cantidad real.** El cerebro envía `count=32`, `radius=32` y
   `timeout_ticks=6000` (y `max_logs=64` al talar). Antes la tool usaba su valor por
   defecto de 8 bloques y parecía que "se detenía de la nada".
@@ -292,6 +294,10 @@ Errores encontrados al revisar el motor y cómo quedaron:
     talaba madera. Ahora traduce hierro, piedra, tierra, arena, esmeralda, redstone y madera.
 19. **La recolección moría cuando un reflejo la interrumpía.** Se agregó el reflejo cuidador de
     tareas, con tope de reintentos y cancelación explícita.
+20. **Al arreglar el seguimiento, "vení" quedó pegado para siempre.** Ambas órdenes usaban la
+    misma tarea persistente. Ahora `venir` es un `follow` de una sola vez (`once=true`) y
+    `seguir` es el persistente; la tarea sabe cuál es cuál y solo guarda la orden en el
+    segundo caso.
 
 ## 11. Límites honestos
 
@@ -305,11 +311,11 @@ Errores encontrados al revisar el motor y cómo quedaron:
 - No recuerda hechos nuevos por sí sola salvo los que el runtime guarda (memoria,
   estado social, identidad).
 - Nada de esto está verificado todavía dentro de una partida: está compilado y
-  cubierto por 187 checks unitarios, no por juego real.
+  cubierto por 189 checks unitarios, no por juego real.
 
 ## 12. Cómo probar y extender
 
-- Pruebas: `./gradlew :covellite-agent:agentTest` (187 checks).
+- Pruebas: `./gradlew :covellite-agent:agentTest` (189 checks).
 - En juego: `/cove mind` muestra proveedor, autoridad, último motivo, pregunta
   pendiente, ánimo y rasgos.
 - Extender el vocabulario: editar `covemcp/lexicon-extra.txt` en la instancia (sin recompilar).

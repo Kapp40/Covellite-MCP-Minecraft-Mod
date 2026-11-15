@@ -104,7 +104,7 @@ public final class OfflineBrain {
             case "gather" -> tools.contains("gather") ? "gather" : "chop_tree";
             case "craft_item" -> "craft_item";
             case "attack" -> "attack";
-            case "follow" -> "follow";
+            case "follow", "come" -> "follow";
             case "stay" -> "stay";
             case "stop" -> "stop";
             case "eat" -> "eat";
@@ -122,6 +122,10 @@ public final class OfflineBrain {
         Map<String, Object> args = argumentsFor(tool, reading, world, player);
         if (args == null) {
             return calls;
+        }
+        // "veni" es venir ahora y terminar; "seguime" es quedarse pegado.
+        if ("come".equals(action)) {
+            args.put("once", true);
         }
         calls.add(new AgentProvider.ToolCall("cove_" + tool, tool, args));
         return calls;

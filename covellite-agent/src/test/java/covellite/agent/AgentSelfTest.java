@@ -755,6 +755,15 @@ public final class AgentSelfTest {
         check("parser: a negative order is recognised and negated",
                 negatedOrder.order() && negatedOrder.negated());
 
+        List<AgentProvider.ToolCall> coming = brain.toolsFor("vení acá", world, "Lorex",
+                List.of("follow"));
+        check("brain: 'veni' asks for a one-shot approach",
+                coming.size() == 1 && Boolean.TRUE.equals(coming.get(0).arguments().get("once")));
+        List<AgentProvider.ToolCall> staying = brain.toolsFor("seguime", world, "Lorex",
+                List.of("follow"));
+        check("brain: 'seguime' stays a persistent follow",
+                staying.size() == 1 && !staying.get(0).arguments().containsKey("once"));
+
         List<AgentProvider.ToolCall> gathering = brain.toolsFor("conseguime hierro", world, "Lorex",
                 List.of("gather", "mine", "chop_tree"));
         check("brain: gathering passes material, amount and radius",

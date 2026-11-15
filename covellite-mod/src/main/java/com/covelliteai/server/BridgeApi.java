@@ -1054,7 +1054,7 @@ public final class BridgeApi {
         }
         if (this.activeTask == null) {
             startTask(new FollowTask(newAction("follow", "running"),
-                    this.defendPlayer, this.followDistance), player);
+                    this.defendPlayer, this.followDistance, false), player);
         }
         out.put("ok", true);
         out.put("enabled", true);
@@ -1492,18 +1492,26 @@ public final class BridgeApi {
             throw new IllegalArgumentException("player is required");
         }
         double distance = clamp(num(params, "distance", 3.0D), 1.0D, 16.0D);
-        // Persist the order: a chat line, a finished task or combat must not
-        // silently drop the follow. Only "para"/"quedate" clears it.
-        this.followTarget = name;
-        this.followDistance = distance;
-        this.followResume = false;
+        // "veni" llega y termina; "seguime" se queda pegado. Solo el segundo se
+        // guarda como orden persistente, para no quedar siguiendo para siempre.
+        boolean once = bool(params, "once", false);
+        if (once) {
+            this.followTarget = null;
+            this.followResume = false;
+        } else {
+            // Persist the order: a chat line, a finished task or combat must not
+            // silently drop the follow. Only "para"/"quedate" clears it.
+            this.followTarget = name;
+            this.followDistance = distance;
+            this.followResume = false;
+        }
         // An explicit follow replaces any stay/guard role.
         this.staying = false;
         this.stayAnchor = null;
         this.guardAnchor = null;
         this.guardDim = null;
         String id = newAction("follow", "running");
-        startTask(new FollowTask(id, name, distance), player);
+        startTask(new FollowTask(id, name, distance, once), player);
         return actionResult(id, "running");
     }
 
@@ -4873,7 +4881,7 @@ public final class BridgeApi {
             if (target != null) {
                 this.followResume = false;
                 startTask(new FollowTask(newAction("follow", "running"),
-                        this.followTarget, this.followDistance), player);
+                        this.followTarget, this.followDistance, false), player);
             }
         }
         idleChatTick(player);
@@ -5590,7 +5598,7 @@ public final class BridgeApi {
                 }
                 if (this.activeTask == null) {
                     startTask(new FollowTask(newAction("follow", "running"),
-                            sender, this.followDistance), player);
+                            sender, this.followDistance, false), player);
                 }
                 if (!already && this.autopilotTicks - this.lastDefendReply > 60L) {
                     this.lastDefendReply = this.autopilotTicks;
@@ -7287,15 +7295,18 @@ public final class BridgeApi {
         private final String id;
         private final String playerName;
         private final double distance;
+        /** One-shot "come here": ends on arrival instead of following forever. */
+        private final boolean finite;
         private final ProgressWatch progress = new ProgressWatch();
         private PathWalker walker;
         private Vec3 planEnd = Vec3.ZERO;
         private int cooldown;
 
-        FollowTask(String id, String playerName, double distance) {
+        FollowTask(String id, String playerName, double distance, boolean finite) {
             this.id = id;
             this.playerName = playerName;
             this.distance = distance;
+            this.finite = finite;
         }
 
         @Override
@@ -7317,7 +7328,8 @@ public final class BridgeApi {
                 BridgeApi.this.companion.controller().stop();
                 this.walker = null;
                 this.progress.reset(distance);
-                return false;
+                // A one-shot "veni" is done once it arrives.
+                return this.finite;
             }
             double dy = target.getY() - player.getY();
             if (this.cooldown > 0) {

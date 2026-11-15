@@ -196,7 +196,7 @@ ABSURD|miami|nueva york
 VERB|cortar|talar,derribar,hachear,hachazo|chop_tree|madera
 VERB|minar|picar,excavar,cavar,mineria|mine|piedra
 VERB|ir|andar,caminar,dirigirse,ir a,largarse|return_home|base
-VERB|venir|acercarse,acercate,veni,ven|follow|
+VERB|venir|acercarse,acercate,veni,ven,vení|come|
 VERB|seguir|acompanar,seguime,sígueme,seguime el paso|follow|
 VERB|quedarse|quedate,esperar,esperame,quedate ahi,frenar|stay|
 VERB|parar|detenerse,parate,frenar,alto|stop|
