@@ -237,7 +237,7 @@ public final class BridgeApi {
     private final ReflexEngine reflexes = new ReflexEngine(SurvivalReflexes.layer0());
     private long reflexScanTicks;
     private long reflexLockUntil;
-    private long glanceAtTick;
+    private String lastFinishNote;
 
     // One body, two brains: only the active one has authority over the world.
     private final BrainArbiter brains = new BrainArbiter(BrainArbiter.Brain.MCP);
@@ -443,7 +443,6 @@ public final class BridgeApi {
             }
             return;
         }
-        maybeGlance(player);
         if (this.activeTask == null) {
             return;
         }
@@ -2664,6 +2663,17 @@ public final class BridgeApi {
         public int priority() {
             return 60;
         }
+
+        /** Breaking a block is standing still on purpose, not being stuck. */
+        @Override
+        public boolean stationary() {
+            return this.mining != null;
+        }
+
+        @Override
+        public String signature() {
+            return "gather:" + this.what + (this.focus == null ? "" : "@" + this.focus.toShortString());
+        }
         private final String id;
         private final String what;
         private final Predicate<BlockState> matcher;
@@ -2756,7 +2766,10 @@ public final class BridgeApi {
                 return true;
             }
             if (this.target == null) {
-                if (this.treeMode && this.broken > 0) {
+                // Nothing left nearby: if something was already collected this is
+                // a finished job, not a failure. It used to throw and the
+                // companion went silent after breaking a handful of blocks.
+                if (this.broken > 0) {
                     return true;
                 }
                 String reason = "no " + this.what + " found within " + (int) this.radius + " blocks";
@@ -3213,6 +3226,12 @@ public final class BridgeApi {
             this.depth = (int) clamp(num(params, "depth", ExpeditionPlan.DEFAULT_DEPTH), 8.0D, 40.0D);
             this.travel = (int) clamp(num(params, "distance", ExpeditionPlan.DEFAULT_TRAVEL), 120.0D, 400.0D);
             this.resume = bool(params, "resume", false);
+        }
+
+        /** Digging a block or driving the drill stands still on purpose. */
+        @Override
+        public boolean stationary() {
+            return this.mining != null;
         }
 
         @Override
@@ -4702,6 +4721,11 @@ public final class BridgeApi {
         public int priority() {
             return 50;
         }
+        @Override
+        public boolean stationary() {
+            return true;
+        }
+
         private final String id;
         private final Item target;
         private final int count;
@@ -6276,7 +6300,10 @@ public final class BridgeApi {
         if (this.autopilotTicks % 20L != 0L) {
             return;
         }
-        if (this.emergency || this.activeTask == null
+        // A task that stands still on purpose (digging, sleeping, crafting,
+        // fishing) is not stuck: the watchdog must never yank its body or cancel
+        // it, which is what made the companion stop in the middle of a job.
+        if (this.emergency || this.activeTask == null || this.activeTask.stationary()
                 || !this.companion.controller().isMoving()) {
             this.stuckSinceTick = -1L;
             this.stuckRecoveries = 0;
@@ -6297,17 +6324,19 @@ public final class BridgeApi {
             this.stuckSinceTick = this.autopilotTicks;
             return;
         }
-        if (this.autopilotTicks - this.stuckSinceTick < 40L) {
+        if (this.autopilotTicks - this.stuckSinceTick < 60L) {
             return;
         }
         this.stuckSinceTick = this.autopilotTicks;
         this.stuckLastX = player.getX();
         this.stuckLastZ = player.getZ();
         if (this.stuckRecoveries < 2) {
+            // Jump and nudge forward only. The old sideways shove walked the
+            // companion left, right, left, right, which looked like it was
+            // pacing instead of working.
             this.stuckRecoveries++;
             this.companion.controller().jump();
-            this.companion.controller().move(0.4D,
-                    this.stuckRecoveries == 1 ? 0.8D : -0.8D, false, 10);
+            this.companion.controller().move(0.6D, 0.0D, false, 6);
             return;
         }
         cancelActive("stuck");
@@ -7201,7 +7230,10 @@ public final class BridgeApi {
             this.companion.controller().setSneak(down || this.sneakHeld);
             return;
         }
-        if (this.activeTask != null || this.pendingGiveItem != null || this.autopilotTicks % 40L != 0L) {
+        // Never look at somebody while there is work pending: the companion
+        // either does its job or looks, never both.
+        if (this.activeTask != null || !this.pendingTasks.isEmpty()
+                || this.pendingGiveItem != null || this.autopilotTicks % 40L != 0L) {
             return;
         }
         ServerPlayer near = nearestHuman(player, 6.0D);
@@ -7578,6 +7610,23 @@ public final class BridgeApi {
 
         boolean tick(CompanionPlayer player, MinecraftServer server);
 
+        /**
+         * True while the task deliberately stands still (digging a block,
+         * sleeping, crafting). The stuck watchdog ignores these tasks.
+         */
+        default boolean stationary() {
+            return false;
+        }
+
+        /**
+         * Identity of the order behind the task. Repeating the same order
+         * ("seguime" twice, "mina piedra" twice) must not restart the work.
+         * null means "always start a new task".
+         */
+        default String signature() {
+            return null;
+        }
+
         /** Extra fields merged into the action status when the task ends. */
         default Map<String, Object> result(CompanionPlayer player) {
             return Map.of();
@@ -7602,6 +7651,12 @@ public final class BridgeApi {
         int incoming = task.priority();
         boolean locked = this.autopilotTicks < this.reflexLockUntil;
         if (this.activeTask != null) {
+            // The very same order again is not a new order: keep the running
+            // task untouched instead of cancelling and restarting from scratch.
+            String signature = task.signature();
+            if (signature != null && signature.equals(this.activeTask.signature())) {
+                return true;
+            }
             boolean outranked = incoming < this.activeTask.priority();
             boolean reflexBlocked = locked && incoming < 91;
             if (outranked || reflexBlocked) {
@@ -7751,22 +7806,6 @@ public final class BridgeApi {
         }
     }
 
-    /** Low-priority idle behaviour: glance at the owner now and then. */
-    private void maybeGlance(CompanionPlayer player) {
-        if (this.activeTask != null || this.emergency) {
-            return;
-        }
-        if (this.autopilotTicks < this.glanceAtTick) {
-            return;
-        }
-        ServerPlayer owner = nearestOwner(player);
-        if (owner == null) {
-            return;
-        }
-        this.glanceAtTick = this.autopilotTicks + 500L + (long) (Math.random() * 400.0D);
-        startTask(new GlanceTask(owner.getUUID(), 40), player);
-    }
-
     private ServerPlayer nearestOwner(CompanionPlayer player) {
         ServerPlayer best = null;
         for (ServerPlayer candidate : player.server.getPlayerList().getPlayers()) {
@@ -7856,33 +7895,6 @@ public final class BridgeApi {
                 + " - en espera: " + this.pendingTasks.size()
                 + " - bloqueo de reflejo: " + Math.max(0L, this.reflexLockUntil - this.autopilotTicks) + "t");
         return lines;
-    }
-
-    /** A one-off look at the owner; the lowest priority there is. */
-    private final class GlanceTask implements Task {
-        private final java.util.UUID targetId;
-        private final int total;
-        private int ticks;
-
-        GlanceTask(java.util.UUID targetId, int total) {
-            this.targetId = targetId;
-            this.total = total;
-        }
-
-        @Override
-        public int priority() {
-            return 10;
-        }
-
-        @Override
-        public boolean tick(CompanionPlayer player, MinecraftServer server) {
-            Entity target = player.serverLevel().getEntity(this.targetId);
-            if (target == null) {
-                return true;
-            }
-            lookAtPoint(player, target.getEyePosition());
-            return ++this.ticks >= this.total;
-        }
     }
 
     /**
@@ -8232,6 +8244,11 @@ public final class BridgeApi {
         private int replans;
         private int waitTicks;
 
+        @Override
+        public boolean stationary() {
+            return true;
+        }
+
         SleepTask(String id, double radius) {
             this.id = id;
             this.radius = radius;
@@ -8412,6 +8429,11 @@ public final class BridgeApi {
         public int priority() {
             return 55;
         }
+        @Override
+        public String signature() {
+            return "follow:" + this.playerName + ":" + this.finite;
+        }
+
         private final String id;
         private final String playerName;
         private final double distance;
@@ -8433,7 +8455,9 @@ public final class BridgeApi {
         public boolean tick(CompanionPlayer player, MinecraftServer server) {
             ServerPlayer target = server.getPlayerList().getPlayerByName(this.playerName);
             if (target == null) {
-                throw new IllegalStateException("player not online: " + this.playerName);
+                // The player left or died: end the order quietly instead of
+                // failing it and spamming "no pude" in chat.
+                return true;
             }
             if (target == player) {
                 return true;
@@ -8487,8 +8511,17 @@ public final class BridgeApi {
                     return false;
                 }
             }
-            driveTowards(player, target.getX(), target.getY(), target.getZ(),
-                    this.distance, this.progress);
+            try {
+                driveTowards(player, target.getX(), target.getY(), target.getZ(),
+                        this.distance, this.progress);
+            } catch (IllegalStateException e) {
+                // The player moved away or the way closed: re-plan on the next
+                // tick. Throwing here dropped the whole follow order, which is
+                // why "seguime" seemed to cut off by itself.
+                this.walker = null;
+                this.cooldown = 10;
+                this.progress.reset(distance);
+            }
             return false;
         }
     }
@@ -8537,6 +8570,13 @@ public final class BridgeApi {
 
     private void finishTask(String state, String reason) {
         Task task = this.activeTask;
+        if (task != null && !"replaced".equals(reason)) {
+            // One line per finished task: the only way to see from latest.log
+            // why something stopped without playing the whole session.
+            CovelliteAI.LOGGER.info("[cove] tarea {} -> {} ({})",
+                    task.getClass().getSimpleName(), state,
+                    reason == null ? "terminada" : reason);
+        }
         if (reason != null && !"replaced".equals(reason) && !"give".equals(reason)) {
             this.lastInterruptReason = reason;
         }
