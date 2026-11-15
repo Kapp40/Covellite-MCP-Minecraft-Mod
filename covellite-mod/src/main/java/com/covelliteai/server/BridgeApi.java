@@ -20,7 +20,9 @@ import covellite.agent.brain.BrainArbiter;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
+import covellite.core.ExpeditionPlan;
 import covellite.core.TunnelPlan;
+import covellite.core.WoodDecision;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.Event;
 import covellite.core.event.EventLog;
@@ -171,6 +173,19 @@ public final class BridgeApi {
 
     /** Where a ramp/gallery run started; the companion walks back when it ends. */
     private BlockPos digOrigin = null;
+
+    // Wood chore: at the threshold the companion stops and asks, and the answer
+    // is decided once per message (including a coin flip for "si queres").
+    private boolean woodConsult = false;
+    private long woodConsultAt = 0L;
+    private long woodDecisionSeq = -1L;
+    private boolean woodDecisionContinues = false;
+    private int woodGoal = 448;
+    private int woodAskRotation = 0;
+
+    /** Expedition resume after combat or a survival reflex. */
+    private long expeditionResumeAt = 0L;
+    private int expeditionAttempts = 0;
     /** Deferred walk home, handled by autopilotTick outside any task. */
     private BlockPos returnTo = null;
 
@@ -377,6 +392,7 @@ public final class BridgeApi {
         dispatcher.register("set_autopilot", this::setAutopilot);
         dispatcher.register("get_action_status", this::actionStatus);
         dispatcher.register("cancel_action", this::cancelAction);
+        dispatcher.register("mine_expedition", this::mineExpedition);
         dispatcher.register("emergency_stop", params -> emergencyStop());
         dispatcher.register("reset_emergency_stop", params -> resetEmergencyStop());
 
@@ -1450,6 +1466,88 @@ public final class BridgeApi {
      * short. Without this, "mina hierro" died the moment a zombie showed up and
      * the player had to repeat the order. Explicit orders still cancel it.
      */
+    /** Counts logs, stems, wood and hyphae in the inventory. */
+    private static int woodCount(CompanionPlayer player) {
+        int total = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+            if (path.endsWith("_log") || path.endsWith("_stem")
+                    || path.endsWith("_wood") || path.endsWith("_hyphae")) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    /**
+     * At seven stacks of logs the chopping stops and the player is asked. Only
+     * then: the task is cancelled first so the keeper does not restart it by
+     * itself, and the answer decides whether it resumes.
+     */
+    private void woodThresholdTick(CompanionPlayer player) {
+        if (this.woodConsult || this.choreTool == null) {
+            return;
+        }
+        boolean chopping = "chop_tree".equals(this.choreTool)
+                || ("gather".equals(this.choreTool)
+                && "wood".equals(String.valueOf(this.choreParams.get("what"))));
+        if (!chopping) {
+            return;
+        }
+        int count = woodCount(player);
+        int target = this.woodGoal <= 0 ? 448 : this.woodGoal;
+        if (count < target) {
+            return;
+        }
+        clearChore();
+        cancelActive("wood_threshold");
+        this.woodConsult = true;
+        this.woodConsultAt = this.autopilotTicks;
+        this.woodDecisionSeq = -1L;
+        String[] lines = {
+                "che, tengo bastante madera ya (" + count + "). ¿Seguimos o te parece suficiente?",
+                "tengo " + count + " troncos, ¿querés que siga llenando el inventario?",
+                "bueno, escuchame, ¿seguimos talando o ya estamos hechos?",
+                "ya junté un montón de madera (" + count + "). ¿Le damos un rato más?"
+        };
+        reply(lines[this.woodAskRotation++ % lines.length]);
+    }
+
+    /**
+     * Interprets the answer to the wood question. Explicit orders win; a
+     * permissive answer is a 50/50 recorded once per message so the same line
+     * cannot flip twice.
+     */
+    private boolean answerWoodConsult(CompanionPlayer player, String sender, String raw) {
+        long sequence = this.chatLog.latestSequence();
+        if (sequence == this.woodDecisionSeq) {
+            return true;
+        }
+        WoodDecision.Decision decision = WoodDecision.decide(raw, sequence);
+        if (decision.answer() == WoodDecision.Answer.IGNORED) {
+            // Not an answer to the question: leave the consultation open.
+            return false;
+        }
+        this.woodDecisionSeq = sequence;
+        this.woodDecisionContinues = decision.continueChopping();
+        this.woodConsult = false;
+        if (decision.continueChopping()) {
+            this.woodGoal = woodCount(player) + 448;
+            reply("bueno, dale, sigo un rato más");
+            try {
+                chopTree(Map.of("max_logs", 448, "radius", 32));
+            } catch (RuntimeException e) {
+                reply("no encuentro más árboles cerca, avisame");
+            }
+        } else {
+            reply("listo, la corto acá. Me quedo con " + woodCount(player) + " troncos");
+        }
+        return true;
+    }
+
     private void choreKeeperTick(CompanionPlayer player) {
         if (this.choreTool == null || this.activeTask != null || this.emergency) {
             return;
@@ -2383,6 +2481,7 @@ public final class BridgeApi {
             throw new IllegalArgumentException("no logs found within " + (int) radius + " blocks");
         }
         String id = newAction("chop_tree", "running");
+        this.woodGoal = (int) clamp(num(params, "ask_at", 448.0D), 64.0D, 1792.0D);
         startTask(new GatherTask(id, "wood", maxLogs, Math.max(radius, 4.0D), 2400, true,
                 bool(params, "allow_player_blocks", false), focus), player);
         rememberChore("chop_tree", Map.of("max_logs", maxLogs, "radius", radius));
@@ -3048,6 +3147,443 @@ public final class BridgeApi {
             }
             controller.move(1.0D, 0.0D, false, 3);
             return true;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Autonomous mining expedition: travel, descend, dig the full cross
+    // ------------------------------------------------------------------
+
+    /**
+     * Starts a real expedition: walk 200-300 blocks away, go 20 blocks down and
+     * open four 60-block galleries with side branches every 5 blocks, collecting
+     * the ore met on the way. Progress is saved so combat does not lose it.
+     */
+    private Map<String, Object> mineExpedition(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        if (!"overworld".equals(dimName(player.serverLevel()))) {
+            throw new IllegalArgumentException("expeditions run in the overworld only");
+        }
+        String id = newAction("mine_expedition", "running");
+        startTask(new ExpeditionTask(id, params), player);
+        armInterrupts(Map.of("interrupts", true,
+                "ignore", List.of("chat", "enemy", "night")), player);
+        return actionResult(id, "running");
+    }
+
+    private final class ExpeditionTask implements Task {
+
+        private enum Phase { TRAVEL, DESCEND, DIG }
+
+        private final String id;
+        private final int length;
+        private final int step;
+        private final int lateral;
+        private final int depth;
+        private final int travel;
+        private final boolean resume;
+        private final ProgressWatch watch = new ProgressWatch();
+        private final Set<Long> cleared = new HashSet<>();
+
+        private Phase phase = Phase.TRAVEL;
+        private List<ExpeditionPlan.Segment> segments = List.of();
+        private int segmentIndex;
+        private int cellIndex;
+        private BlockPos center;
+        private int targetX;
+        private int targetZ;
+        private int startY;
+        private PathWalker walker;
+        private int replans;
+        private int travelTicks;
+        private int stuckTicks;
+        private int torches;
+        private int dug;
+        private BlockPos mining;
+        private float progress;
+        private int lastStage = -1;
+        private int swings;
+        private Map<String, Integer> before;
+
+        ExpeditionTask(String id, Map<String, Object> params) {
+            this.id = id;
+            this.length = (int) clamp(num(params, "length", ExpeditionPlan.DEFAULT_LENGTH), 8.0D, 96.0D);
+            this.step = (int) clamp(num(params, "step", ExpeditionPlan.DEFAULT_STEP), 2.0D, 16.0D);
+            this.lateral = (int) clamp(num(params, "lateral", ExpeditionPlan.DEFAULT_LATERAL), 1.0D, 16.0D);
+            this.depth = (int) clamp(num(params, "depth", ExpeditionPlan.DEFAULT_DEPTH), 8.0D, 40.0D);
+            this.travel = (int) clamp(num(params, "distance", ExpeditionPlan.DEFAULT_TRAVEL), 120.0D, 400.0D);
+            this.resume = bool(params, "resume", false);
+        }
+
+        @Override
+        public int priority() {
+            return 58;
+        }
+
+        @Override
+        public boolean tick(CompanionPlayer player, MinecraftServer server) {
+            ServerLevel level = player.serverLevel();
+            if (this.before == null) {
+                this.before = inventoryTotals(player);
+                this.startY = player.blockPosition().getY();
+                if (this.resume && loadProgress(player)) {
+                    this.phase = Phase.DIG;
+                } else {
+                    chooseTarget(player);
+                }
+            }
+            if (this.mining != null) {
+                mineBlock(player, level);
+                return false;
+            }
+            return switch (this.phase) {
+                case TRAVEL -> travelTick(player, level);
+                case DESCEND -> descendTick(player, level);
+                case DIG -> digTick(player, level);
+            };
+        }
+
+        // ---- travel ---------------------------------------------------
+
+        private void chooseTarget(CompanionPlayer player) {
+            float yaw = player.getYRot();
+            double radians = Math.toRadians(yaw);
+            // Walk away from where the player is looking: the expedition must not
+            // start next to the base.
+            double dx = -Math.sin(radians);
+            double dz = Math.cos(radians);
+            this.targetX = (int) Math.round(player.getX() + dx * this.travel);
+            this.targetZ = (int) Math.round(player.getZ() + dz * this.travel);
+        }
+
+        private boolean travelTick(CompanionPlayer player, ServerLevel level) {
+            double dx = this.targetX + 0.5D - player.getX();
+            double dz = this.targetZ + 0.5D - player.getZ();
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            if (distance <= 4.0D) {
+                this.phase = Phase.DESCEND;
+                this.center = player.blockPosition().immutable();
+                this.startY = this.center.getY();
+                this.walker = null;
+                return false;
+            }
+            if (++this.travelTicks > 6000) {
+                throw new IllegalStateException("no_path_to_site: could not reach the mining area");
+            }
+            if (this.walker == null) {
+                if (this.replans++ > 8) {
+                    throw new IllegalStateException("no_path_to_site: no route after " + this.replans + " plans");
+                }
+                Vec3 goal = new Vec3(this.targetX + 0.5D, player.getY(), this.targetZ + 0.5D);
+                Pathfinder.Result result = Pathfinder.find(level, player.blockPosition(),
+                        pos -> {
+                            double gx = pos.getX() + 0.5D - this.targetX;
+                            double gz = pos.getZ() + 0.5D - this.targetZ;
+                            return Math.sqrt(gx * gx + gz * gz) <= 4.0D;
+                        }, goal, 6000, avoidCells());
+                if (result.path().size() < 2) {
+                    // Try a closer site instead of giving up on the first failure.
+                    this.targetX = (int) Math.round(player.getX() + (this.targetX - player.getX()) * 0.6D);
+                    this.targetZ = (int) Math.round(player.getZ() + (this.targetZ - player.getZ()) * 0.6D);
+                    return false;
+                }
+                this.walker = new PathWalker(result.path());
+            }
+            PathStatus status = this.walker.tick(player);
+            if (status != PathStatus.RUNNING) {
+                this.walker = null;
+            }
+            return false;
+        }
+
+        // ---- descent --------------------------------------------------
+
+        private boolean descendTick(CompanionPlayer player, ServerLevel level) {
+            BlockPos feet = player.blockPosition();
+            if (feet.getY() <= this.startY - this.depth) {
+                this.center = feet.immutable();
+                this.segments = ExpeditionPlan.build(this.center.getX(), this.center.getY(),
+                        this.center.getZ(), this.length, this.step, this.lateral,
+                        ExpeditionPlan.quarterTurns(player.getYRot()));
+                this.phase = Phase.DIG;
+                saveProgress(player);
+                return false;
+            }
+            Direction dir = Direction.fromYRot(player.getYRot());
+            BlockPos next = feet.relative(dir);
+            BlockPos landing = next.below();
+            for (BlockPos pos : List.of(next.above(), next, landing)) {
+                if (!passable(level, pos, level.getBlockState(pos))) {
+                    if (!beginBreak(player, level, pos)) {
+                        throw new IllegalStateException("need_better_tool:pickaxe (descending)");
+                    }
+                    return false;
+                }
+            }
+            if (feet.equals(landing)) {
+                return false;
+            }
+            if (++this.stuckTicks > 120) {
+                throw new IllegalStateException("stuck_descending");
+            }
+            driveTowards(player, landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
+                    0.15D, this.watch);
+            return false;
+        }
+
+        // ---- the cross ------------------------------------------------
+
+        private boolean digTick(CompanionPlayer player, ServerLevel level) {
+            if (this.segmentIndex >= this.segments.size()) {
+                report(player);
+                return true;
+            }
+            ExpeditionPlan.Segment segment = this.segments.get(this.segmentIndex);
+            if (this.cellIndex >= segment.cells().size()) {
+                this.segmentIndex++;
+                this.cellIndex = 0;
+                saveProgress(player);
+                return false;
+            }
+            ExpeditionPlan.Cell cell = segment.cells().get(this.cellIndex);
+            BlockPos feet = new BlockPos(cell.x(), cell.y(), cell.z());
+            BlockPos head = feet.above();
+            for (BlockPos pos : List.of(feet, head)) {
+                if (passable(level, pos, level.getBlockState(pos))) {
+                    continue;
+                }
+                if (!diggable(level, pos, level.getBlockState(pos))) {
+                    // Protected block: skip this cell instead of breaking a build.
+                    this.cellIndex++;
+                    return false;
+                }
+                if (!beginBreak(player, level, pos)) {
+                    throw new IllegalStateException("need_better_tool:pickaxe (gallery)");
+                }
+                return false;
+            }
+            if (!player.blockPosition().equals(feet)) {
+                if (++this.stuckTicks > 160) {
+                    throw new IllegalStateException("stuck_in_gallery");
+                }
+                driveTowards(player, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D,
+                        0.15D, this.watch);
+                return false;
+            }
+            this.stuckTicks = 0;
+            this.cleared.add(feet.asLong());
+            this.cellIndex++;
+            if (this.cellIndex % 8 == 0) {
+                light(player, level, feet);
+            }
+            collectOre(player, level, feet);
+            return false;
+        }
+
+        /** Breaks ore blocks exposed by the corridor, so a vein is not left half-mined. */
+        private void collectOre(CompanionPlayer player, ServerLevel level, BlockPos feet) {
+            for (BlockPos pos : BlockPos.betweenClosed(feet.offset(-2, -1, -2), feet.offset(2, 2, 2))) {
+                BlockState state = level.getBlockState(pos);
+                if (!state.isAir() && BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().endsWith("_ore")
+                        && player.getEyePosition().distanceTo(Vec3.atCenterOf(pos))
+                        <= player.blockInteractionRange() + 0.5D) {
+                    if (beginBreak(player, level, pos.immutable())) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void light(CompanionPlayer player, ServerLevel level, BlockPos feet) {
+            if (level.getMaxLocalRawBrightness(feet) >= 7 || findBlockItemSlot(player, "torch") < 0) {
+                return;
+            }
+            try {
+                placeBlock(Map.of("x", feet.getX(), "y", feet.getY(), "z", feet.getZ(),
+                        "block", "torch"));
+                this.torches++;
+            } catch (RuntimeException ignored) {
+                // Lighting is optional; the expedition continues.
+            }
+        }
+
+        // ---- breaking -------------------------------------------------
+
+        private boolean beginBreak(CompanionPlayer player, ServerLevel level, BlockPos pos) {
+            BlockState state = level.getBlockState(pos);
+            if (state.getDestroySpeed(level, pos) < 0.0F) {
+                return false;
+            }
+            BridgeApi.this.companion.controller().stop();
+            equipBestTool(player, state);
+            if (!player.getAbilities().instabuild
+                    && state.getDestroyProgress(player, level, pos) < 1.0F / 600.0F) {
+                return false;
+            }
+            this.mining = pos.immutable();
+            this.progress = 0.0F;
+            this.lastStage = -1;
+            this.swings = 0;
+            return true;
+        }
+
+        private void mineBlock(CompanionPlayer player, ServerLevel level) {
+            BlockState state = level.getBlockState(this.mining);
+            Vec3 center = Vec3.atCenterOf(this.mining);
+            if (state.isAir()
+                    || player.getEyePosition().distanceTo(center) > player.blockInteractionRange() + 0.5D) {
+                level.destroyBlockProgress(player.getId(), this.mining, -1);
+                this.mining = null;
+                return;
+            }
+            lookAtPoint(player, center);
+            this.progress += player.getAbilities().instabuild
+                    ? 1.0F : state.getDestroyProgress(player, level, this.mining);
+            if (this.swings++ % 6 == 0) {
+                player.swing(InteractionHand.MAIN_HAND, true);
+            }
+            if (this.progress < 1.0F) {
+                int stage = (int) (this.progress * 10.0F);
+                if (stage != this.lastStage) {
+                    level.destroyBlockProgress(player.getId(), this.mining, stage);
+                    this.lastStage = stage;
+                }
+                return;
+            }
+            BlockPos done = this.mining;
+            this.mining = null;
+            level.destroyBlockProgress(player.getId(), done, -1);
+            if (player.gameMode.destroyBlock(done)) {
+                player.containerMenu.broadcastChanges();
+                this.dug++;
+            }
+        }
+
+        // ---- report and persistence -----------------------------------
+
+        private void report(CompanionPlayer player) {
+            Map<String, Integer> gained = new LinkedHashMap<>();
+            Map<String, Integer> now = inventoryTotals(player);
+            for (Map.Entry<String, Integer> entry : now.entrySet()) {
+                int delta = entry.getValue() - this.before.getOrDefault(entry.getKey(), 0);
+                String family = ExpeditionPlan.oreFamily(entry.getKey());
+                if (delta > 0 && !family.isEmpty()) {
+                    gained.merge(family, delta, Integer::sum);
+                }
+            }
+            StringBuilder line = new StringBuilder("che, terminé de minar");
+            if (gained.isEmpty()) {
+                line.append(". No encontré gran cosa, la verdad");
+            } else {
+                line.append(". Conseguí ");
+                int i = 0;
+                for (Map.Entry<String, Integer> entry : gained.entrySet()) {
+                    if (i > 0) {
+                        line.append(i == gained.size() - 1 ? " y " : ", ");
+                    }
+                    line.append(entry.getValue()).append(' ').append(entry.getKey());
+                    i++;
+                }
+            }
+            line.append(". Fueron ").append(this.dug).append(" bloques y ")
+                    .append(this.torches).append(" antorchas. Me voy a tomar un descanso");
+            reply(line.toString());
+            clearProgress(player);
+            BridgeApi.this.expeditionAttempts = 0;
+        }
+
+        private java.nio.file.Path progressFile(CompanionPlayer player) {
+            return player.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                    .resolve("covemcp").resolve("expedition.json");
+        }
+
+        private void saveProgress(CompanionPlayer player) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("dim", dimName(player.serverLevel()));
+            map.put("segment", this.segmentIndex);
+            map.put("cell", this.cellIndex);
+            map.put("length", this.length);
+            map.put("step", this.step);
+            map.put("lateral", this.lateral);
+            map.put("depth", this.depth);
+            map.put("dug", this.dug);
+            map.put("torches", this.torches);
+            if (this.center != null) {
+                map.put("cx", this.center.getX());
+                map.put("cy", this.center.getY());
+                map.put("cz", this.center.getZ());
+            }
+            try {
+                java.nio.file.Path file = progressFile(player);
+                java.nio.file.Files.createDirectories(file.getParent());
+                java.nio.file.Files.writeString(file, covellite.core.json.Json.stringify(map),
+                        java.nio.charset.StandardCharsets.UTF_8);
+            } catch (java.io.IOException | RuntimeException e) {
+                System.err.println("[cove] no se pudo guardar la expedicion: " + e.getMessage());
+            }
+        }
+
+        private boolean loadProgress(CompanionPlayer player) {
+            try {
+                java.nio.file.Path file = progressFile(player);
+                if (!java.nio.file.Files.exists(file)) {
+                    return false;
+                }
+                Map<String, Object> map = covellite.core.json.Json.parseObject(
+                        java.nio.file.Files.readString(file, java.nio.charset.StandardCharsets.UTF_8));
+                if (!dimName(player.serverLevel()).equals(String.valueOf(map.get("dim")))) {
+                    return false;
+                }
+                int cx = (int) num(map, "cx", player.getX());
+                int cy = (int) num(map, "cy", player.getY());
+                int cz = (int) num(map, "cz", player.getZ());
+                if (player.blockPosition().distSqr(new BlockPos(cx, cy, cz)) > 1024.0D * 1024.0D) {
+                    return false;
+                }
+                this.center = new BlockPos(cx, cy, cz);
+                this.segments = ExpeditionPlan.build(cx, cy, cz, this.length, this.step,
+                        this.lateral, ExpeditionPlan.quarterTurns(player.getYRot()));
+                this.segmentIndex = (int) num(map, "segment", 0);
+                this.cellIndex = (int) num(map, "cell", 0);
+                this.dug = (int) num(map, "dug", 0);
+                this.torches = (int) num(map, "torches", 0);
+                return true;
+            } catch (java.io.IOException | RuntimeException e) {
+                return false;
+            }
+        }
+
+        private void clearProgress(CompanionPlayer player) {
+            try {
+                java.nio.file.Files.deleteIfExists(progressFile(player));
+            } catch (java.io.IOException ignored) {
+                // Nothing to do: the next expedition overwrites it anyway.
+            }
+        }
+
+        @Override
+        public Map<String, Object> result(CompanionPlayer player) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("phase", this.phase.name().toLowerCase(java.util.Locale.ROOT));
+            out.put("segments_done", this.segmentIndex);
+            out.put("segments_total", this.segments.size());
+            out.put("dug", this.dug);
+            out.put("torches", this.torches);
+            if (this.center != null) {
+                out.put("center", List.of(this.center.getX(), this.center.getY(), this.center.getZ()));
+            }
+            return out;
+        }
+
+        @Override
+        public void cleanup(CompanionPlayer player) {
+            if (this.mining != null) {
+                player.serverLevel().destroyBlockProgress(player.getId(), this.mining, -1);
+                this.mining = null;
+            }
+            if (this.segmentIndex < this.segments.size()) {
+                saveProgress(player);
+            }
         }
     }
 
@@ -5444,6 +5980,15 @@ public final class BridgeApi {
             maybeAutoDefend(player);
         }
         choreKeeperTick(player);
+        woodThresholdTick(player);
+        if (this.expeditionResumeAt > 0L && this.autopilotTicks >= this.expeditionResumeAt
+                && this.activeTask == null && !this.staying && this.guardAnchor == null
+                && this.expeditionAttempts < 6) {
+            this.expeditionResumeAt = 0L;
+            this.expeditionAttempts++;
+            startTask(new ExpeditionTask(newAction("mine_expedition", "running"),
+                    Map.of("resume", true)), player);
+        }
         if (this.returnTo != null && this.activeTask == null) {
             BlockPos home = this.returnTo;
             this.returnTo = null;
@@ -5998,27 +6543,18 @@ public final class BridgeApi {
         if (!this.interruptOn || this.emergency) {
             return null;
         }
+        // Chat is NOT an interruption. Talking to Cove while it mines, chops or
+        // explores must never cancel the task, reset the pathfinder or free the
+        // controls: the social layer answers on its own and the body keeps
+        // working. Only explicit cancel orders (handled as reflexes) and real
+        // danger stop a task. The pointer is advanced so old lines are not
+        // treated as new.
         if (!this.interruptIgnore.contains("chat")) {
             long latest = this.chatLog.latestSequence();
             if (latest > this.interruptChatBase) {
-                List<Map<String, Object>> lines = new ArrayList<>();
-                for (ChatLog.Entry entry : this.chatLog.since(this.interruptChatBase, 8)) {
-                    if (entry.sequence() <= this.interruptChatBase || entry.fromCompanion()
-                            || !"chat".equals(entry.type())) {
-                        continue;
-                    }
-                    Map<String, Object> line = new LinkedHashMap<>();
-                    line.put("from", String.valueOf(entry.sender()));
-                    line.put("msg", String.valueOf(entry.message()));
-                    lines.add(line);
-                }
                 this.interruptChatBase = latest;
-                if (!lines.isEmpty()) {
-                    // The lines travel in the status, so do not repeat them as new_chat.
-                    if (this.chatPushed >= 0L && latest > this.chatPushed) {
-                        this.chatPushed = latest;
-                    }
-                    return interrupted("player_chat", "chat", lines);
+                if (this.chatPushed >= 0L && latest > this.chatPushed) {
+                    this.chatPushed = latest;
                 }
             }
         }
@@ -6094,6 +6630,9 @@ public final class BridgeApi {
     private boolean reactToCommand(CompanionPlayer player, String sender, String raw) {
         if (raw == null || raw.isBlank()) {
             return false;
+        }
+        if (this.woodConsult) {
+            return answerWoodConsult(player, sender, raw);
         }
         String text = normalizeCommand(raw);
         java.util.Set<String> words = new java.util.HashSet<>();
@@ -8047,6 +8586,11 @@ public final class BridgeApi {
                 if (task instanceof DigMineTask && this.digOrigin != null) {
                     this.returnTo = this.digOrigin;
                 }
+            }
+            if (task instanceof ExpeditionTask && !"completed".equals(state)) {
+                // Combat or a survival reflex took the body: come back to the
+                // expedition instead of starting a new one somewhere else.
+                this.expeditionResumeAt = this.autopilotTicks + 100L;
             }
         }
         this.companion.controller().stop();

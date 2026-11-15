@@ -117,6 +117,19 @@ public final class OfflineBrain {
         if (action == null || action.isBlank() || reading.negated()) {
             return calls;
         }
+        // A whole expedition, not a few blocks: travel away, go down and open the
+        // cross of galleries. Only when the player asks for it in those words.
+        if (tools.contains("mine_expedition")
+                && Lexicon.shared().expeditionIntent(Spanish.normalize(text))) {
+            Map<String, Object> expedition = new LinkedHashMap<>();
+            expedition.put("distance", 250);
+            expedition.put("depth", 20);
+            expedition.put("length", 60);
+            expedition.put("step", 5);
+            expedition.put("lateral", 5);
+            calls.add(new AgentProvider.ToolCall("cove_mine_expedition", "mine_expedition", expedition));
+            return calls;
+        }
         String tool = switch (action) {
             case "mine" -> "mine";
             case "chop_tree" -> "chop_tree";

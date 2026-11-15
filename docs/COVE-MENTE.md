@@ -386,3 +386,57 @@ La política pura vive en `covellite-core/TunnelPlan` y se testea sin Minecraft.
 - `:covellite-mod:build` correcto.
 - JAR: **591 KB** (antes 528 KB), principalmente por el diccionario de Minecraft.
 - Sigue sin validarse en partida.
+
+---
+
+## Expedición minera autónoma, umbral de madera y chat que no interrumpe
+
+### El chat ya no cancela tareas
+
+`checkInterrupt` devolvía `player_chat` y eso terminaba la tarea en curso. Ahora la
+conversación solo avanza el puntero de lectura: hablar con Cove mientras mina,
+tala o explora no reinicia el pathfinder, no libera controles ni vacía la cola.
+Solo las órdenes explícitas de cancelación (`pará`, `dejá de talar`, `cancelá`) y
+los peligros reales cortan un trabajo.
+
+### Expedición (`mine_expedition`)
+
+Se activa con frases como «andate a minar lo que quieras», «por tu cuenta»,
+«conseguí minerales» o «buscá una mina» (categoría `EXPEDITION` del léxico).
+
+Fases: **viaje** (200-300 bloques con A*, replanificando y acercando el destino si
+no hay ruta), **descenso** (escalera de 20 bloques, nunca en vertical), **cruz**
+(cuatro galerías de 60 con ramales de 5 cada 5 bloques, 720 celdas / 1440 bloques),
+con antorchas, recolección de mena expuesta y reporte final solo con lo obtenido.
+
+La geometría es pura (`covellite-core/ExpeditionPlan`) y está testeada: 4 galerías
+principales, 96 ramales, total exacto de bloques. El progreso se guarda en
+`covellite/expedition.json` del mundo y la expedición se retoma sola tras un
+combate o un reflejo (hasta 6 intentos), sin duplicar el trabajo.
+
+### Umbral de madera y respuesta ambigua
+
+`chop_tree` acepta `ask_at` (448 por defecto). Al llegar, cancela la tarea, avisa
+por el chat y espera. La respuesta se interpreta con `WoodDecision` (puro):
+«dale/segui» continúa, «no/pará» termina, y «si querés / como quieras» es un 50/50
+decidido una sola vez por mensaje. La decisión queda registrada para no volver a
+sortearla.
+
+### Estado de verificación
+
+- `agentTest`: **219/219** (geometría de expedición, familias de mena, intención
+  natural, respuestas de madera y su moneda estable).
+- `:covellite-mod:build`: correcto.
+- **No probado en un mundo real.** El viaje, el descenso y el recorrido de la cruz
+  están sin validar en partida.
+
+### Lo que sigue pendiente de este pedido
+
+- Reconocimiento de árboles por copa/conectividad más fino y recolección de hojas
+  con tijeras o Toque de Seda (hoy `chop_tree` valida árbol natural y no toca
+  construcciones, pero no junta hojas).
+- Recolección de vetas completas: hoy rompe la mena expuesta al corredor, no hace
+  un BFS de toda la veta hacia techos y paredes.
+- Iniciativa social con preguntas personales y memoria de datos del jugador
+  (nombre, gustos, construcciones) más allá del historial y la identidad.
+- Validación en partida de todo lo anterior.

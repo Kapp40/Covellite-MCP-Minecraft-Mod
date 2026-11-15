@@ -26,7 +26,9 @@ import covellite.agent.lang.Realizer;
 import covellite.agent.lang.Spanish;
 import covellite.agent.lang.WorldFacts;
 import covellite.agent.reflex.ReflexEngine;
+import covellite.core.ExpeditionPlan;
 import covellite.core.TunnelPlan;
+import covellite.core.WoodDecision;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
 
@@ -990,6 +992,45 @@ public final class AgentSelfTest {
                         && Lexicon.shared().lookup("snorlax") != null);
         check("learning: a learned word reaches the parser",
                 new Parser().parse("atacá al wapiti", world, null).mobs().contains("wapiti"));
+
+        // ---- autonomous mining expedition -----------------------------
+        java.util.List<ExpeditionPlan.Segment> plan = ExpeditionPlan.build(0, 40, 0, 60, 5, 5, 0);
+        long mains = plan.stream().filter(ExpeditionPlan.Segment::main).count();
+        long branches = plan.stream().filter(segment -> !segment.main()).count();
+        check("expedition: four main galleries", mains == 4);
+        check("expedition: side branches every five blocks", branches == 4 * 12 * 2);
+        check("expedition: branches are five blocks long",
+                plan.stream().filter(segment -> !segment.main())
+                        .allMatch(segment -> segment.cells().size() == 5));
+        check("expedition: the whole cross is 1440 blocks",
+                plan.stream().mapToInt(segment -> segment.cells().size()).sum() == 720
+                        && ExpeditionPlan.blockCount(plan) == 1440);
+        check("expedition: ore families for the report",
+                "hierro".equals(ExpeditionPlan.oreFamily("raw_iron"))
+                        && "diamante".equals(ExpeditionPlan.oreFamily("diamond"))
+                        && ExpeditionPlan.oreFamily("cobblestone").isEmpty());
+        List<AgentProvider.ToolCall> expedition = brain.toolsFor("andate a minar lo que quieras",
+                world, "Lorex", List.of("mine_expedition", "mine", "gather"));
+        check("brain: natural words start a full expedition",
+                expedition.size() == 1
+                        && "mine_expedition".equals(expedition.get(0).name()));
+        List<AgentProvider.ToolCall> plainMine = brain.toolsFor("miná hierro", world, "Lorex",
+                List.of("mine_expedition", "mine", "gather"));
+        check("brain: a plain mining order is not an expedition",
+                plainMine.isEmpty() || !"mine_expedition".equals(plainMine.get(0).name()));
+
+        // ---- wood threshold consultation ------------------------------
+        check("wood: an explicit yes continues",
+                WoodDecision.decide("dale, seguí", 1L).continueChopping());
+        check("wood: an explicit no stops",
+                !WoodDecision.decide("no, pará", 2L).continueChopping());
+        check("wood: 'si querés' is a coin flip",
+                WoodDecision.classify("si querés") == WoodDecision.Answer.COIN_FLIP);
+        check("wood: the flip is stable for the same message",
+                WoodDecision.decide("si querés", 42L).continueChopping()
+                        == WoodDecision.decide("si querés", 42L).continueChopping());
+        check("wood: an unrelated line is not an answer",
+                WoodDecision.classify("che, ¿cómo andás?") == WoodDecision.Answer.IGNORED);
     }
 
     private static void check(String label, boolean condition) {

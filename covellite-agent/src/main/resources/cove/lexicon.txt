@@ -378,3 +378,8 @@ PHRASE|jaja|me muero de risa,que haces jaja,me cague todo
 # ======================= INTENCIÓN DE CAVAR ============================
 # Si aparece alguna, la orden de mena habilita rampa + galería (tunnel=true).
 TUNNEL|tunel|tuneles,tunelar,hacer un tunel,bajo tierra,subterraneo,profundo,profundidad,fondo,galeria,galerias,rampa,rampas,socavon,mina profunda,cavar abajo,picar abajo,excavar
+
+# ======================= EXPEDICIÓN MINERA =============================
+# Si aparece alguna, la orden se convierte en una expedición completa
+# (viaje lejos, descenso y cruz de cuatro galerías con ramales).
+EXPEDITION|expedicion|expediciones,lo que quieras,lo que vos quieras,por tu cuenta,conseguir minerales,buscar minerales,buscate una mina,buscar una mina,salir a minar,ir a minar,explorar y conseguir,minar por tu cuenta,andate a minar,anda a minar

@@ -266,6 +266,22 @@ public final class ToolCatalog {
                         "ignore", stringArray(IGNORE_DOC), "interrupts", bool(INTERRUPTS_DOC),
                         "wait", bool("Wait until finished. Default true.")),
                 List.of());
+        add(tools, connection, "mine_expedition",
+                "HIGH-LEVEL: a real autonomous mining expedition, not a few blocks. Walks 200-300 blocks away "
+                        + "from the player, descends about 20 blocks by a safe staircase, then opens four "
+                        + "60-block galleries (one per direction) with 5-block side branches every 5 blocks, "
+                        + "collecting the ore it meets, lighting the way and defending itself. Progress is saved, "
+                        + "so combat or a reflex stops it temporarily instead of losing the work. Reports the "
+                        + "ores it actually obtained when the whole structure is done.",
+                props("distance", number("How far from the player to work (120-400). Default 250."),
+                        "depth", integer("Blocks to descend before opening galleries (8-40). Default 20."),
+                        "length", integer("Length of each of the four main galleries (8-96). Default 60."),
+                        "step", integer("Dig a side branch every N blocks (2-16). Default 5."),
+                        "lateral", integer("Length of each side branch (1-16). Default 5."),
+                        "resume", bool("Continue the saved expedition instead of starting a new one."),
+                        "ignore", stringArray(IGNORE_DOC), "interrupts", bool(INTERRUPTS_DOC),
+                        "wait", bool("Wait until finished. Default true.")),
+                List.of());
         add(tools, connection, "mine",
                 "Like gather but defaults to stone. Use what='iron' etc. for ores.",
                 props("what", string("Resource. Default stone."),

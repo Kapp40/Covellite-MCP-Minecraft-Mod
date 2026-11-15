@@ -38,7 +38,8 @@ import java.util.Set;
 public final class Lexicon {
 
     public enum Category {
-        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE, TUNNEL
+        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE, TUNNEL,
+        EXPEDITION
     }
 
     /** One word with its synonyms and, for verbs, the action it refers to. */
@@ -58,6 +59,8 @@ public final class Lexicon {
     private final Set<String> imperativeForms = new LinkedHashSet<>();
     /** Words that ask for a ramp/tunnel instead of a surface search. */
     private final Set<String> tunnelWords = new LinkedHashSet<>();
+    /** Phrases that ask for a whole expedition rather than a handful of blocks. */
+    private final Set<String> expeditionWords = new LinkedHashSet<>();
     /** Recent typo corrections, so a miss does not rescan the whole lexicon. */
     private final Map<String, Entry> typoHits = new java.util.concurrent.ConcurrentHashMap<>();
     private final Set<String> typoMisses = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -167,6 +170,13 @@ public final class Lexicon {
                     this.tunnelWords.add(Spanish.normalize(canonical));
                     for (String synonym : synonyms) {
                         this.tunnelWords.add(Spanish.normalize(synonym));
+                    }
+                    continue;
+                }
+                if (category == Category.EXPEDITION) {
+                    this.expeditionWords.add(Spanish.normalize(canonical));
+                    for (String synonym : synonyms) {
+                        this.expeditionWords.add(Spanish.normalize(synonym));
                     }
                     continue;
                 }
@@ -372,6 +382,20 @@ public final class Lexicon {
         }
         String padded = " " + normalizedText + " ";
         for (String word : this.tunnelWords) {
+            if (!word.isBlank() && padded.contains(" " + word + " ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True when the message asks for a full mining expedition ("por tu cuenta"). */
+    public boolean expeditionIntent(String normalizedText) {
+        if (normalizedText == null || normalizedText.isBlank()) {
+            return false;
+        }
+        String padded = " " + normalizedText + " ";
+        for (String word : this.expeditionWords) {
             if (!word.isBlank() && padded.contains(" " + word + " ")) {
                 return true;
             }
