@@ -356,6 +356,7 @@ public final class BridgeApi {
         dispatcher.register("attack", this::attack);
         // Fase 3: combate tactico y supervivencia
         dispatcher.register("equip_best_weapon", this::equipBestWeaponTool);
+        dispatcher.register("equip", this::equipTool);
         dispatcher.register("shield", this::shieldTool);
         dispatcher.register("use_consumable", this::useConsumableTool);
         dispatcher.register("evade", this::evadeTool);
@@ -2038,6 +2039,34 @@ public final class BridgeApi {
     // ------------------------------------------------------------------
     // Fase 3: combate
     // ------------------------------------------------------------------
+
+    /**
+     * Equips whatever the player asked for by name: "la espada", "el pico de
+     * hierro", "piedra", "una antorcha". This is the tool that was missing, so
+     * "equipate el pico" used to do nothing at all.
+     */
+    private Map<String, Object> equipTool(Map<String, Object> params) {
+        CompanionPlayer player = requireControl();
+        String item = str(params, "item");
+        if (item == null || item.isBlank()) {
+            throw new IllegalArgumentException("item is required: que queres que me ponga");
+        }
+        String hand = str(params, "hand");
+        boolean offhand = "off".equalsIgnoreCase(hand) || "offhand".equalsIgnoreCase(hand)
+                || "secundaria".equalsIgnoreCase(hand);
+        String equipped = CombatKit.equip(player, item, offhand);
+        if (equipped == null) {
+            throw new IllegalStateException("no tengo " + item + " en el inventario");
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("equipped", equipped);
+        out.put("query", item);
+        out.put("hand", offhand ? "off" : "main");
+        out.put("slot", player.getInventory().selected);
+        out.put("loadout", CombatKit.loadout(player));
+        return out;
+    }
 
     private Map<String, Object> equipBestWeaponTool(Map<String, Object> params) {
         CompanionPlayer player = requireControl();
@@ -7630,6 +7659,11 @@ public final class BridgeApi {
         Entity target = nearestMonster(player, player.entityInteractionRange());
         if (target == null) {
             return;
+        }
+        // Defending includes holding the right thing: bare hands against a
+        // zombie is not "defending", it is losing slowly.
+        if (!CombatKit.holdingBestWeapon(player)) {
+            CombatKit.equipBestWeapon(player);
         }
         lookAtPoint(player, target.getEyePosition());
         player.attackWithFullStrength(target);

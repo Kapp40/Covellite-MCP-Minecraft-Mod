@@ -3,6 +3,7 @@ package com.covelliteai.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -15,6 +16,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.ShieldItem;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.HoeItem;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.TridentItem;
@@ -94,6 +99,147 @@ public final class CombatKit {
     public static boolean holdingBestWeapon(ServerPlayer player) {
         int slot = bestWeaponSlot(player);
         return slot < 0 || weaponScore(player.getMainHandItem()) >= weaponScore(player.getInventory().items.get(slot));
+    }
+
+    /** Spanish word -> fragment of the registry id it usually means. */
+    private static final String[][] ALIASES = {
+            {"espada", "sword"}, {"pico", "pickaxe"}, {"hacha", "axe"}, {"pala", "shovel"},
+            {"azada", "hoe"}, {"arco", "bow"}, {"ballesta", "crossbow"}, {"escudo", "shield"},
+            {"tridente", "trident"}, {"antorcha", "torch"}, {"flecha", "arrow"},
+            {"piedra", "stone"}, {"adoquin", "cobblestone"}, {"tierra", "dirt"},
+            {"arena", "sand"}, {"grava", "gravel"}, {"madera", "log"}, {"tronco", "log"},
+            {"tabla", "planks"}, {"hierro", "iron"}, {"oro", "gold"}, {"diamante", "diamond"},
+            {"carbon", "coal"}, {"esmeralda", "emerald"}, {"lapis", "lapis"},
+            {"pan", "bread"}, {"manzana", "apple"}, {"carne", "beef"}, {"cerdo", "porkchop"},
+            {"pollo", "chicken"}, {"pescado", "cod"}, {"balde", "bucket"}, {"cubo", "bucket"},
+            {"agua", "water_bucket"}, {"cama", "bed"}, {"cofre", "chest"},
+            {"mesa", "crafting_table"}, {"horno", "furnace"}, {"vidrio", "glass"},
+            {"ladrillo", "brick"}, {"tela", "wool"}, {"linterna", "lantern"}
+    };
+
+    /**
+     * Finds the inventory slot that best answers a plain-language request, such
+     * as "la espada", "el pico de hierro", "piedra" or "antorcha".
+     *
+     * @return the slot index, or -1 when nothing in the bag matches
+     */
+    public static int findSlotFor(ServerPlayer player, String query) {
+        String q = normalize(query);
+        if (q.isEmpty()) {
+            return -1;
+        }
+        int best = -1;
+        double bestScore = 0.0D;
+        List<ItemStack> items = player.getInventory().items;
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = items.get(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            double score = matchScore(stack, q);
+            if (score > bestScore) {
+                bestScore = score;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** How well a stack answers the request; 0 means it does not match at all. */
+    private static double matchScore(ItemStack stack, String q) {
+        Item item = stack.getItem();
+        String id = BuiltInRegistries.ITEM.getKey(item).getPath();
+        String name = normalize(stack.getHoverName().getString());
+        double score = 0.0D;
+        if ((q.contains("espada") || q.contains("sable")) && item instanceof SwordItem) {
+            score = 10.0D;
+        } else if (q.contains("pico") && item instanceof PickaxeItem) {
+            score = 10.0D;
+        } else if (q.contains("hacha") && item instanceof AxeItem) {
+            score = 10.0D;
+        } else if (q.contains("pala") && item instanceof ShovelItem) {
+            score = 10.0D;
+        } else if (q.contains("azada") && item instanceof HoeItem) {
+            score = 10.0D;
+        } else if (q.contains("arco") && item instanceof BowItem) {
+            score = 10.0D;
+        } else if (q.contains("ballesta") && item instanceof CrossbowItem) {
+            score = 10.0D;
+        } else if (q.contains("escudo") && item instanceof ShieldItem) {
+            score = 10.0D;
+        } else if (q.contains("comida") && stack.getFoodProperties(null) != null) {
+            score = 8.0D;
+        } else if ((q.contains("bloque") || q.contains("bloques")) && item instanceof BlockItem) {
+            score = 8.0D;
+        }
+        for (String[] pair : ALIASES) {
+            if (!q.contains(pair[0])) {
+                continue;
+            }
+            if (id.equals(pair[1])) {
+                score = Math.max(score, 11.0D);
+            } else if (id.contains(pair[1]) || name.contains(pair[0])) {
+                score = Math.max(score, 9.0D);
+            }
+        }
+        String idQuery = q.replace(' ', '_');
+        if (id.contains(idQuery)) {
+            score = Math.max(score, 12.0D);
+        } else if (name.contains(q)) {
+            score = Math.max(score, 9.0D);
+        }
+        if (score <= 0.0D) {
+            return 0.0D;
+        }
+        // Ties: a better tier wins, and a full stack beats a leftover.
+        if (item instanceof TieredItem tiered) {
+            score += tiered.getTier().getAttackDamageBonus() * 0.01D;
+        }
+        score += Math.min(stack.getCount(), 64) * 0.0001D;
+        return score;
+    }
+
+    /**
+     * Equips whatever the player named. Returns the equipped stack's name, or
+     * null when the bag has nothing that matches.
+     */
+    public static String equip(ServerPlayer player, String query, boolean offhand) {
+        int slot = findSlotFor(player, query);
+        if (slot < 0) {
+            return null;
+        }
+        if (offhand) {
+            ItemStack wanted = player.getInventory().items.get(slot);
+            ItemStack previous = player.getOffhandItem().copy();
+            player.getInventory().items.set(slot, previous);
+            player.setItemInHand(InteractionHand.OFF_HAND, wanted);
+            player.containerMenu.broadcastChanges();
+            player.inventoryMenu.broadcastChanges();
+            return wanted.getHoverName().getString();
+        }
+        selectOrSwap(player, slot);
+        return player.getMainHandItem().getHoverName().getString();
+    }
+
+    /** Lowercase, no accents, trimmed: "Pico de Hierro" -> "pico de hierro". */
+    public static String normalize(String text) {
+        if (text == null) {
+            return "";
+        }
+        String lower = text.toLowerCase(java.util.Locale.ROOT).trim();
+        StringBuilder out = new StringBuilder(lower.length());
+        for (char c : lower.toCharArray()) {
+            out.append(switch (c) {
+                case 'á' -> 'a';
+                case 'é' -> 'e';
+                case 'í' -> 'i';
+                case 'ó' -> 'o';
+                case 'ú', 'ü' -> 'u';
+                case 'ñ' -> 'n';
+                default -> c;
+            });
+        }
+        return out.toString();
     }
 
     // ------------------------------------------------------------------
@@ -278,19 +424,27 @@ public final class CombatKit {
      * Selects a hotbar slot, or swaps an inventory item into the held slot when
      * it lives outside the hotbar, without ever dropping an item.
      */
+    /**
+     * Puts a slot in the main hand, swapping it in from the backpack when needed.
+     *
+     * <p>The broadcast is not cosmetic: without it the inventory change never
+     * reaches the client, so the companion looked like it had not equipped
+     * anything even though the server had already swapped the item.</p>
+     */
     private static void selectOrSwap(ServerPlayer player, int slot) {
         if (slot < 0) {
             return;
         }
-        if (slot < 9) {
-            player.getInventory().selected = slot;
-            return;
+        if (slot >= 9) {
+            List<ItemStack> items = player.getInventory().items;
+            int selected = player.getInventory().selected;
+            ItemStack current = items.get(selected);
+            items.set(selected, items.get(slot));
+            items.set(slot, current);
+            slot = selected;
         }
-        List<ItemStack> items = player.getInventory().items;
-        int selected = player.getInventory().selected;
-        ItemStack current = items.get(selected);
-        items.set(selected, items.get(slot));
-        items.set(slot, current);
-        player.getInventory().selected = selected;
+        player.getInventory().selected = slot;
+        player.containerMenu.broadcastChanges();
+        player.inventoryMenu.broadcastChanges();
     }
 }

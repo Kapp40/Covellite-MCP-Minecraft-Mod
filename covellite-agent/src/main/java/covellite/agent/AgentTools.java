@@ -140,6 +140,12 @@ public final class AgentTools {
         // ----------------------------------------------------------
         // Combat loadout and tactics
         // ----------------------------------------------------------
+        add(registry, remote, "equip",
+                "Equipa lo que el jugador nombre: espada, pico, hacha, antorcha, piedra, comida. "
+                        + "Busca en todo el inventario y lo pone en la mano.",
+                schema(props(
+                        "item", string("Nombre o id: espada, pico de hierro, piedra, antorcha."),
+                        "hand", string("main u off.")), List.of("item")));
         add(registry, remote, "equip_best_weapon",
                 "Equipa el mejor arma del inventario (espada, hacha o tridente) y devuelve el loadout.",
                 schema(props(), List.of()));

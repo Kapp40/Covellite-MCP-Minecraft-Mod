@@ -354,6 +354,11 @@ public final class ToolCatalog {
                 props("item", string("Result filter."),
                         "limit", integer("Default 40.")),
                 List.of());
+        add(tools, connection, "equip",
+                "Equip a named item into the main hand: sword, pickaxe, axe, torch, stone.",
+                props("item", string("Item name or id, e.g. espada, pico de hierro, piedra."),
+                        "hand", string("main or off.")),
+                List.of("item"));
         add(tools, connection, "equip_armor",
                 "Equip an armour piece from the inventory.",
                 props("item", string("Armour id substring. Default: first piece.")),

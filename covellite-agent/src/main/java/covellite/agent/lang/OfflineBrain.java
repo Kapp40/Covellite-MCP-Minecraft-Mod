@@ -139,6 +139,10 @@ public final class OfflineBrain {
             case "follow", "come" -> "follow";
             case "stay" -> "stay";
             case "stop" -> "stop";
+            // "equipate la espada" hands the item to the mod, which knows how to
+            // match a plain Spanish word against the inventory.
+            case "equip" -> tools.contains("equip") ? "equip"
+                    : tools.contains("equip_best_weapon") ? "equip_best_weapon" : "";
             case "eat" -> "eat";
             case "sleep" -> "sleep";
             case "fish" -> "fish";
@@ -167,6 +171,15 @@ public final class OfflineBrain {
                                              String player) {
         Map<String, Object> args = new LinkedHashMap<>();
         switch (tool) {
+            case "equip" -> {
+                String query = reading.items().isEmpty()
+                        ? reading.text()
+                        : String.join(" ", reading.items());
+                if (query == null || query.isBlank()) {
+                    return null;
+                }
+                args.put("item", query);
+            }
             // A chore must have a real amount: the old call let the bridge
             // default to 8 blocks, so mining looked like it "stopped by itself".
             case "mine", "gather" -> {

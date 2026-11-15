@@ -1077,6 +1077,79 @@ public final class AgentSelfTest {
         check("talk: known ids become Spanish words",
                 "hierro".equals(StateTalk.itemName("minecraft:iron_ore"))
                         && "piedra".equals(StateTalk.itemName("cobblestone")));
+
+        // ---- tensor engine -------------------------------------------
+        covellite.agent.nn.Tensor a = new covellite.agent.nn.Tensor(2, 3,
+                new float[] {1, 2, 3, 4, 5, 6});
+        covellite.agent.nn.Tensor b = new covellite.agent.nn.Tensor(3, 2,
+                new float[] {7, 8, 9, 10, 11, 12});
+        covellite.agent.nn.Tensor product = a.matmul(b);
+        check("tensor: matmul matches the textbook result",
+                product.get(0, 0) == 58.0F && product.get(0, 1) == 64.0F
+                        && product.get(1, 0) == 139.0F && product.get(1, 1) == 154.0F);
+        covellite.agent.nn.Tensor eye = covellite.agent.nn.Tensor.identity(3);
+        covellite.agent.nn.Tensor same = a.matmul(eye);
+        boolean untouched = true;
+        for (int i = 0; i < 6; i++) {
+            untouched &= Math.abs(same.data()[i] - a.data()[i]) < 1.0E-6F;
+        }
+        check("tensor: multiplying by the identity changes nothing", untouched);
+        float[] soft = covellite.agent.nn.Tensor.softmax(new float[] {1.0F, 2.0F, 3.0F}, 1.0F);
+        check("tensor: softmax is a distribution",
+                Math.abs(soft[0] + soft[1] + soft[2] - 1.0F) < 1.0E-5F
+                        && soft[2] > soft[1] && soft[1] > soft[0]);
+
+        // ---- corpus in rioplatense Spanish ----------------------------
+        List<String> corpus = covellite.agent.nn.CorpusBuilder.sentences(300, 11L);
+        long distinct = corpus.stream().distinct().count();
+        long withGerund = corpus.stream().filter(line -> line.contains("ando") || line.contains("iendo")).count();
+        long questions = corpus.stream().filter(line -> line.contains("?")).count();
+        check("corpus: sentences are varied", corpus.size() == 300 && distinct >= 150);
+        check("corpus: real conjugated gerunds appear", withGerund >= 20);
+        check("corpus: both statements and questions", questions >= 10);
+        check("corpus: no empty or placeholder lines",
+                corpus.stream().noneMatch(line -> line.isBlank() || line.contains("<")));
+
+        // ---- tiny language model: it learns and it generates ----------
+        covellite.agent.nn.Vocab vocab = new covellite.agent.nn.Vocab();
+        for (String line : corpus) {
+            for (String token : covellite.agent.nn.TinyLm.tokenize(line)) {
+                vocab.count(token);
+            }
+        }
+        vocab.freeze(600);
+        covellite.agent.nn.TinyLm lm = new covellite.agent.nn.TinyLm(vocab, 3, 12, 48,
+                new java.util.Random(5L));
+        List<int[]> encoded = new ArrayList<>();
+        for (String line : corpus) {
+            encoded.add(lm.encode(line));
+        }
+        float firstLoss = lm.trainCorpus(encoded, 1, 0.1F);
+        float laterLoss = lm.trainCorpus(encoded, 6, 0.1F);
+        check("lm: training lowers the loss", laterLoss < firstLoss);
+        String sample = lm.generate(lm.encode("estoy minando"), 12, 0.5F, new java.util.Random(3L));
+        check("lm: it samples real words from the vocabulary",
+                !sample.isBlank() && sample.split(" ").length >= 2
+                        && !sample.contains("<"));
+        int vocabulary = vocab.size();
+        check("lm: the parameter count is the size we expect",
+                lm.parameterCount() == vocabulary * 12 + 3 * 12 * 48 + 48
+                        + 48 * vocabulary + vocabulary);
+        java.nio.file.Path checkpoint = java.nio.file.Path.of("build", "lm-test.bin");
+        String again = "";
+        boolean loaded;
+        try {
+            lm.save(checkpoint);
+            covellite.agent.nn.TinyLm reloaded = covellite.agent.nn.TinyLm.load(checkpoint);
+            loaded = reloaded.parameterCount() == lm.parameterCount()
+                    && reloaded.samplesSeen() == lm.samplesSeen();
+            again = reloaded.generate(reloaded.encode("estoy minando"), 12, 0.5F,
+                    new java.util.Random(3L));
+        } catch (java.io.IOException e) {
+            loaded = false;
+        }
+        check("lm: a saved checkpoint loads back", loaded);
+        check("lm: the reloaded model answers the same", again.equals(sample));
     }
 
     private static void check(String label, boolean condition) {

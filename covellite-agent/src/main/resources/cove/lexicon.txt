@@ -230,7 +230,7 @@ VERB|salir|sali,rajarse|move|
 VERB|agarrar|tomar,agarra,toma,levantar|gather|
 VERB|soltar|largar,suelta|stop|
 VERB|usar|utilizar,usa|use_item|
-VERB|equipar|equipate,equipa|equip_best_weapon|
+VERB|equipar|equipate,equipa,equipá,ponete,ponte,empuña,empuna|equip|
 VERB|hablar|conversar,charlar,decir,contar|scan|
 VERB|preguntar|consultar,preguntale|scan|
 VERB|escuchar|oir,escucha|scan|
