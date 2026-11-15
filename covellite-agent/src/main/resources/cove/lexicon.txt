@@ -250,3 +250,131 @@ PHRASE|yes|de una,obvio que si,dale que si,esta bien,joya,perfecto,sin dudas,obv
 PHRASE|no|ni en pedo,ni ahi,para nada,olvidate,ni lo suenes,que va
 PHRASE|duda|no se,ni idea,no tengo idea,no me acuerdo,no cazo una,nose
 PHRASE|jaja|me cague de risa,que haces jaja,estoy cagado de risa
+
+# ====================== MÁS MATERIALES Y BLOQUES ========================
+ITEM|pizarra|deepslate,pizarra profunda
+ITEM|toba|tuff
+ITEM|cobre|copper
+ITEM|amatista|amethyst,amatistas
+ITEM|netherita|netherite,netherita antigua
+ITEM|escombros|ancient debris,escombro antiguo
+ITEM|brillantina|glowstone,piedra luminosa
+ITEM|calcita|calcite
+ITEM|basalto|basalt
+ITEM|pizarra negra|blackstone
+ITEM|bambu|bamboo
+ITEM|algas|kelp,alga marina
+ITEM|caña|sugar cane,caña de azucar
+ITEM|melón|melon,sandia
+ITEM|calabaza|pumpkin,zapallo
+ITEM|bayas|sweet berries,bayas dulces
+ITEM|remolacha|beetroot
+ITEM|cacao|cocoa
+ITEM|miel|honey,panal
+ITEM|huevo|egg
+ITEM|lana|wool
+ITEM|cuerda|string
+ITEM|polvora|gunpowder
+ITEM|hueso|bones,huesito
+ITEM|palo|stick,palito
+ITEM|pedernal|flint
+ITEM|nieve|snow
+ITEM|hielo|ice
+ITEM|musgo|moss
+ITEM|enredadera|vine
+ITEM|hongo|mushroom,champiñon
+ITEM|flor|flower,flores
+ITEM|hierba|grass,pasto
+ITEM|ladrillo|brick,ladrillos
+ITEM|poción|potion
+ITEM|flecha|arrow
+ITEM|ballesta|crossbow
+ITEM|tridente|trident
+ITEM|escudo|shield
+
+# ================== MATERIALES EN INGLÉS (jugadores bilingües) =========
+ITEM|madera|wood,oak,log,planks,timber
+ITEM|piedra|stone,cobble,cobblestone,rock
+ITEM|hierro|iron,iron ore,iron ingot
+ITEM|diamante|diamond,diamonds
+ITEM|carbon|coal,charcoal
+ITEM|oro|gold,gold ore,gold ingot
+ITEM|esmeralda|emerald,emeralds
+ITEM|redstone|redstone dust
+ITEM|arena|sand
+ITEM|tierra|dirt
+ITEM|grava|gravel
+ITEM|vidrio|glass
+ITEM|cofre|chest
+ITEM|horno|furnace
+ITEM|mesa|crafting table,workbench
+ITEM|antorcha|torch
+ITEM|pico|pickaxe,pick
+ITEM|espada|sword
+ITEM|hacha|axe
+ITEM|pala|shovel,spade
+ITEM|comida|food
+
+# ========================= MÁS CRIATURAS ===============================
+MOB|warden|wardens,guardian del abismo
+MOB|allay|allays
+MOB|rana|frog,ranas
+MOB|cabra|goat,cabras
+MOB|camello|camel,camellos
+MOB|sniffer|sniffers
+MOB|breeze|breezes
+MOB|bogged|boggeds
+MOB|hoglin|hoglins
+MOB|strider|striders
+MOB|fantasma|phantom,phantoms
+MOB|shulker|shulkers
+MOB|guardian|guardianes
+MOB|raider|ravager,saqueadores
+MOB|vex|vexes
+MOB|evocador|evoker
+MOB|vindicador|vindicator
+MOB|esqueleto wither|wither skeleton
+MOB|cubo de magma|magma cube
+MOB|silverfish|lepisma
+MOB|abeja|bee,abejas
+MOB|panda|pandas
+MOB|lora|parrot,loro
+MOB|tortuga|turtle,tortugas
+MOB|delfin|dolphin
+MOB|calamar|squid
+MOB|salmon|salmones
+MOB|llama|llamas
+MOB|comerciante|wandering trader
+
+# ========================= MÁS LUGARES =================================
+PLACE|llanura|plains,pradera
+PLACE|sabana|savanna
+PLACE|taiga|taiga nevada
+PLACE|pantano|swamp,cienaga
+PLACE|badlands|meseta,desierto rojo
+PLACE|bosque de cerezo|cherry grove
+PLACE|manglar|mangrove
+PLACE|cueva luminosa|lush cave
+PLACE|ciudad antigua|ancient city
+PLACE|fortaleza|stronghold
+PLACE|fortaleza del nether|nether fortress
+PLACE|bastion|bastion remnant
+PLACE|ciudad del end|end city
+PLACE|monumento|ocean monument
+PLACE|barco hundido|shipwreck
+PLACE|mina abandonada|mineshaft
+PLACE|cañon|ravine
+
+# =========================== MÁS JERGA =================================
+PHRASE|greet|que haces,que haces che,que andas haciendo,como te va,que tal todo,hola che
+PHRASE|elogio|sos un crack,sos un fenomeno,te salio genial,alta laburo,la rompiste toda
+PHRASE|insulto|andate a cagar,sos un inutil,no servis para nada,cerra el orto
+PHRASE|preferencia|me re copa,me re gusta,no me copa,ni me gusta,me da igual
+PHRASE|yes|dale que va,de una che,obvio que si,al toque,ya fue
+PHRASE|no|ni a palos,ni de casualidad,olvidate che,ni lo sueñes
+PHRASE|duda|ni idea che,no tengo la mas palida,no cazo una
+PHRASE|jaja|me muero de risa,que haces jaja,me cague todo
+
+# ======================= INTENCIÓN DE CAVAR ============================
+# Si aparece alguna, la orden de mena habilita rampa + galería (tunnel=true).
+TUNNEL|tunel|tuneles,tunelar,hacer un tunel,bajo tierra,subterraneo,profundo,profundidad,fondo,galeria,galerias,rampa,rampas,socavon,mina profunda,cavar abajo,picar abajo,excavar

@@ -38,7 +38,7 @@ import java.util.Set;
 public final class Lexicon {
 
     public enum Category {
-        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE
+        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE, TUNNEL
     }
 
     /** One word with its synonyms and, for verbs, the action it refers to. */
@@ -56,6 +56,11 @@ public final class Lexicon {
     private final Map<String, Entry> verbForms = new LinkedHashMap<>();
     private final Map<String, Entry> phrases = new LinkedHashMap<>();
     private final Set<String> imperativeForms = new LinkedHashSet<>();
+    /** Words that ask for a ramp/tunnel instead of a surface search. */
+    private final Set<String> tunnelWords = new LinkedHashSet<>();
+    /** Recent typo corrections, so a miss does not rescan the whole lexicon. */
+    private final Map<String, Entry> typoHits = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Set<String> typoMisses = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private List<Map.Entry<String, Entry>> phrasesByLength = List.of();
 
     private Lexicon() {
@@ -85,10 +90,26 @@ public final class Lexicon {
     private static Lexicon load() {
         Lexicon lexicon = new Lexicon();
         lexicon.loadStream(Lexicon.class.getResourceAsStream("/cove/lexicon.txt"));
+        // Generated from Minecraft's own language files: every item, block, mob,
+        // biome and effect in Spanish with its English name as an alias.
+        lexicon.loadStream(Lexicon.class.getResourceAsStream("/cove/minecraft-terms.txt"));
         lexicon.loadStream(Lexicon.class.getResourceAsStream("/cove/lexicon-extra.txt"));
         String extraPath = System.getProperty("covemcp.lexiconExtra");
         if (extraPath != null && !extraPath.isBlank()) {
             Path path = Path.of(extraPath);
+            if (Files.isReadable(path)) {
+                try (InputStream stream = Files.newInputStream(path)) {
+                    lexicon.loadStream(stream);
+                } catch (IOException e) {
+                    System.err.println("[cove] no se pudo leer " + path + ": " + e.getMessage());
+                }
+            }
+        }
+        // Everything Cove learned while playing is written here by Learning, in
+        // the same format, so it is simply more base knowledge on the next load.
+        String learnedPath = System.getProperty("covemcp.lexiconLearned");
+        if (learnedPath != null && !learnedPath.isBlank()) {
+            Path path = Path.of(learnedPath);
             if (Files.isReadable(path)) {
                 try (InputStream stream = Files.newInputStream(path)) {
                     lexicon.loadStream(stream);
@@ -142,6 +163,13 @@ public final class Lexicon {
                 String action = parts.length > 3 ? parts[3].trim() : "";
                 String hint = parts.length > 4 ? parts[4].trim() : "";
                 Entry entry = new Entry(canonical, category, List.copyOf(synonyms), action, hint);
+                if (category == Category.TUNNEL) {
+                    this.tunnelWords.add(Spanish.normalize(canonical));
+                    for (String synonym : synonyms) {
+                        this.tunnelWords.add(Spanish.normalize(synonym));
+                    }
+                    continue;
+                }
                 if (category == Category.PHRASE) {
                     this.phrases.putIfAbsent(Spanish.normalize(canonical), entry);
                     for (String synonym : synonyms) {
@@ -241,7 +269,133 @@ public final class Lexicon {
                 return candidate.getValue();
             }
         }
+        // Typed in a hurry: "diamnte", "cortr el arbol". One edit away is a
+        // typo, not a new word; two only for long words.
+        Entry typo = fuzzy(key);
+        if (typo != null) {
+            return typo;
+        }
         return null;
+    }
+
+    /**
+     * Nearest known word within one edit (two for long words), cached. Words under
+     * five letters are skipped on purpose: correcting "cazo" into "capo" invents a
+     * compliment and is worse than admitting the word is unknown.
+     */
+    public Entry fuzzy(String key) {
+        if (key == null || key.length() < 5) {
+            return null;
+        }
+        Entry cached = this.typoHits.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        if (this.typoMisses.contains(key)) {
+            return null;
+        }
+        int limit = key.length() >= 8 ? 2 : 1;
+        Entry best = null;
+        int bestDistance = Integer.MAX_VALUE;
+        for (Map.Entry<String, Entry> candidate : this.byWord.entrySet()) {
+            String word = candidate.getKey();
+            if (Math.abs(word.length() - key.length()) > limit) {
+                continue;
+            }
+            int distance = distance(key, word, limit);
+            if (distance < bestDistance && distance <= limit) {
+                bestDistance = distance;
+                best = candidate.getValue();
+                if (distance == 1) {
+                    break;
+                }
+            }
+        }
+        if (best == null) {
+            for (Map.Entry<String, Entry> candidate : this.verbForms.entrySet()) {
+                String word = candidate.getKey();
+                if (Math.abs(word.length() - key.length()) > limit) {
+                    continue;
+                }
+                int distance = distance(key, word, limit);
+                if (distance < bestDistance && distance <= limit) {
+                    bestDistance = distance;
+                    best = candidate.getValue();
+                }
+            }
+        }
+        if (best == null) {
+            this.typoMisses.add(key);
+        } else {
+            this.typoHits.put(key, best);
+        }
+        return best;
+    }
+
+    /** Optimal string alignment distance, bounded by {@code limit}. */
+    private static int distance(String a, String b, int limit) {
+        if (a.equals(b)) {
+            return 0;
+        }
+        if (Math.abs(a.length() - b.length()) > limit) {
+            return limit + 1;
+        }
+        int[] previous = new int[b.length() + 1];
+        int[] current = new int[b.length() + 1];
+        int[] beforePrevious = new int[b.length() + 1];
+        for (int j = 0; j <= b.length(); j++) {
+            previous[j] = j;
+        }
+        for (int i = 1; i <= a.length(); i++) {
+            current[0] = i;
+            for (int j = 1; j <= b.length(); j++) {
+                int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+                current[j] = Math.min(Math.min(current[j - 1] + 1, previous[j] + 1),
+                        previous[j - 1] + cost);
+                if (i > 1 && j > 1 && a.charAt(i - 1) == b.charAt(j - 2)
+                        && a.charAt(i - 2) == b.charAt(j - 1)) {
+                    current[j] = Math.min(current[j], beforePrevious[j - 2] + 1);
+                }
+            }
+            int[] swap = beforePrevious;
+            beforePrevious = previous;
+            previous = current;
+            current = swap;
+        }
+        return previous[b.length()];
+    }
+
+    /** True when the message asks to dig down ("cavá un túnel", "bajá buscando hierro"). */
+    public boolean tunnelIntent(String normalizedText) {
+        if (normalizedText == null || normalizedText.isBlank()) {
+            return false;
+        }
+        String padded = " " + normalizedText + " ";
+        for (String word : this.tunnelWords) {
+            if (!word.isBlank() && padded.contains(" " + word + " ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds a word learned mid-game. Same indices as a file entry, so the next
+     * message already understands it; the file keeps it for the next session.
+     */
+    public synchronized void addLearned(Entry entry) {
+        if (entry == null || entry.canonical() == null || entry.canonical().isBlank()) {
+            return;
+        }
+        index(Spanish.normalize(entry.canonical()), entry);
+        for (String synonym : entry.synonyms()) {
+            index(Spanish.normalize(synonym), entry);
+        }
+        if (entry.category() == Category.VERB) {
+            indexVerbForms(entry);
+        }
+        this.typoHits.clear();
+        this.typoMisses.clear();
     }
 
     /** True when the token is an imperative form of any known verb. */
@@ -315,6 +469,10 @@ public final class Lexicon {
 
     public int phraseCount() {
         return this.phrases.size();
+    }
+
+    public int tunnelWordCount() {
+        return this.tunnelWords.size();
     }
 
     private static String stripReflexive(String token) {

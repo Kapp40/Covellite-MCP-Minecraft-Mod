@@ -20,6 +20,7 @@ import covellite.agent.brain.BrainArbiter;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
+import covellite.core.TunnelPlan;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.Event;
 import covellite.core.event.EventLog;
@@ -167,6 +168,11 @@ public final class BridgeApi {
     private double followDistance = 3.0D;
     private boolean followResume = false;
     private long followResumeAt = 0L;
+
+    /** Where a ramp/gallery run started; the companion walks back when it ends. */
+    private BlockPos digOrigin = null;
+    /** Deferred walk home, handled by autopilotTick outside any task. */
+    private BlockPos returnTo = null;
 
     // Distinct role states: staying still is NOT guarding a place.
     private boolean staying = false;
@@ -1004,6 +1010,7 @@ public final class BridgeApi {
         if (task instanceof GotoTask) return "goto";
         if (task instanceof FollowTask) return "follow";
         if (task instanceof GatherTask gather) return "gather:" + gather.what;
+        if (task instanceof DigMineTask dig) return "dig:" + dig.what;
         if (task instanceof CraftTask) return "craft";
         if (task instanceof SleepTask) return "sleep";
         return "task";
@@ -1014,6 +1021,7 @@ public final class BridgeApi {
         if (task instanceof GotoTask gotoTask) return gotoTask.id;
         if (task instanceof FollowTask follow) return follow.id;
         if (task instanceof GatherTask gather) return gather.id;
+        if (task instanceof DigMineTask dig) return dig.id;
         if (task instanceof CraftTask craft) return craft.id;
         return null;
     }
@@ -2321,12 +2329,34 @@ public final class BridgeApi {
         }
         int count = (int) clamp(num(params, "count", 32.0D), 1.0D, 256.0D);
         double radius = clamp(num(params, "radius", 32.0D), 4.0D, 32.0D);
-        int timeout = (int) clamp(num(params, "timeout_ticks", 6000.0D), 100.0D, 12000.0D);
+        // Ores in the overworld fall back to ramp + gallery digging when the
+        // first scan finds nothing; everything else behaves exactly as before.
+        Integer digY = TunnelPlan.targetY(what);
+        // Opt-in on purpose: tunnelling can dig hundreds of blocks, so it only
+        // happens when the caller asks for it, never as a side effect.
+        boolean tunnel = digY != null && bool(params, "tunnel", false)
+                && "overworld".equals(dimName(player.serverLevel()));
+        int requested = (int) clamp(num(params, "timeout_ticks", tunnel ? 12000.0D : 6000.0D),
+                100.0D, 12000.0D);
+        // A 120-block descent does not fit in 6000 ticks: the budget follows the
+        // distance to the ore's Y instead of guessing.
+        int timeout = tunnel ? TunnelPlan.timeoutFor(player.getY(), digY, requested)
+                : (int) clamp(requested, 100.0D, 12000.0D);
         boolean allowPlayerBlocks = bool(params, "allow_player_blocks", false);
+        boolean voidSpoil = bool(params, "void_spoil", false);
+        boolean returnHome = bool(params, "return_home", true);
         String id = newAction("gather", "running");
-        startTask(new GatherTask(id, what, count, radius, timeout, false, allowPlayerBlocks, null), player);
+        if (tunnel) {
+            this.digOrigin = returnHome ? player.blockPosition().immutable() : null;
+            startTask(new DigMineTask(id, what, count, radius, timeout, allowPlayerBlocks, digY,
+                    voidSpoil), player);
+        } else {
+            this.digOrigin = null;
+            startTask(new GatherTask(id, what, count, radius, timeout, false, allowPlayerBlocks, null), player);
+        }
         rememberChore("gather", Map.of("what", what, "count", count, "radius", radius,
-                "timeout_ticks", timeout));
+                "timeout_ticks", timeout, "tunnel", tunnel, "void_spoil", voidSpoil,
+                "return_home", returnHome));
         armInterrupts(params, player);
         return actionResult(id, "running");
     }
@@ -2486,6 +2516,30 @@ public final class BridgeApi {
     private static float toolScore(ItemStack stack, BlockState state) {
         boolean usable = !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state);
         return (usable ? 1000.0F : 0.0F) + stack.getDestroySpeed(state);
+    }
+
+    /** Puts the best tool for this block in the selected hotbar slot (swapping from the backpack if needed). */
+    private static void equipBestTool(CompanionPlayer player, BlockState state) {
+        Inventory inventory = player.getInventory();
+        int best = inventory.selected;
+        float bestScore = toolScore(inventory.getItem(best), state);
+        for (int i = 0; i < 36; i++) {
+            float score = toolScore(inventory.getItem(i), state);
+            if (score > bestScore + 0.01F) {
+                best = i;
+                bestScore = score;
+            }
+        }
+        if (best >= 9) {
+            // The tool is in the backpack: swap it into the hand slot.
+            int slot = inventory.selected;
+            ItemStack previous = inventory.getItem(slot);
+            inventory.setItem(slot, inventory.getItem(best));
+            inventory.setItem(best, previous);
+            best = slot;
+        }
+        inventory.selected = best;
+        player.containerMenu.broadcastChanges();
     }
 
     private static boolean hasUsableTool(ServerPlayer player, BlockState state) {
@@ -2894,26 +2948,7 @@ public final class BridgeApi {
         }
 
         private void selectBestTool(CompanionPlayer player, BlockState state) {
-            Inventory inventory = player.getInventory();
-            int best = inventory.selected;
-            float bestScore = toolScore(inventory.getItem(best), state);
-            for (int i = 0; i < 36; i++) {
-                float score = toolScore(inventory.getItem(i), state);
-                if (score > bestScore + 0.01F) {
-                    best = i;
-                    bestScore = score;
-                }
-            }
-            if (best >= 9) {
-                // The tool is in the backpack: swap it into the hand slot.
-                int slot = inventory.selected;
-                ItemStack previous = inventory.getItem(slot);
-                inventory.setItem(slot, inventory.getItem(best));
-                inventory.setItem(best, previous);
-                best = slot;
-            }
-            inventory.selected = best;
-            player.containerMenu.broadcastChanges();
+            equipBestTool(player, state);
         }
 
         /** One tick of breaking: accumulates the vanilla destroy progress and swings. */
@@ -3013,6 +3048,540 @@ public final class BridgeApi {
             }
             controller.move(1.0D, 0.0D, false, 3);
             return true;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Tunnel mining: reach the right depth, open a gallery, scan again
+    // ------------------------------------------------------------------
+
+    /** Scan radius for every scan after the first one (the first uses the caller's radius). */
+    private static final double DIG_SCAN_RADIUS = 16.0D;
+    /** Gallery blocks dug between two scans; below the scan radius so coverage overlaps. */
+    private static final int DIG_SEGMENT = 12;
+    /** After this many gallery segments the gallery turns 90 degrees (branch mining). */
+    private static final int DIG_TURN_EVERY = 6;
+    /** Hard cap on blocks broken while tunnelling, so a barren area cannot dig forever. */
+    private static final int DIG_MAX_DUG = 400;
+
+    /** Junk the tunnel produces; voided only when the backpack is nearly full. */
+    private static final Set<String> SPOIL = Set.of("cobblestone", "cobbled_deepslate", "dirt", "gravel",
+            "tuff", "andesite", "diorite", "granite", "deepslate", "stone");
+
+    /** True when this cell or any of its six neighbours holds water or lava. */
+    private static boolean fluidNear(ServerLevel level, BlockPos pos) {
+        if (!level.getFluidState(pos).isEmpty()) {
+            return true;
+        }
+        for (Direction side : Direction.values()) {
+            if (!level.getFluidState(pos.relative(side)).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Free to walk through without breaking anything (air, torches, grass...). */
+    private static boolean passable(ServerLevel level, BlockPos pos, BlockState state) {
+        return state.isAir()
+                || (state.getCollisionShape(level, pos).isEmpty() && state.getFluidState().isEmpty());
+    }
+
+    private static int emptySlots(CompanionPlayer player) {
+        Inventory inventory = player.getInventory();
+        int empty = 0;
+        for (int slot = 0; slot < 36; slot++) {
+            if (inventory.getItem(slot).isEmpty()) {
+                empty++;
+            }
+        }
+        return empty;
+    }
+
+    /**
+     * Cleans junk once the backpack is nearly full. Destruction only happens when
+     * {@code void_spoil} was requested; otherwise the spoil is dropped on the
+     * floor, where the player can still pick it up. One stack of cobblestone and
+     * one of cobbled deepslate are always kept as building material.
+     */
+    private static int dumpSpoil(CompanionPlayer player, boolean destroy) {
+        Inventory inventory = player.getInventory();
+        if (emptySlots(player) > 3) {
+            return 0;
+        }
+        boolean keptCobble = false;
+        boolean keptDeepslate = false;
+        int removed = 0;
+        for (int slot = 0; slot < 36; slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            String name = shortName(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (!SPOIL.contains(name)) {
+                continue;
+            }
+            if (name.equals("cobblestone") && !keptCobble) {
+                keptCobble = true;
+                continue;
+            }
+            if (name.equals("cobbled_deepslate") && !keptDeepslate) {
+                keptDeepslate = true;
+                continue;
+            }
+            if (destroy) {
+                removed += stack.getCount();
+                inventory.setItem(slot, ItemStack.EMPTY);
+            } else {
+                removed += stack.getCount();
+                player.drop(stack.copy(), false);
+                inventory.setItem(slot, ItemStack.EMPTY);
+            }
+        }
+        if (removed > 0) {
+            player.containerMenu.broadcastChanges();
+        }
+        return removed;
+    }
+
+    /**
+     * Mining when there is no ore around: wraps {@link GatherTask} and, each time
+     * it reports "nothing found", relocates and scans again.
+     *
+     * <pre>
+     *   SCAN    run a GatherTask (first with the caller's radius, then 16)
+     *     found  -> done                      none -> DESCEND or GALLERY
+     *   DESCEND 1:1 staircase (3 blocks per step) until feet Y reaches the ore's best Y
+     *   GALLERY 1x2 tunnel, 12 blocks, then SCAN again; turns 90 degrees every 6 segments
+     * </pre>
+     *
+     * Every step is checked before it is dug: water or lava touching the cells,
+     * a missing floor (cave), a block that is not safe to break, or a tool that is
+     * too slow. A hazard turns the tunnel 90 degrees; four turns in a row, more
+     * than twelve hazards in total, or 400 blocks dug end the task with the reason.
+     * Nothing is remembered between ticks that the world cannot tell again, so a
+     * restart after a survival reflex (chore keeper) simply rescans and continues.
+     */
+    private final class DigMineTask implements Task {
+
+        private enum Phase { SCAN, DESCEND, GALLERY }
+
+        private final String id;
+        private final String what;
+        private final Predicate<BlockState> matcher;
+        private final int goal;
+        private final double radius;
+        private final int timeoutTicks;
+        private final boolean allowPlayerBlocks;
+        private final int targetY;
+        private final ProgressWatch watch = new ProgressWatch();
+
+        private Phase phase = Phase.SCAN;
+        private GatherTask scan;
+        private Map<String, Integer> before;
+        private Direction dir;
+        private BlockPos dest;
+        private BlockPos mining;
+        private float progress;
+        private int lastStage = -1;
+        private int swings;
+        private int ticks;
+        private int scans;
+        private int caveScans;
+        private int broken;
+        private int dug;
+        private int steps;
+        private int segmentSteps;
+        private int segments;
+        private int hazards;
+        private int dirTries;
+        private int breaksThisStep;
+        private int moveTicks;
+        private int discarded;
+        private int torches;
+        private int extensionTicks;
+        private final boolean voidSpoil;
+        private String lastHazard;
+
+        DigMineTask(String id, String what, int goal, double radius, int timeoutTicks,
+                    boolean allowPlayerBlocks, int targetY, boolean voidSpoil) {
+            this.id = id;
+            this.what = what;
+            this.matcher = blockMatcher(what);
+            this.goal = goal;
+            this.radius = radius;
+            this.timeoutTicks = timeoutTicks;
+            this.allowPlayerBlocks = allowPlayerBlocks;
+            this.targetY = targetY;
+            this.voidSpoil = voidSpoil;
+        }
+
+        @Override
+        public int priority() {
+            return 60;
+        }
+
+        @Override
+        public boolean tick(CompanionPlayer player, MinecraftServer server) {
+            ServerLevel level = player.serverLevel();
+            if (this.before == null) {
+                this.before = inventoryTotals(player);
+                this.dir = Direction.fromYRot(player.getYRot());
+                if (!player.getAbilities().instabuild
+                        && !hasUsableTool(player, Blocks.STONE.defaultBlockState())) {
+                    throw new IllegalStateException("need_better_tool:pickaxe (nothing to dig with)");
+                }
+            }
+            if (++this.ticks > this.timeoutTicks + this.extensionTicks) {
+                throw new IllegalStateException("timeout after "
+                        + (this.timeoutTicks + this.extensionTicks) + " ticks ("
+                        + this.dug + " blocks dug, " + this.broken + "/" + this.goal + " " + this.what + ")");
+            }
+            if (player.getHealth() <= 4.0F) {
+                throw new IllegalStateException("low_health");
+            }
+            if (this.mining != null) {
+                mine(player, level);
+                return false;
+            }
+            return switch (this.phase) {
+                case SCAN -> scanTick(player, server);
+                case DESCEND, GALLERY -> stepTick(player, level);
+            };
+        }
+
+        @Override
+        public Map<String, Object> result(CompanionPlayer player) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("what", this.what);
+            out.put("broken", this.broken);
+            out.put("goal", this.goal);
+            out.put("tunnelled", this.dug);
+            out.put("target_y", this.targetY);
+            out.put("phase", this.phase.name().toLowerCase(java.util.Locale.ROOT));
+            out.put("void_spoil", this.voidSpoil);
+            if (this.torches > 0) {
+                out.put("torches", this.torches);
+            }
+            if (this.lastHazard != null) {
+                out.put("issue", this.lastHazard);
+            }
+            if (this.discarded > 0) {
+                out.put("discarded_spoil", this.discarded);
+            }
+            if (this.before != null) {
+                Map<String, Object> gained = new LinkedHashMap<>();
+                for (Map.Entry<String, Integer> entry : inventoryTotals(player).entrySet()) {
+                    int delta = entry.getValue() - this.before.getOrDefault(entry.getKey(), 0);
+                    if (delta > 0) {
+                        gained.put(entry.getKey(), delta);
+                    }
+                }
+                if (!gained.isEmpty()) {
+                    out.put("gained", gained);
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public void cleanup(CompanionPlayer player) {
+            if (this.mining != null) {
+                player.serverLevel().destroyBlockProgress(player.getId(), this.mining, -1);
+                this.mining = null;
+            }
+            if (this.scan != null) {
+                absorbScan(player);
+            }
+        }
+
+        // ---- SCAN -----------------------------------------------------
+
+        private boolean scanTick(CompanionPlayer player, MinecraftServer server) {
+            if (this.scan == null) {
+                int budget = Math.max(200, this.timeoutTicks - this.ticks);
+                double r = this.scans == 0 ? this.radius : Math.min(this.radius, DIG_SCAN_RADIUS);
+                this.scans++;
+                this.scan = new GatherTask(this.id, this.what, this.goal - this.broken, r, budget,
+                        false, this.allowPlayerBlocks, null);
+            }
+            try {
+                if (!this.scan.tick(player, server)) {
+                    return false;
+                }
+            } catch (IllegalStateException e) {
+                String message = e.getMessage();
+                boolean nothingFound = message != null && message.startsWith("no ")
+                        && !(this.scan.lastReason != null
+                        && this.scan.lastReason.startsWith("need_better_tool"));
+                absorbScan(player);
+                if (!nothingFound) {
+                    // timeout, low health, or ore that exists but needs a better pickaxe.
+                    throw e;
+                }
+                if (this.broken >= this.goal) {
+                    return true;
+                }
+                if (this.dug >= DIG_MAX_DUG) {
+                    throw new IllegalStateException("no " + this.what + " found after tunnelling "
+                            + this.dug + " blocks" + (this.lastHazard == null ? "" : " (" + this.lastHazard + ")"));
+                }
+                this.phase = player.getY() > this.targetY + 2.0D ? Phase.DESCEND : Phase.GALLERY;
+                this.segmentSteps = 0;
+                // Scanning and the descent eat a large part of the budget; make
+                // sure the gallery itself still has time instead of dying at the
+                // first scan below.
+                int remaining = this.timeoutTicks + this.extensionTicks - this.ticks;
+                if (remaining < 2500) {
+                    int extra = Math.min(3000, 2500 - remaining);
+                    this.extensionTicks = Math.min(this.extensionTicks + extra,
+                            Math.max(0, 12000 - this.timeoutTicks));
+                }
+                return false;
+            }
+            absorbScan(player);
+            return true;
+        }
+
+        private void absorbScan(CompanionPlayer player) {
+            this.broken += this.scan.broken;
+            this.scan.cleanup(player);
+            this.scan = null;
+        }
+
+        private void enterScan() {
+            this.phase = Phase.SCAN;
+            this.scan = null;
+            this.dest = null;
+            BridgeApi.this.companion.controller().stop();
+        }
+
+        // ---- DESCEND / GALLERY ---------------------------------------
+
+        private boolean stepTick(CompanionPlayer player, ServerLevel level) {
+            boolean down = this.phase == Phase.DESCEND;
+            BlockPos feet = player.blockPosition();
+
+            if (this.dest != null) {
+                moveStep(player, level, feet);
+                return false;
+            }
+            if (this.broken >= this.goal) {
+                return true;
+            }
+            if (down && feet.getY() <= this.targetY + 1) {
+                enterScan();
+                return false;
+            }
+            if (!down && this.segmentSteps >= DIG_SEGMENT) {
+                this.segments++;
+                this.segmentSteps = 0;
+                if (this.segments % DIG_TURN_EVERY == 0) {
+                    this.dir = this.dir.getClockWise();
+                }
+                enterScan();
+                return false;
+            }
+
+            BlockPos next = feet.relative(this.dir);
+            List<BlockPos> column = down
+                    ? List.of(next.above(), next, next.below())
+                    : List.of(next.above(), next);
+            BlockPos landing = column.get(column.size() - 1);
+            BlockPos floor = landing.below();
+
+            String hazard = columnHazard(level, column, floor);
+            if (hazard != null) {
+                if (down && "gap_below".equals(hazard) && this.caveScans < 2) {
+                    // Opened into a cave: ore is often exposed there, look before turning.
+                    this.caveScans++;
+                    this.lastHazard = "cave_below";
+                    enterScan();
+                    return false;
+                }
+                hazard(hazard);
+                return false;
+            }
+
+            for (BlockPos pos : column) {
+                BlockState state = level.getBlockState(pos);
+                if (passable(level, pos, state)) {
+                    continue;
+                }
+                if (++this.breaksThisStep > 10) {
+                    hazard("unstable_ceiling");
+                    return false;
+                }
+                if (!beginBreak(player, level, pos)) {
+                    hazard("too_slow_without_tool:"
+                            + shortName(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString()));
+                }
+                return false;
+            }
+
+            this.dest = landing.immutable();
+            this.moveTicks = 0;
+            this.watch.reset(Double.MAX_VALUE);
+            return false;
+        }
+
+        /** Null when the column can be dug and walked; otherwise the reason it cannot. */
+        private String columnHazard(ServerLevel level, List<BlockPos> column, BlockPos floor) {
+            for (BlockPos pos : column) {
+                if (!level.isLoaded(pos)) {
+                    return "unloaded_chunk";
+                }
+                if (fluidNear(level, pos)) {
+                    return "fluid_ahead";
+                }
+                BlockState state = level.getBlockState(pos);
+                if (!passable(level, pos, state) && !diggable(level, pos, state)) {
+                    return "blocked_by:" + shortName(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+                }
+            }
+            if (!level.isLoaded(floor)) {
+                return "unloaded_chunk";
+            }
+            if (!level.getFluidState(floor).isEmpty()) {
+                return "fluid_floor";
+            }
+            if (level.getBlockState(floor).getCollisionShape(level, floor).isEmpty()) {
+                return "gap_below";
+            }
+            return null;
+        }
+
+        /** Walks into the cell that was just cleared; re-checks it every tick (gravel can fall in). */
+        private void moveStep(CompanionPlayer player, ServerLevel level, BlockPos feet) {
+            if (feet.equals(this.dest)) {
+                this.dest = null;
+                this.steps++;
+                if (this.phase == Phase.GALLERY) {
+                    this.segmentSteps++;
+                }
+                this.breaksThisStep = 0;
+                this.dirTries = 0;
+                // Making real progress resets the hazard tally: twelve harmless
+                // turns should not kill a long, productive excavation.
+                this.hazards = 0;
+                BridgeApi.this.companion.controller().stop();
+                if (this.phase == Phase.GALLERY) {
+                    lightStep(player, level, feet);
+                }
+                return;
+            }
+            BlockState body = level.getBlockState(this.dest);
+            BlockState head = level.getBlockState(this.dest.above());
+            if (!passable(level, this.dest, body) || !passable(level, this.dest.above(), head)) {
+                this.dest = null; // something fell in: plan the step again
+                return;
+            }
+            if (++this.moveTicks > 80) {
+                hazard("stuck_stepping");
+                return;
+            }
+            Vec3 c = Vec3.atBottomCenterOf(this.dest);
+            try {
+                driveTowards(player, c.x, c.y, c.z, 0.15D, this.watch);
+            } catch (IllegalStateException e) {
+                hazard("cannot_step");
+            }
+        }
+
+        /**
+         * Puts a torch down every few blocks of gallery when it is dark and there
+         * are torches in the inventory. A failed placement never stops the dig.
+         */
+        private void lightStep(CompanionPlayer player, ServerLevel level, BlockPos feet) {
+            if (this.steps % 6 != 0 || level.getMaxLocalRawBrightness(feet) >= 7) {
+                return;
+            }
+            if (findBlockItemSlot(player, "torch") < 0) {
+                return;
+            }
+            try {
+                placeBlock(Map.of("x", feet.getX(), "y", feet.getY(), "z", feet.getZ(),
+                        "block", "torch"));
+                this.torches++;
+            } catch (RuntimeException ignored) {
+                // No support or out of reach: keep digging, it is only lighting.
+            }
+        }
+
+        /** Records a hazard and turns 90 degrees; gives up after four turns in a row. */
+        private void hazard(String reason) {
+            this.lastHazard = reason;
+            this.hazards++;
+            this.dest = null;
+            this.breaksThisStep = 0;
+            if (++this.dirTries > 4 || this.hazards > 12) {
+                throw new IllegalStateException("tunnel_blocked:" + reason + " after "
+                        + this.dug + " blocks dug");
+            }
+            this.dir = this.dir.getClockWise();
+        }
+
+        // ---- breaking (same vanilla break time as GatherTask) --------
+
+        private boolean beginBreak(CompanionPlayer player, ServerLevel level, BlockPos pos) {
+            BlockState state = level.getBlockState(pos);
+            if (state.getDestroySpeed(level, pos) < 0.0F) {
+                return false;
+            }
+            BridgeApi.this.companion.controller().stop();
+            equipBestTool(player, state);
+            if (!player.getAbilities().instabuild
+                    && state.getDestroyProgress(player, level, pos) < 1.0F / 600.0F) {
+                return false;
+            }
+            this.mining = pos.immutable();
+            this.progress = 0.0F;
+            this.lastStage = -1;
+            this.swings = 0;
+            return true;
+        }
+
+        private void mine(CompanionPlayer player, ServerLevel level) {
+            BlockState state = level.getBlockState(this.mining);
+            Vec3 center = Vec3.atCenterOf(this.mining);
+            if (state.isAir()
+                    || player.getEyePosition().distanceTo(center) > player.blockInteractionRange() + 0.5D) {
+                level.destroyBlockProgress(player.getId(), this.mining, -1);
+                this.mining = null;
+                return;
+            }
+            lookAtPoint(player, center);
+            this.progress += player.getAbilities().instabuild
+                    ? 1.0F : state.getDestroyProgress(player, level, this.mining);
+            if (this.swings++ % 6 == 0) {
+                player.swing(InteractionHand.MAIN_HAND, true);
+            }
+            if (this.progress < 1.0F) {
+                int stage = (int) (this.progress * 10.0F);
+                if (stage != this.lastStage) {
+                    level.destroyBlockProgress(player.getId(), this.mining, stage);
+                    this.lastStage = stage;
+                }
+                return;
+            }
+            BlockPos done = this.mining;
+            boolean wanted = this.matcher.test(state);
+            this.mining = null;
+            level.destroyBlockProgress(player.getId(), done, -1);
+            if (player.gameMode.destroyBlock(done)) {
+                player.containerMenu.broadcastChanges();
+                this.dug++;
+                if (wanted) {
+                    this.broken++; // ore met on the way counts toward the goal
+                }
+                this.discarded += dumpSpoil(player, this.voidSpoil);
+                if (emptySlots(player) <= 1) {
+                    throw new IllegalStateException("inventory_full: no room for more "
+                            + this.what + " (" + this.dug + " blocks dug)");
+                }
+            } else {
+                hazard("break_rejected");
+            }
         }
     }
 
@@ -4642,6 +5211,7 @@ public final class BridgeApi {
         if (task instanceof GotoTask gotoTask) return gotoTask.id;
         if (task instanceof FollowTask followTask) return followTask.id;
         if (task instanceof GatherTask gatherTask) return gatherTask.id;
+        if (task instanceof DigMineTask digTask) return digTask.id;
         if (task instanceof CraftTask craftTask) return craftTask.id;
         if (task instanceof SleepTask sleepTask) return sleepTask.id;
         return null;
@@ -4874,6 +5444,16 @@ public final class BridgeApi {
             maybeAutoDefend(player);
         }
         choreKeeperTick(player);
+        if (this.returnTo != null && this.activeTask == null) {
+            BlockPos home = this.returnTo;
+            this.returnTo = null;
+            if (!this.staying && this.guardAnchor == null
+                    && player.blockPosition().distSqr(home) > 400) {
+                String id = newAction("return_home", "running");
+                startTask(new GotoTask(id, home.getX() + 0.5D, home.getY(),
+                        home.getZ() + 0.5D, 2.0D), player);
+            }
+        }
         if (this.followResume && this.activeTask == null
                 && this.autopilotTicks >= this.followResumeAt) {
             ServerPlayer target = this.followTarget == null ? null
@@ -5295,7 +5875,8 @@ public final class BridgeApi {
         if (this.autopilotTicks % 40L != 0L) {
             return;
         }
-        boolean gathering = this.activeTask instanceof GatherTask;
+        boolean gathering = this.activeTask instanceof GatherTask
+                || this.activeTask instanceof DigMineTask;
         if (!gathering) {
             this.inventoryFullWarned = false;
             return;
@@ -7430,6 +8011,7 @@ public final class BridgeApi {
             else if (task instanceof GotoTask gotoTask) id = gotoTask.id;
             else if (task instanceof FollowTask followTask) id = followTask.id;
             else if (task instanceof GatherTask gatherTask) id = gatherTask.id;
+            else if (task instanceof DigMineTask digTask) id = digTask.id;
             else if (task instanceof CraftTask craftTask) id = craftTask.id;
             Map<String, Object> result = null;
             if (id != null) {
@@ -7460,6 +8042,11 @@ public final class BridgeApi {
             }
             if ("completed".equals(state) && result != null) {
                 announceCompletion(task, result);
+                // A tunnel ends far below the surface: walk back to where it
+                // started instead of leaving the companion lost underground.
+                if (task instanceof DigMineTask && this.digOrigin != null) {
+                    this.returnTo = this.digOrigin;
+                }
             }
         }
         this.companion.controller().stop();
@@ -7492,7 +8079,7 @@ public final class BridgeApi {
 
     /** One short line when a long chore really finished (never on cancel/fail). */
     private void announceCompletion(Task task, Map<String, Object> result) {
-        if (task instanceof GatherTask) {
+        if (task instanceof GatherTask || task instanceof DigMineTask) {
             Object gained = result.get("gained");
             String detail = "";
             if (gained instanceof Map<?, ?> map && !map.isEmpty()) {

@@ -137,6 +137,12 @@ public final class CoveProvider implements AgentProvider {
         if (last.startsWith("[Jugador]")) {
             String player = playerFrom(last);
             String said = saidFrom(last);
+            // Definitions and "what is X?" are handled before anything else: a
+            // taught word must be usable on the very next message.
+            java.util.Optional<String> taught = this.brain.learn(said);
+            if (taught.isPresent()) {
+                return new Response(taught.get(), List.of(), "stop");
+            }
             Parser.Reading reading = this.brain.read(said, this.world, pending);
             if (reading.negated() && reading.order()) {
                 return new Response(this.brain.realizer().decline(), List.of(), "stop");

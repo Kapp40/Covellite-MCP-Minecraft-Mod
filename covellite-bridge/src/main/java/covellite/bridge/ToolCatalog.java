@@ -257,6 +257,12 @@ public final class ToolCatalog {
                         "radius", number("Search radius (4-32). Default 24."),
                         "timeout_ticks", integer("100-12000, default 3600."),
                         "allow_player_blocks", bool("Also take player-built logs. Default false."),
+                        "tunnel", bool("Ores only (iron, coal, gold, diamond, copper, redstone, lapis; overworld). "
+                                + "When none is within the radius, dig a stair to the ore's best Y and a gallery, "
+                                + "scanning again. Default false: the caller must ask for it. Needs a pickaxe."),
+                        "void_spoil", bool("Destroy cobble/dirt/tuff when the inventory is nearly full. "
+                                + "Default false: the spoil is dropped on the floor instead."),
+                        "return_home", bool("Walk back to the starting spot after the tunnel ends. Default true."),
                         "ignore", stringArray(IGNORE_DOC), "interrupts", bool(INTERRUPTS_DOC),
                         "wait", bool("Wait until finished. Default true.")),
                 List.of());
@@ -266,7 +272,13 @@ public final class ToolCatalog {
                         "ignore", stringArray(IGNORE_DOC), "interrupts", bool(INTERRUPTS_DOC),
                         "count", integer("Blocks to break (1-256). Default 8."),
                         "radius", number("Search radius (4-32). Default 24."),
-                        "timeout_ticks", integer("100-12000, default 3600."),
+                        "timeout_ticks", integer("100-12000, default 3600 (9000 minimum while tunnelling)."),
+                        "tunnel", bool("Ores only (iron, coal, gold, diamond, copper, redstone, lapis; overworld). "
+                                + "When none is within the radius, dig a stair to the ore's best Y and a gallery, "
+                                + "scanning again. Default false: the caller must ask for it. Needs a pickaxe."),
+                        "void_spoil", bool("Destroy cobble/dirt/tuff when the inventory is nearly full. "
+                                + "Default false: the spoil is dropped on the floor instead."),
+                        "return_home", bool("Walk back to the starting spot after the tunnel ends. Default true."),
                         "wait", bool("Wait until finished. Default true.")),
                 List.of());
         add(tools, connection, "craft_item",

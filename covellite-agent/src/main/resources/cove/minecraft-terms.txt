@@ -1,0 +1,2964 @@
+# Generado desde los archivos de idioma de Minecraft.
+# No editar a mano: correr tools/gen_minecraft_terms.py
+# Formato: CATEGORIA|canonico|sinonimos en espanol e ingles
+PLACE|jungla de bambu|jungla,bambu,bamboo,jungle
+PLACE|deltas de basalto|deltas,basalto,basalt
+PLACE|playa|beach
+PLACE|abedular|birch,forest
+PLACE|cerezal|cherry,grove
+PLACE|oceano frio|oceano,frio,cold,ocean
+PLACE|bosque carmesi|bosque,carmesi,crimson,forest
+PLACE|bosque moteado|bosque,moteado,dappled,forest
+PLACE|bosque oscuro|bosque,oscuro,dark,forest
+PLACE|oceano frio profundo|oceano,frio,profundo,deep,cold,ocean
+PLACE|oscuridad profunda|oscuridad,profunda,deep,dark
+PLACE|oceano congelado profundo|oceano,congelado,profundo,deep,frozen,ocean
+PLACE|oceano tibio profundo|oceano,tibio,profundo,deep,lukewarm,ocean
+PLACE|oceano profundo|oceano,profundo,deep,ocean
+PLACE|desierto|desert
+PLACE|cuevas karsticas|cuevas,karsticas,dripstone,caves
+PLACE|el end - zona arida|end,zona,arida,barrens
+PLACE|el end - zona alta|end,zona,alta,highlands
+PLACE|el end - zona central|end,zona,central,midlands
+PLACE|badlands erosionadas|badlands,erosionadas,eroded
+PLACE|bosque floral|bosque,floral,flower,forest
+PLACE|bosque|forest
+PLACE|oceano congelado|oceano,congelado,frozen,ocean
+PLACE|cumbres heladas|cumbres,heladas,frozen,peaks
+PLACE|rio congelado|rio,congelado,frozen,river
+PLACE|arboleda|grove
+PLACE|picos de hielo|picos,hielo,ice,spikes
+PLACE|cumbres escarpadas|cumbres,escarpadas,jagged,peaks
+PLACE|jungla|jungle
+PLACE|oceano tibio|oceano,tibio,lukewarm,ocean
+PLACE|cuevas frondosas|cuevas,frondosas,lush,caves
+PLACE|manglar|mangrove,swamp
+PLACE|prado|meadow
+PLACE|campo fungico|campo,fungico,mushroom,fields
+PLACE|desiertos del nether|desiertos,nether,wastes
+PLACE|oceano|ocean
+PLACE|abedular ancestral|abedular,ancestral,old,growth,birch,forest
+PLACE|taiga de pinos ancestral|taiga,pinos,ancestral,old,growth,pine
+PLACE|taiga de abetos ancestral|taiga,abetos,ancestral,old,growth,spruce
+PLACE|jardin palido|jardin,palido,pale,garden
+PLACE|llanura|plains
+PLACE|rio|river
+PLACE|sabana|savanna
+PLACE|meseta de sabana|meseta,sabana,savanna,plateau
+PLACE|el end - islas chicas|end,islas,chicas,small,islands
+PLACE|playa nevada|playa,nevada,snowy,beach
+PLACE|llanura nevada|llanura,nevada,snowy,plains
+PLACE|laderas nevadas|laderas,nevadas,snowy,slopes
+PLACE|taiga nevada|taiga,nevada,snowy
+PLACE|valle de almas|valle,almas,soul,sand,valley
+PLACE|jungla dispersa|jungla,dispersa,sparse,jungle
+PLACE|cumbres rocosas|cumbres,rocosas,stony,peaks
+PLACE|costa rocosa|costa,rocosa,stony,shore
+PLACE|cuevas sulfuricas|cuevas,sulfuricas,sulfur,caves
+PLACE|llanura de girasoles|llanura,girasoles,sunflower,plains
+PLACE|pantano|swamp
+PLACE|el end|end
+PLACE|el vacio|vacio,void
+PLACE|oceano calido|oceano,calido,warm,ocean
+PLACE|bosque distorsionado|bosque,distorsionado,warped,forest
+PLACE|bosque ventiscoso|bosque,ventiscoso,windswept,forest
+PLACE|colinas de grava ventiscosas|colinas,grava,ventiscosas,windswept,gravelly,hills
+PLACE|colinas ventiscosas|colinas,ventiscosas,windswept,hills
+PLACE|sabana ventiscosa|sabana,ventiscosa,windswept,savanna
+PLACE|paramo frondoso|paramo,frondoso,wooded,badlands
+ITEM|boton de acacia|boton,acacia
+ITEM|puerta de acacia|puerta,acacia
+ITEM|valla de acacia|valla,acacia,fence
+ITEM|puerta de valla de acacia|puerta,valla,acacia,fence,gate
+ITEM|cartel colgante de acacia|cartel,colgante,acacia,hanging,sign
+ITEM|hojas de acacia|hojas,acacia,leaves
+ITEM|tronco de acacia|tronco,acacia,log
+ITEM|madera de acacia|madera,acacia,planks
+ITEM|placa de presion de acacia|placa,presion,acacia
+ITEM|brote de acacia|brote,acacia,sapling
+ITEM|estante de acacia|estante,acacia,shelf
+ITEM|cartel de acacia|cartel,acacia,sign
+ITEM|baldosa de acacia|baldosa,acacia
+ITEM|escaleras de acacia|escaleras,acacia
+ITEM|escotilla de acacia|escotilla,acacia
+ITEM|cartel colgante de acacia en pared|cartel,colgante,acacia,pared,hanging,sign
+ITEM|cartel de acacia en pared|cartel,acacia,pared,sign
+ITEM|leno de acacia|leno,acacia,wood
+ITEM|via activadora|via,activadora,activator,rail
+ITEM|aire|air
+ITEM|bloque de amatista|bloque,amatista,amethyst
+ITEM|cluster de amatista|cluster,amatista,amethyst
+ITEM|escombros ancestrales|escombros,ancestrales,ancient,debris
+ITEM|andesita|andesite
+ITEM|baldosa de andesita|baldosa,andesita,andesite
+ITEM|escaleras de andesita|escaleras,andesita,andesite
+ITEM|pared de andesita|pared,andesita,andesite
+ITEM|yunque|anvil
+ITEM|tallo de sandia unido|tallo,sandia,unido,attached,melon,stem
+ITEM|tallo de zapallo unido|tallo,zapallo,unido,attached,pumpkin,stem
+ITEM|hojas de azalea|hojas,azalea,leaves
+ITEM|rubiacea|azure,bluet
+ITEM|bambu|bamboo
+ITEM|bloque de bambu|bloque,bambu,bamboo
+ITEM|boton de bambu|boton,bambu,bamboo
+ITEM|puerta de bambu|puerta,bambu,bamboo
+ITEM|valla de bambu|valla,bambu,bamboo,fence
+ITEM|puerta de valla de bambu|puerta,valla,bambu,bamboo,fence,gate
+ITEM|cartel colgante de bambu|cartel,colgante,bambu,bamboo,hanging,sign
+ITEM|mosaico de bambu|mosaico,bambu,bamboo,mosaic
+ITEM|baldosa de mosaico de bambu|baldosa,mosaico,bambu,bamboo,mosaic
+ITEM|escaleras de mosaico de bambu|escaleras,mosaico,bambu,bamboo,mosaic
+ITEM|madera de bambu|madera,bambu,bamboo,planks
+ITEM|placa de presion de bambu|placa,presion,bambu,bamboo
+ITEM|brote de bambu|brote,bambu,bamboo,sapling
+ITEM|estante de bambu|estante,bambu,bamboo,shelf
+ITEM|cartel de bambu|cartel,bambu,bamboo,sign
+ITEM|baldosa de bambu|baldosa,bambu,bamboo
+ITEM|escaleras de bambu|escaleras,bambu,bamboo
+ITEM|escotilla de bambu|escotilla,bambu,bamboo
+ITEM|cartel colgante de bambu en pared|cartel,colgante,bambu,pared,bamboo,hanging
+ITEM|cartel de bambu en pared|cartel,bambu,pared,bamboo,sign
+ITEM|pano completamente negro|pano,completamente,negro,banner,base,black
+ITEM|pano completamente azul|pano,completamente,azul,banner,base,blue
+ITEM|pano completamente marron|pano,completamente,marron,banner,base,brown
+ITEM|pano completamente cian|pano,completamente,cian,banner,base,cyan
+ITEM|pano completamente gris|pano,completamente,gris,banner,base,gray
+ITEM|pano completamente verde|pano,completamente,verde,banner,base,green
+ITEM|pano completamente celeste|pano,completamente,celeste,banner,base,light
+ITEM|pano completamente gris claro|pano,completamente,gris,claro,banner,base
+ITEM|pano completamente verde lima|pano,completamente,verde,lima,banner,base
+ITEM|pano completamente magenta|pano,completamente,magenta,banner,base
+ITEM|pano completamente naranja|pano,completamente,naranja,banner,base,orange
+ITEM|pano completamente rosado|pano,completamente,rosado,banner,base,pink
+ITEM|pano completamente violeta|pano,completamente,violeta,banner,base,purple
+ITEM|pano completamente rojo|pano,completamente,rojo,banner,base,red
+ITEM|pano completamente blanco|pano,completamente,blanco,banner,base,white
+ITEM|pano completamente amarillo|pano,completamente,amarillo,banner,base,yellow
+ITEM|bordura negra|bordura,negra,banner,border,black
+ITEM|bordura azul|bordura,azul,banner,border,blue
+ITEM|bordura marron|bordura,marron,banner,border,brown
+ITEM|bordura cian|bordura,cian,banner,border,cyan
+ITEM|bordura gris|bordura,gris,banner,border,gray
+ITEM|bordura verde|bordura,verde,banner,border,green
+ITEM|bordura celeste|bordura,celeste,banner,border,light,blue
+ITEM|bordura gris claro|bordura,gris,claro,banner,border,light
+ITEM|bordura verde lima|bordura,verde,lima,banner,border,lime
+ITEM|bordura magenta|bordura,magenta,banner,border
+ITEM|bordura naranja|bordura,naranja,banner,border,orange
+ITEM|bordura rosa|bordura,rosa,banner,border,pink
+ITEM|bordura violeta|bordura,violeta,banner,border,purple
+ITEM|bordura roja|bordura,roja,banner,border,red
+ITEM|bordura blanca|bordura,blanca,banner,border,white
+ITEM|bordura amarilla|bordura,amarilla,banner,border,yellow
+ITEM|mazonado negro|mazonado,negro,banner,bricks,black
+ITEM|mazonado azul|mazonado,azul,banner,bricks,blue
+ITEM|mazonado marron|mazonado,marron,banner,bricks,brown
+ITEM|mazonado cian|mazonado,cian,banner,bricks,cyan
+ITEM|mazonado gris|mazonado,gris,banner,bricks,gray
+ITEM|mazonado verde|mazonado,verde,banner,bricks,green
+ITEM|mazonado celeste|mazonado,celeste,banner,bricks,light,blue
+ITEM|mazonado gris claro|mazonado,gris,claro,banner,bricks,light
+ITEM|mazonado verde lima|mazonado,verde,lima,banner,bricks,lime
+ITEM|mazonado magenta|mazonado,magenta,banner,bricks
+ITEM|mazonado naranja|mazonado,naranja,banner,bricks,orange
+ITEM|mazonado rosa|mazonado,rosa,banner,bricks,pink
+ITEM|mazonado violeta|mazonado,violeta,banner,bricks,purple
+ITEM|mazonado rojo|mazonado,rojo,banner,bricks,red
+ITEM|mazonado blanco|mazonado,blanco,banner,bricks,white
+ITEM|mazonado amarillo|mazonado,amarillo,banner,bricks,yellow
+ITEM|roel negro|roel,negro,banner,circle,black
+ITEM|roel azul|roel,azul,banner,circle,blue
+ITEM|roel marron|roel,marron,banner,circle,brown
+ITEM|roel cian|roel,cian,banner,circle,cyan
+ITEM|roel gris|roel,gris,banner,circle,gray
+ITEM|roel verde|roel,verde,banner,circle,green
+ITEM|roel celeste|roel,celeste,banner,circle,light,blue
+ITEM|roel gris claro|roel,gris,claro,banner,circle,light
+ITEM|roel verde lima|roel,verde,lima,banner,circle,lime
+ITEM|roel magenta|roel,magenta,banner,circle
+ITEM|roel naranja|roel,naranja,banner,circle,orange
+ITEM|roel rosa|roel,rosa,banner,circle,pink
+ITEM|roel violeta|roel,violeta,banner,circle,purple
+ITEM|roel rojo|roel,rojo,banner,circle,red
+ITEM|roel blanco|roel,blanco,banner,circle,white
+ITEM|roel amarillo|roel,amarillo,banner,circle,yellow
+ITEM|figura de creeper negra|figura,creeper,negra,banner,black
+ITEM|figura de creeper azul|figura,creeper,azul,banner,blue
+ITEM|figura de creeper marron|figura,creeper,marron,banner,brown
+ITEM|figura de creeper cian|figura,creeper,cian,banner,cyan
+ITEM|figura de creeper gris|figura,creeper,gris,banner,gray
+ITEM|figura de creeper verde|figura,creeper,verde,banner,green
+ITEM|figura de creeper celeste|figura,creeper,celeste,banner,light,blue
+ITEM|figura de creeper gris claro|figura,creeper,gris,claro,banner,light
+ITEM|figura de creeper verde lima|figura,creeper,verde,lima,banner,lime
+ITEM|figura de creeper magenta|figura,creeper,magenta,banner
+ITEM|figura de creeper naranja|figura,creeper,naranja,banner,orange
+ITEM|figura de creeper rosa|figura,creeper,rosa,banner,pink
+ITEM|figura de creeper violeta|figura,creeper,violeta,banner,purple
+ITEM|figura de creeper roja|figura,creeper,roja,banner,red
+ITEM|figura de creeper blanca|figura,creeper,blanca,banner,white
+ITEM|figura de creeper amarilla|figura,creeper,amarilla,banner,yellow
+ITEM|aspa negra|aspa,negra,banner,cross,black
+ITEM|aspa azul|aspa,azul,banner,cross,blue
+ITEM|aspa marron|aspa,marron,banner,cross,brown
+ITEM|aspa cian|aspa,cian,banner,cross,cyan
+ITEM|aspa gris|aspa,gris,banner,cross,gray
+ITEM|aspa verde|aspa,verde,banner,cross,green
+ITEM|aspa celeste|aspa,celeste,banner,cross,light,blue
+ITEM|aspa gris claro|aspa,gris,claro,banner,cross,light
+ITEM|aspa verde lima|aspa,verde,lima,banner,cross,lime
+ITEM|aspa magenta|aspa,magenta,banner,cross
+ITEM|aspa naranja|aspa,naranja,banner,cross,orange
+ITEM|aspa rosa|aspa,rosa,banner,cross,pink
+ITEM|aspa violeta|aspa,violeta,banner,cross,purple
+ITEM|aspa roja|aspa,roja,banner,cross,red
+ITEM|aspa blanca|aspa,blanca,banner,cross,white
+ITEM|aspa amarilla|aspa,amarilla,banner,cross,yellow
+ITEM|bordura dentada negra|bordura,dentada,negra,banner,curly,border
+ITEM|bordura dentada azul|bordura,dentada,azul,banner,curly,border
+ITEM|bordura dentada marron|bordura,dentada,marron,banner,curly,border
+ITEM|bordura dentada cian|bordura,dentada,cian,banner,curly,border
+ITEM|bordura dentada gris|bordura,dentada,gris,banner,curly,border
+ITEM|bordura dentada verde|bordura,dentada,verde,banner,curly,border
+ITEM|bordura dentada celeste|bordura,dentada,celeste,banner,curly,border
+ITEM|bordura dentada gris claro|bordura,dentada,gris,claro,banner,curly
+ITEM|bordura dentada verde lima|bordura,dentada,verde,lima,banner,curly
+ITEM|bordura dentada magenta|bordura,dentada,magenta,banner,curly,border
+ITEM|bordura dentada naranja|bordura,dentada,naranja,banner,curly,border
+ITEM|bordura dentada rosa|bordura,dentada,rosa,banner,curly,border
+ITEM|bordura dentada violeta|bordura,dentada,violeta,banner,curly,border
+ITEM|bordura dentada roja|bordura,dentada,roja,banner,curly,border
+ITEM|bordura dentada blanca|bordura,dentada,blanca,banner,curly,border
+ITEM|bordura dentada amarilla|bordura,dentada,amarilla,banner,curly,border
+ITEM|tajado negro|tajado,negro,banner,diagonal,left,black
+ITEM|tajado azul|tajado,azul,banner,diagonal,left,blue
+ITEM|tajado marron|tajado,marron,banner,diagonal,left,brown
+ITEM|tajado cian|tajado,cian,banner,diagonal,left,cyan
+ITEM|tajado gris|tajado,gris,banner,diagonal,left,gray
+ITEM|tajado verde|tajado,verde,banner,diagonal,left,green
+ITEM|tajado celeste|tajado,celeste,banner,diagonal,left,light
+ITEM|tajado gris claro|tajado,gris,claro,banner,diagonal,left
+ITEM|tajado verde lima|tajado,verde,lima,banner,diagonal,left
+ITEM|tajado magenta|tajado,magenta,banner,diagonal,left
+ITEM|tajado naranja|tajado,naranja,banner,diagonal,left,orange
+ITEM|tajado rosa|tajado,rosa,banner,diagonal,left,pink
+ITEM|tajado violeta|tajado,violeta,banner,diagonal,left,purple
+ITEM|tajado rojo|tajado,rojo,banner,diagonal,left,red
+ITEM|tajado blanco|tajado,blanco,banner,diagonal,left,white
+ITEM|tajado amarillo|tajado,amarillo,banner,diagonal,left,yellow
+ITEM|tronchado negro|tronchado,negro,banner,diagonal,right,black
+ITEM|tronchado azul|tronchado,azul,banner,diagonal,right,blue
+ITEM|tronchado marron|tronchado,marron,banner,diagonal,right,brown
+ITEM|tronchado cian|tronchado,cian,banner,diagonal,right,cyan
+ITEM|tronchado gris|tronchado,gris,banner,diagonal,right,gray
+ITEM|tronchado verde|tronchado,verde,banner,diagonal,right,green
+ITEM|tronchado celeste|tronchado,celeste,banner,diagonal,right,light
+ITEM|tronchado gris claro|tronchado,gris,claro,banner,diagonal,right
+ITEM|tronchado verde lima|tronchado,verde,lima,banner,diagonal,right
+ITEM|tronchado magenta|tronchado,magenta,banner,diagonal,right
+ITEM|tronchado naranja|tronchado,naranja,banner,diagonal,right,orange
+ITEM|tronchado rosa|tronchado,rosa,banner,diagonal,right,pink
+ITEM|tronchado violeta|tronchado,violeta,banner,diagonal,right,purple
+ITEM|tronchado rojo|tronchado,rojo,banner,diagonal,right,red
+ITEM|tronchado blanco|tronchado,blanco,banner,diagonal,right,white
+ITEM|tronchado amarillo|tronchado,amarillo,banner,diagonal,right,yellow
+ITEM|tronchado invertido negro|tronchado,invertido,negro,banner,diagonal,left
+ITEM|tronchado invertido azul|tronchado,invertido,azul,banner,diagonal,left
+ITEM|tronchado invertido marron|tronchado,invertido,marron,banner,diagonal,left
+ITEM|tronchado invertido cian|tronchado,invertido,cian,banner,diagonal,left
+ITEM|tronchado invertido gris|tronchado,invertido,gris,banner,diagonal,left
+ITEM|tronchado invertido verde|tronchado,invertido,verde,banner,diagonal,left
+ITEM|tronchado invertido celeste|tronchado,invertido,celeste,banner,diagonal,left
+ITEM|tronchado invertido gris claro|tronchado,invertido,gris,claro,banner,diagonal
+ITEM|tronchado invertido verde lima|tronchado,invertido,verde,lima,banner,diagonal
+ITEM|tronchado invertido magenta|tronchado,invertido,magenta,banner,diagonal,left
+ITEM|tronchado invertido naranja|tronchado,invertido,naranja,banner,diagonal,left
+ITEM|tronchado invertido rosa|tronchado,invertido,rosa,banner,diagonal,left
+ITEM|tronchado invertido violeta|tronchado,invertido,violeta,banner,diagonal,left
+ITEM|tronchado invertido rojo|tronchado,invertido,rojo,banner,diagonal,left
+ITEM|tronchado invertido blanco|tronchado,invertido,blanco,banner,diagonal,left
+ITEM|tronchado invertido amarillo|tronchado,invertido,amarillo,banner,diagonal,left
+ITEM|tajado invertido negro|tajado,invertido,negro,banner,diagonal,right
+ITEM|tajado invertido azul|tajado,invertido,azul,banner,diagonal,right
+ITEM|tajado invertido marron|tajado,invertido,marron,banner,diagonal,right
+ITEM|tajado invertido cian|tajado,invertido,cian,banner,diagonal,right
+ITEM|tajado invertido gris|tajado,invertido,gris,banner,diagonal,right
+ITEM|tajado invertido verde|tajado,invertido,verde,banner,diagonal,right
+ITEM|tajado invertido celeste|tajado,invertido,celeste,banner,diagonal,right
+ITEM|tajado invertido gris claro|tajado,invertido,gris,claro,banner,diagonal
+ITEM|tajado invertido verde lima|tajado,invertido,verde,lima,banner,diagonal
+ITEM|tajado invertido magenta|tajado,invertido,magenta,banner,diagonal,right
+ITEM|tajado invertido naranja|tajado,invertido,naranja,banner,diagonal,right
+ITEM|tajado invertido rosa|tajado,invertido,rosa,banner,diagonal,right
+ITEM|tajado invertido violeta|tajado,invertido,violeta,banner,diagonal,right
+ITEM|tajado invertido rojo|tajado,invertido,rojo,banner,diagonal,right
+ITEM|tajado invertido blanco|tajado,invertido,blanco,banner,diagonal,right
+ITEM|tajado invertido amarillo|tajado,invertido,amarillo,banner,diagonal,right
+ITEM|figura de espiral negro|figura,espiral,negro,banner,flow,black
+ITEM|figura de espiral azul|figura,espiral,azul,banner,flow,blue
+ITEM|figura de espiral marron|figura,espiral,marron,banner,flow,brown
+ITEM|figura de espiral cian|figura,espiral,cian,banner,flow,cyan
+ITEM|figura de espiral gris|figura,espiral,gris,banner,flow,gray
+ITEM|figura de espiral verde|figura,espiral,verde,banner,flow,green
+ITEM|figura de espiral celeste|figura,espiral,celeste,banner,flow,light
+ITEM|figura de espiral gris claro|figura,espiral,gris,claro,banner,flow
+ITEM|espiral verde lima|espiral,verde,lima,banner,flow,lime
+ITEM|figura de espiral magenta|figura,espiral,magenta,banner,flow
+ITEM|figura de espiral naranja|figura,espiral,naranja,banner,flow,orange
+ITEM|figura de espiral rosa|figura,espiral,rosa,banner,flow,pink
+ITEM|figura de espiral violeta|figura,espiral,violeta,banner,flow,purple
+ITEM|figura de espiral rojo|figura,espiral,rojo,banner,flow,red
+ITEM|figura de espiral blanco|figura,espiral,blanco,banner,flow,white
+ITEM|figura de espiral amarillo|figura,espiral,amarillo,banner,flow,yellow
+ITEM|figura de flor negra|figura,flor,negra,banner,flower,black
+ITEM|figura de flor azul|figura,flor,azul,banner,flower,blue
+ITEM|figura de flor marron|figura,flor,marron,banner,flower,brown
+ITEM|figura de flor cian|figura,flor,cian,banner,flower,cyan
+ITEM|figura de flor gris|figura,flor,gris,banner,flower,gray
+ITEM|figura de flor verde|figura,flor,verde,banner,flower,green
+ITEM|figura de flor celeste|figura,flor,celeste,banner,flower,light
+ITEM|figura de flor gris claro|figura,flor,gris,claro,banner,flower
+ITEM|figura de flor verde lima|figura,flor,verde,lima,banner,flower
+ITEM|figura de flor magenta|figura,flor,magenta,banner,flower
+ITEM|figura de flor naranja|figura,flor,naranja,banner,flower,orange
+ITEM|figura de flor rosa|figura,flor,rosa,banner,flower,pink
+ITEM|figura de flor violeta|figura,flor,violeta,banner,flower,purple
+ITEM|figura de flor roja|figura,flor,roja,banner,flower,red
+ITEM|figura de flor blanca|figura,flor,blanca,banner,flower,white
+ITEM|figura de flor amarilla|figura,flor,amarilla,banner,flower,yellow
+ITEM|planeta negro|planeta,negro,banner,globe,black
+ITEM|planeta azul|planeta,azul,banner,globe,blue
+ITEM|planeta marron|planeta,marron,banner,globe,brown
+ITEM|planeta cian|planeta,cian,banner,globe,cyan
+ITEM|planeta gris|planeta,gris,banner,globe,gray
+ITEM|planeta verde|planeta,verde,banner,globe,green
+ITEM|planeta celeste|planeta,celeste,banner,globe,light,blue
+ITEM|planeta gris claro|planeta,gris,claro,banner,globe,light
+ITEM|planeta verde lima|planeta,verde,lima,banner,globe,lime
+ITEM|planeta magenta|planeta,magenta,banner,globe
+ITEM|planeta naranja|planeta,naranja,banner,globe,orange
+ITEM|planeta rosa|planeta,rosa,banner,globe,pink
+ITEM|planeta violeta|planeta,violeta,banner,globe,purple
+ITEM|planeta rojo|planeta,rojo,banner,globe,red
+ITEM|planeta blanco|planeta,blanco,banner,globe,white
+ITEM|planeta amarillo|planeta,amarillo,banner,globe,yellow
+ITEM|gradiente negro|gradiente,negro,banner,gradient,black
+ITEM|gradiente azul|gradiente,azul,banner,gradient,blue
+ITEM|gradiente marron|gradiente,marron,banner,gradient,brown
+ITEM|gradiente cian|gradiente,cian,banner,gradient,cyan
+ITEM|gradiente gris|gradiente,gris,banner,gradient,gray
+ITEM|gradiente verde|gradiente,verde,banner,gradient,green
+ITEM|gradiente celeste|gradiente,celeste,banner,gradient,light,blue
+ITEM|gradiente gris claro|gradiente,gris,claro,banner,gradient,light
+ITEM|gradiente verde lima|gradiente,verde,lima,banner,gradient,lime
+ITEM|gradiente magenta|gradiente,magenta,banner,gradient
+ITEM|gradiente naranja|gradiente,naranja,banner,gradient,orange
+ITEM|gradiente rosa|gradiente,rosa,banner,gradient,pink
+ITEM|gradiente violeta|gradiente,violeta,banner,gradient,purple
+ITEM|gradiente rojo|gradiente,rojo,banner,gradient,red
+ITEM|gradiente blanco|gradiente,blanco,banner,gradient,white
+ITEM|gradiente amarillo|gradiente,amarillo,banner,gradient,yellow
+ITEM|gradiente en campana negro|gradiente,campana,negro,banner,gradient,black
+ITEM|gradiente en campana azul|gradiente,campana,azul,banner,gradient,blue
+ITEM|gradiente en campana marron|gradiente,campana,marron,banner,gradient,brown
+ITEM|gradiente en campana cian|gradiente,campana,cian,banner,gradient,cyan
+ITEM|gradiente en campana gris|gradiente,campana,gris,banner,gradient,gray
+ITEM|gradiente en campana verde|gradiente,campana,verde,banner,gradient,green
+ITEM|gradiente en campana celeste|gradiente,campana,celeste,banner,gradient,light
+ITEM|gradiente en campana azul celeste|gradiente,campana,azul,celeste,banner,gradient
+ITEM|gradiente en campana verde lima|gradiente,campana,verde,lima,banner,gradient
+ITEM|gradiente en campana magenta|gradiente,campana,magenta,banner,gradient
+ITEM|gradiente en campana naranja|gradiente,campana,naranja,banner,gradient,orange
+ITEM|gradiente en campana rosa|gradiente,campana,rosa,banner,gradient,pink
+ITEM|gradiente en campana violeta|gradiente,campana,violeta,banner,gradient,purple
+ITEM|gradiente en campana rojo|gradiente,campana,rojo,banner,gradient,red
+ITEM|gradiente en campana blanco|gradiente,campana,blanco,banner,gradient,white
+ITEM|gradiente en campana amarillo|gradiente,campana,amarillo,banner,gradient,yellow
+ITEM|rafaga negra|rafaga,negra,banner,guster,black
+ITEM|rafaga azul|rafaga,azul,banner,guster,blue
+ITEM|rafaga marron|rafaga,marron,banner,guster,brown
+ITEM|rafaga cian|rafaga,cian,banner,guster,cyan
+ITEM|rafaga gris|rafaga,gris,banner,guster,gray
+ITEM|rafaga verde|rafaga,verde,banner,guster,green
+ITEM|rafaga celeste|rafaga,celeste,banner,guster,light,blue
+ITEM|rafaga gris claro|rafaga,gris,claro,banner,guster,light
+ITEM|rafaga verde lima|rafaga,verde,lima,banner,guster,lime
+ITEM|rafaga magenta|rafaga,magenta,banner,guster
+ITEM|rafaga naranja|rafaga,naranja,banner,guster,orange
+ITEM|rafaga rosa|rafaga,rosa,banner,guster,pink
+ITEM|rafaga violeta|rafaga,violeta,banner,guster,purple
+ITEM|rafaga roja|rafaga,roja,banner,guster,red
+ITEM|rafaga blanca|rafaga,blanca,banner,guster,white
+ITEM|rafaga amarilla|rafaga,amarilla,banner,guster,yellow
+ITEM|cortado negro|cortado,negro,banner,half,horizontal,black
+ITEM|cortado azul|cortado,azul,banner,half,horizontal,blue
+ITEM|cortado marron|cortado,marron,banner,half,horizontal,brown
+ITEM|cortado cian|cortado,cian,banner,half,horizontal,cyan
+ITEM|cortado gris|cortado,gris,banner,half,horizontal,gray
+ITEM|cortado verde|cortado,verde,banner,half,horizontal,green
+ITEM|cortado celeste|cortado,celeste,banner,half,horizontal,light
+ITEM|cortado gris claro|cortado,gris,claro,banner,half,horizontal
+ITEM|cortado verde lima|cortado,verde,lima,banner,half,horizontal
+ITEM|cortado magenta|cortado,magenta,banner,half,horizontal
+ITEM|cortado naranja|cortado,naranja,banner,half,horizontal,orange
+ITEM|cortado rosa|cortado,rosa,banner,half,horizontal,pink
+ITEM|cortado violeta|cortado,violeta,banner,half,horizontal,purple
+ITEM|cortado rojo|cortado,rojo,banner,half,horizontal,red
+ITEM|cortado blanco|cortado,blanco,banner,half,horizontal,white
+ITEM|cortado amarillo|cortado,amarillo,banner,half,horizontal,yellow
+ITEM|cortado invertido negro|cortado,invertido,negro,banner,half,horizontal
+ITEM|cortado invertido azul|cortado,invertido,azul,banner,half,horizontal
+ITEM|cortado invertido marron|cortado,invertido,marron,banner,half,horizontal
+ITEM|cortado invertido cian|cortado,invertido,cian,banner,half,horizontal
+ITEM|cortado invertido gris|cortado,invertido,gris,banner,half,horizontal
+ITEM|cortado invertido verde|cortado,invertido,verde,banner,half,horizontal
+ITEM|cortado invertido celeste|cortado,invertido,celeste,banner,half,horizontal
+ITEM|cortado invertido gris claro|cortado,invertido,gris,claro,banner,half
+ITEM|cortado invertido verde lima|cortado,invertido,verde,lima,banner,half
+ITEM|cortado invertido magenta|cortado,invertido,magenta,banner,half,horizontal
+ITEM|cortado invertido naranja|cortado,invertido,naranja,banner,half,horizontal
+ITEM|cortado invertido rosa|cortado,invertido,rosa,banner,half,horizontal
+ITEM|cortado invertido violeta|cortado,invertido,violeta,banner,half,horizontal
+ITEM|cortado invertido rojo|cortado,invertido,rojo,banner,half,horizontal
+ITEM|cortado invertido blanca|cortado,invertido,blanca,banner,half,horizontal
+ITEM|cortado invertido amarillo|cortado,invertido,amarillo,banner,half,horizontal
+ITEM|partido a diestra negro|partido,diestra,negro,banner,half,vertical
+ITEM|partido a diestra azul|partido,diestra,azul,banner,half,vertical
+ITEM|partido a diestra marron|partido,diestra,marron,banner,half,vertical
+ITEM|partido a diestra cian|partido,diestra,cian,banner,half,vertical
+ITEM|partido a diestra gris|partido,diestra,gris,banner,half,vertical
+ITEM|partido a diestra verde|partido,diestra,verde,banner,half,vertical
+ITEM|partido a diestra celeste|partido,diestra,celeste,banner,half,vertical
+ITEM|partido a diestra gris claro|partido,diestra,gris,claro,banner,half
+ITEM|partido a diestra verde lima|partido,diestra,verde,lima,banner,half
+ITEM|partido a diestra magenta|partido,diestra,magenta,banner,half,vertical
+ITEM|partido a diestra naranja|partido,diestra,naranja,banner,half,vertical
+ITEM|partido a diestra rosa|partido,diestra,rosa,banner,half,vertical
+ITEM|partido a diestra violeta|partido,diestra,violeta,banner,half,vertical
+ITEM|partido a diestra rojo|partido,diestra,rojo,banner,half,vertical
+ITEM|partido a diestra blanco|partido,diestra,blanco,banner,half,vertical
+ITEM|partido a diestra amarillo|partido,diestra,amarillo,banner,half,vertical
+ITEM|partido a siniestra negro|partido,siniestra,negro,banner,half,vertical
+ITEM|partido a siniestra azul|partido,siniestra,azul,banner,half,vertical
+ITEM|partido a siniestra marron|partido,siniestra,marron,banner,half,vertical
+ITEM|partido a siniestra cian|partido,siniestra,cian,banner,half,vertical
+ITEM|partido a siniestra gris|partido,siniestra,gris,banner,half,vertical
+ITEM|partido a siniestra verde|partido,siniestra,verde,banner,half,vertical
+ITEM|partido a siniestra celeste|partido,siniestra,celeste,banner,half,vertical
+ITEM|partido a siniestra gris claro|partido,siniestra,gris,claro,banner,half
+ITEM|partido a siniestra verde lima|partido,siniestra,verde,lima,banner,half
+ITEM|partido a siniestra magenta|partido,siniestra,magenta,banner,half,vertical
+ITEM|partido a siniestra naranja|partido,siniestra,naranja,banner,half,vertical
+ITEM|partido a siniestra rosa|partido,siniestra,rosa,banner,half,vertical
+ITEM|partido a siniestra violeta|partido,siniestra,violeta,banner,half,vertical
+ITEM|partido a siniestra rojo|partido,siniestra,rojo,banner,half,vertical
+ITEM|partido a siniestra blanco|partido,siniestra,blanco,banner,half,vertical
+ITEM|partido a siniestra amarillo|partido,siniestra,amarillo,banner,half,vertical
+ITEM|logotipo negro|logotipo,negro,banner,mojang,black
+ITEM|logotipo azul|logotipo,azul,banner,mojang,blue
+ITEM|logotipo marron|logotipo,marron,banner,mojang,brown
+ITEM|logotipo cian|logotipo,cian,banner,mojang,cyan
+ITEM|logotipo gris|logotipo,gris,banner,mojang,gray
+ITEM|logotipo verde|logotipo,verde,banner,mojang,green
+ITEM|cosa celeste|cosa,celeste,banner,mojang,light,blue
+ITEM|logotipo gris claro|logotipo,gris,claro,banner,mojang,light
+ITEM|logotipo verde lima|logotipo,verde,lima,banner,mojang,lime
+ITEM|logotipo magenta|logotipo,magenta,banner,mojang
+ITEM|logotipo naranja|logotipo,naranja,banner,mojang,orange
+ITEM|logotipo rosa|logotipo,rosa,banner,mojang,pink
+ITEM|logotipo violeta|logotipo,violeta,banner,mojang,purple
+ITEM|logotipo rojo|logotipo,rojo,banner,mojang,red
+ITEM|logotipo blanco|logotipo,blanco,banner,mojang,white
+ITEM|logotipo amarillo|logotipo,amarillo,banner,mojang,yellow
+ITEM|hocico negro|hocico,negro,banner,piglin,black
+ITEM|hocico azul|hocico,azul,banner,piglin,blue
+ITEM|hocico marron|hocico,marron,banner,piglin,brown
+ITEM|hocico cian|hocico,cian,banner,piglin,cyan
+ITEM|hocico gris|hocico,gris,banner,piglin,gray
+ITEM|hocico verde|hocico,verde,banner,piglin,green
+ITEM|hocico celeste|hocico,celeste,banner,piglin,light,blue
+ITEM|hocico gris claro|hocico,gris,claro,banner,piglin,light
+ITEM|hocico verde lima|hocico,verde,lima,banner,piglin,lime
+ITEM|hocico magenta|hocico,magenta,banner,piglin
+ITEM|hocico naranja|hocico,naranja,banner,piglin,orange
+ITEM|hocico rosa|hocico,rosa,banner,piglin,pink
+ITEM|hocico violeta|hocico,violeta,banner,piglin,purple
+ITEM|hocico rojo|hocico,rojo,banner,piglin,red
+ITEM|hocico blanco|hocico,blanco,banner,piglin,white
+ITEM|hocico amarillo|hocico,amarillo,banner,piglin,yellow
+ITEM|losange negro|losange,negro,banner,rhombus,black
+ITEM|losange azul|losange,azul,banner,rhombus,blue
+ITEM|losange marron|losange,marron,banner,rhombus,brown
+ITEM|losange cian|losange,cian,banner,rhombus,cyan
+ITEM|losange gris|losange,gris,banner,rhombus,gray
+ITEM|losange verde|losange,verde,banner,rhombus,green
+ITEM|losange celeste|losange,celeste,banner,rhombus,light,blue
+ITEM|losange gris claro|losange,gris,claro,banner,rhombus,light
+ITEM|losange verde lima|losange,verde,lima,banner,rhombus,lime
+ITEM|losange magenta|losange,magenta,banner,rhombus
+ITEM|losange naranja|losange,naranja,banner,rhombus,orange
+ITEM|losange rosa|losange,rosa,banner,rhombus,pink
+ITEM|losange violeta|losange,violeta,banner,rhombus,purple
+ITEM|losange rojo|losange,rojo,banner,rhombus,red
+ITEM|losange blanco|losange,blanco,banner,rhombus,white
+ITEM|losange amarillo|losange,amarillo,banner,rhombus,yellow
+ITEM|figura de craneo negra|figura,craneo,negra,banner,skull,black
+ITEM|figura de craneo azul|figura,craneo,azul,banner,skull,blue
+ITEM|figura de craneo marron|figura,craneo,marron,banner,skull,brown
+ITEM|figura de craneo cian|figura,craneo,cian,banner,skull,cyan
+ITEM|figura de craneo gris|figura,craneo,gris,banner,skull,gray
+ITEM|figura de craneo verde|figura,craneo,verde,banner,skull,green
+ITEM|figura de calavera celeste|figura,calavera,celeste,banner,skull,light
+ITEM|figura de craneo gris claro|figura,craneo,gris,claro,banner,skull
+ITEM|figura de craneo verde lima|figura,craneo,verde,lima,banner,skull
+ITEM|figura de craneo magenta|figura,craneo,magenta,banner,skull
+ITEM|figura de craneo naranja|figura,craneo,naranja,banner,skull,orange
+ITEM|figura de craneo rosa|figura,craneo,rosa,banner,skull,pink
+ITEM|figura de craneo violeta|figura,craneo,violeta,banner,skull,purple
+ITEM|figura de craneo roja|figura,craneo,roja,banner,skull,red
+ITEM|figura de craneo blanca|figura,craneo,blanca,banner,skull,white
+ITEM|figura de craneo amarilla|figura,craneo,amarilla,banner,skull,yellow
+ITEM|palado negro|palado,negro,banner,small,stripes,black
+ITEM|palado azul|palado,azul,banner,small,stripes,blue
+ITEM|palado marron|palado,marron,banner,small,stripes,brown
+ITEM|palado cian|palado,cian,banner,small,stripes,cyan
+ITEM|palado gris|palado,gris,banner,small,stripes,gray
+ITEM|palado verde|palado,verde,banner,small,stripes,green
+ITEM|palado celeste|palado,celeste,banner,small,stripes,light
+ITEM|palado gris claro|palado,gris,claro,banner,small,stripes
+ITEM|palado verde lima|palado,verde,lima,banner,small,stripes
+ITEM|palado magenta|palado,magenta,banner,small,stripes
+ITEM|palado naranja|palado,naranja,banner,small,stripes,orange
+ITEM|palado rosa|palado,rosa,banner,small,stripes,pink
+ITEM|palado violeta|palado,violeta,banner,small,stripes,purple
+ITEM|palado rojo|palado,rojo,banner,small,stripes,red
+ITEM|palado blanco|palado,blanco,banner,small,stripes,white
+ITEM|palado amarillo|palado,amarillo,banner,small,stripes,yellow
+ITEM|canton diestro negro en campana|canton,diestro,negro,campana,banner,square
+ITEM|canton diestro azul en campana|canton,diestro,azul,campana,banner,square
+ITEM|canton diestro marron en campana|canton,diestro,marron,campana,banner,square
+ITEM|canton diestro cian en campana|canton,diestro,cian,campana,banner,square
+ITEM|canton diestro gris en campana|canton,diestro,gris,campana,banner,square
+ITEM|canton diestro verde en campana|canton,diestro,verde,campana,banner,square
+ITEM|canton diestro en campana celeste|canton,diestro,campana,celeste,banner,square
+ITEM|canton diestro gris claro en campana|canton,diestro,gris,claro,campana,banner
+ITEM|canton diestro verde lima en campana|canton,diestro,verde,lima,campana,banner
+ITEM|canton diestro magenta en campana|canton,diestro,magenta,campana,banner,square
+ITEM|canton diestro naranja en campana|canton,diestro,naranja,campana,banner,square
+ITEM|canton diestro rosa en campana|canton,diestro,rosa,campana,banner,square
+ITEM|canton diestro violeta en campana|canton,diestro,violeta,campana,banner,square
+ITEM|canton diestro rojo en campana|canton,diestro,rojo,campana,banner,square
+ITEM|canton diestro blanco en campana|canton,diestro,blanco,campana,banner,square
+ITEM|canton diestro amarillo en campana|canton,diestro,amarillo,campana,banner,square
+ITEM|canton siniestro negro en campana|canton,siniestro,negro,campana,banner,square
+ITEM|canton siniestro azul en campana|canton,siniestro,azul,campana,banner,square
+ITEM|canton siniestro marron en campana|canton,siniestro,marron,campana,banner,square
+ITEM|canton siniestro cian en campana|canton,siniestro,cian,campana,banner,square
+ITEM|canton siniestro gris en campana|canton,siniestro,gris,campana,banner,square
+ITEM|canton siniestro verde en campana|canton,siniestro,verde,campana,banner,square
+ITEM|canton siniestro en campana celeste|canton,siniestro,campana,celeste,banner,square
+ITEM|canton siniestro gris claro en campana|canton,siniestro,gris,claro,campana,banner
+ITEM|canton siniestro verde lima en campana|canton,siniestro,verde,lima,campana,banner
+ITEM|canton siniestro magenta en campana|canton,siniestro,magenta,campana,banner,square
+ITEM|canton siniestro naranja en campana|canton,siniestro,naranja,campana,banner,square
+ITEM|canton siniestro rosa en campana|canton,siniestro,rosa,campana,banner,square
+ITEM|canton siniestro violeta en campana|canton,siniestro,violeta,campana,banner,square
+ITEM|canton siniestro rojo en campana|canton,siniestro,rojo,campana,banner,square
+ITEM|canton siniestro blanco en campana|canton,siniestro,blanco,campana,banner,square
+ITEM|canton siniestro amarillo en campana|canton,siniestro,amarillo,campana,banner,square
+ITEM|canton diestro negro en jefe|canton,diestro,negro,jefe,banner,square
+ITEM|canton diestro azul en jefe|canton,diestro,azul,jefe,banner,square
+ITEM|canton diestro marron en jefe|canton,diestro,marron,jefe,banner,square
+ITEM|canton diestro cian en jefe|canton,diestro,cian,jefe,banner,square
+ITEM|canton diestro gris en jefe|canton,diestro,gris,jefe,banner,square
+ITEM|canton diestro verde en jefe|canton,diestro,verde,jefe,banner,square
+ITEM|canton diestro en jefe celeste|canton,diestro,jefe,celeste,banner,square
+ITEM|canton diestro gris claro en jefe|canton,diestro,gris,claro,jefe,banner
+ITEM|canton diestro verde lima en jefe|canton,diestro,verde,lima,jefe,banner
+ITEM|canton diestro magenta en jefe|canton,diestro,magenta,jefe,banner,square
+ITEM|canton diestro naranja en jefe|canton,diestro,naranja,jefe,banner,square
+ITEM|canton diestro rosa en jefe|canton,diestro,rosa,jefe,banner,square
+ITEM|canton diestro violeta en jefe|canton,diestro,violeta,jefe,banner,square
+ITEM|canton diestro rojo en jefe|canton,diestro,rojo,jefe,banner,square
+ITEM|canton diestro blanco en jefe|canton,diestro,blanco,jefe,banner,square
+ITEM|canton diestro amarillo en jefe|canton,diestro,amarillo,jefe,banner,square
+ITEM|canton siniestro negro en jefe|canton,siniestro,negro,jefe,banner,square
+ITEM|canton siniestro azul en jefe|canton,siniestro,azul,jefe,banner,square
+ITEM|canton siniestro marron en jefe|canton,siniestro,marron,jefe,banner,square
+ITEM|canton siniestro cian en jefe|canton,siniestro,cian,jefe,banner,square
+ITEM|canton siniestro gris en jefe|canton,siniestro,gris,jefe,banner,square
+ITEM|canton siniestro verde en jefe|canton,siniestro,verde,jefe,banner,square
+ITEM|canton siniestro en jefe celeste|canton,siniestro,jefe,celeste,banner,square
+ITEM|canton siniestro gris claro en jefe|canton,siniestro,gris,claro,jefe,banner
+ITEM|canton siniestro verde lima en jefe|canton,siniestro,verde,lima,jefe,banner
+ITEM|canton siniestro magenta en jefe|canton,siniestro,magenta,jefe,banner,square
+ITEM|canton siniestro naranja en jefe|canton,siniestro,naranja,jefe,banner,square
+ITEM|canton siniestro rosa en jefe|canton,siniestro,rosa,jefe,banner,square
+ITEM|canton siniestro violeta en jefe|canton,siniestro,violeta,jefe,banner,square
+ITEM|canton siniestro rojo en jefe|canton,siniestro,rojo,jefe,banner,square
+ITEM|canton siniestro blanco en jefe|canton,siniestro,blanco,jefe,banner,square
+ITEM|canton siniestro amarillo en jefe|canton,siniestro,amarillo,jefe,banner,square
+ITEM|cruz negra|cruz,negra,banner,straight,cross,black
+ITEM|cruz azul|cruz,azul,banner,straight,cross,blue
+ITEM|cruz marron|cruz,marron,banner,straight,cross,brown
+ITEM|cruz cian|cruz,cian,banner,straight,cross,cyan
+ITEM|cruz gris|cruz,gris,banner,straight,cross,gray
+ITEM|cruz verde|cruz,verde,banner,straight,cross,green
+ITEM|cruz celeste|cruz,celeste,banner,straight,cross,light
+ITEM|cruz gris claro|cruz,gris,claro,banner,straight,cross
+ITEM|cruz verde lima|cruz,verde,lima,banner,straight,cross
+ITEM|cruz magenta|cruz,magenta,banner,straight,cross
+ITEM|cruz naranja|cruz,naranja,banner,straight,cross,orange
+ITEM|cruz rosa|cruz,rosa,banner,straight,cross,pink
+ITEM|cruz violeta|cruz,violeta,banner,straight,cross,purple
+ITEM|cruz roja|cruz,roja,banner,straight,cross,red
+ITEM|cruz blanca|cruz,blanca,banner,straight,cross,white
+ITEM|cruz amarilla|cruz,amarilla,banner,straight,cross,yellow
+ITEM|campana negra|campana,negra,banner,stripe,bottom,black
+ITEM|campana azul|campana,azul,banner,stripe,bottom,blue
+ITEM|campana marron|campana,marron,banner,stripe,bottom,brown
+ITEM|campana cian|campana,cian,banner,stripe,bottom,cyan
+ITEM|campana gris|campana,gris,banner,stripe,bottom,gray
+ITEM|campana verde|campana,verde,banner,stripe,bottom,green
+ITEM|campana celeste|campana,celeste,banner,stripe,bottom,light
+ITEM|campana gris claro|campana,gris,claro,banner,stripe,bottom
+ITEM|campana verde lima|campana,verde,lima,banner,stripe,bottom
+ITEM|campana magenta|campana,magenta,banner,stripe,bottom
+ITEM|campana naranja|campana,naranja,banner,stripe,bottom,orange
+ITEM|campana rosa|campana,rosa,banner,stripe,bottom,pink
+ITEM|campana violeta|campana,violeta,banner,stripe,bottom,purple
+ITEM|campana roja|campana,roja,banner,stripe,bottom,red
+ITEM|campana blanca|campana,blanca,banner,stripe,bottom,white
+ITEM|campana amarilla|campana,amarilla,banner,stripe,bottom,yellow
+ITEM|palo negro|palo,negro,banner,stripe,center,black
+ITEM|palo azul|palo,azul,banner,stripe,center,blue
+ITEM|palo marron|palo,marron,banner,stripe,center,brown
+ITEM|palo cian|palo,cian,banner,stripe,center,cyan
+ITEM|palo gris|palo,gris,banner,stripe,center,gray
+ITEM|palo verde|palo,verde,banner,stripe,center,green
+ITEM|palo celeste|palo,celeste,banner,stripe,center,light
+ITEM|palo gris claro|palo,gris,claro,banner,stripe,center
+ITEM|palo verde lima|palo,verde,lima,banner,stripe,center
+ITEM|palo magenta|palo,magenta,banner,stripe,center
+ITEM|palo naranja|palo,naranja,banner,stripe,center,orange
+ITEM|palo rosa|palo,rosa,banner,stripe,center,pink
+ITEM|palo violeta|palo,violeta,banner,stripe,center,purple
+ITEM|palo rojo|palo,rojo,banner,stripe,center,red
+ITEM|palo blanco|palo,blanco,banner,stripe,center,white
+ITEM|palo amarillo|palo,amarillo,banner,stripe,center,yellow
+ITEM|barra negra|barra,negra,banner,stripe,downleft,black
+ITEM|barra azul|barra,azul,banner,stripe,downleft,blue
+ITEM|barra marron|barra,marron,banner,stripe,downleft,brown
+ITEM|barra cian|barra,cian,banner,stripe,downleft,cyan
+ITEM|barra gris|barra,gris,banner,stripe,downleft,gray
+ITEM|barra verde|barra,verde,banner,stripe,downleft,green
+ITEM|barra celeste|barra,celeste,banner,stripe,downleft,light
+ITEM|barra gris claro|barra,gris,claro,banner,stripe,downleft
+ITEM|barra verde lima|barra,verde,lima,banner,stripe,downleft
+ITEM|barra magenta|barra,magenta,banner,stripe,downleft
+ITEM|barra naranja|barra,naranja,banner,stripe,downleft,orange
+ITEM|barra rosa|barra,rosa,banner,stripe,downleft,pink
+ITEM|barra violeta|barra,violeta,banner,stripe,downleft,purple
+ITEM|barra roja|barra,roja,banner,stripe,downleft,red
+ITEM|barra blanca|barra,blanca,banner,stripe,downleft,white
+ITEM|barra amarilla|barra,amarilla,banner,stripe,downleft,yellow
+ITEM|banda negra|banda,negra,banner,stripe,downright,black
+ITEM|banda azul|banda,azul,banner,stripe,downright,blue
+ITEM|banda marron|banda,marron,banner,stripe,downright,brown
+ITEM|banda cian|banda,cian,banner,stripe,downright,cyan
+ITEM|banda gris|banda,gris,banner,stripe,downright,gray
+ITEM|banda verde|banda,verde,banner,stripe,downright,green
+ITEM|banda celeste|banda,celeste,banner,stripe,downright,light
+ITEM|banda gris claro|banda,gris,claro,banner,stripe,downright
+ITEM|banda verde lima|banda,verde,lima,banner,stripe,downright
+ITEM|banda magenta|banda,magenta,banner,stripe,downright
+ITEM|banda naranja|banda,naranja,banner,stripe,downright,orange
+ITEM|banda rosa|banda,rosa,banner,stripe,downright,pink
+ITEM|banda violeta|banda,violeta,banner,stripe,downright,purple
+ITEM|banda roja|banda,roja,banner,stripe,downright,red
+ITEM|banda blanca|banda,blanca,banner,stripe,downright,white
+ITEM|banda amarilla|banda,amarilla,banner,stripe,downright,yellow
+ITEM|palo diestro negro|palo,diestro,negro,banner,stripe,left
+ITEM|palo diestro azul|palo,diestro,azul,banner,stripe,left
+ITEM|palo diestro marron|palo,diestro,marron,banner,stripe,left
+ITEM|palo diestro cian|palo,diestro,cian,banner,stripe,left
+ITEM|palo diestro gris|palo,diestro,gris,banner,stripe,left
+ITEM|palo diestro verde|palo,diestro,verde,banner,stripe,left
+ITEM|palo diestro celeste|palo,diestro,celeste,banner,stripe,left
+ITEM|palo diestro gris claro|palo,diestro,gris,claro,banner,stripe
+ITEM|palo diestro verde lima|palo,diestro,verde,lima,banner,stripe
+ITEM|palo diestro magenta|palo,diestro,magenta,banner,stripe,left
+ITEM|palo diestro naranja|palo,diestro,naranja,banner,stripe,left
+ITEM|palo diestro rosa|palo,diestro,rosa,banner,stripe,left
+ITEM|palo diestro violeta|palo,diestro,violeta,banner,stripe,left
+ITEM|palo diestro rojo|palo,diestro,rojo,banner,stripe,left
+ITEM|palo diestro blanco|palo,diestro,blanco,banner,stripe,left
+ITEM|palo diestro amarillo|palo,diestro,amarillo,banner,stripe,left
+ITEM|franja negra|franja,negra,banner,stripe,middle,black
+ITEM|franja azul|franja,azul,banner,stripe,middle,blue
+ITEM|franja marron|franja,marron,banner,stripe,middle,brown
+ITEM|franja cian|franja,cian,banner,stripe,middle,cyan
+ITEM|franja gris|franja,gris,banner,stripe,middle,gray
+ITEM|franja verde|franja,verde,banner,stripe,middle,green
+ITEM|franja celeste|franja,celeste,banner,stripe,middle,light
+ITEM|franja gris claro|franja,gris,claro,banner,stripe,middle
+ITEM|franja verde lima|franja,verde,lima,banner,stripe,middle
+ITEM|franja magenta|franja,magenta,banner,stripe,middle
+ITEM|franja naranja|franja,naranja,banner,stripe,middle,orange
+ITEM|franja rosa|franja,rosa,banner,stripe,middle,pink
+ITEM|franja violeta|franja,violeta,banner,stripe,middle,purple
+ITEM|franja roja|franja,roja,banner,stripe,middle,red
+ITEM|franja blanca|franja,blanca,banner,stripe,middle,white
+ITEM|franja amarilla|franja,amarilla,banner,stripe,middle,yellow
+ITEM|palo siniestro negro|palo,siniestro,negro,banner,stripe,right
+ITEM|palo siniestro azul|palo,siniestro,azul,banner,stripe,right
+ITEM|palo siniestro marron|palo,siniestro,marron,banner,stripe,right
+ITEM|palo siniestro cian|palo,siniestro,cian,banner,stripe,right
+ITEM|palo siniestro gris|palo,siniestro,gris,banner,stripe,right
+ITEM|palo siniestro verde|palo,siniestro,verde,banner,stripe,right
+ITEM|palo siniestro celeste|palo,siniestro,celeste,banner,stripe,right
+ITEM|palo siniestro gris claro|palo,siniestro,gris,claro,banner,stripe
+ITEM|palo siniestro verde lima|palo,siniestro,verde,lima,banner,stripe
+ITEM|palo siniestro magenta|palo,siniestro,magenta,banner,stripe,right
+ITEM|palo siniestro naranja|palo,siniestro,naranja,banner,stripe,right
+ITEM|palo siniestro rosa|palo,siniestro,rosa,banner,stripe,right
+ITEM|palo siniestro violeta|palo,siniestro,violeta,banner,stripe,right
+ITEM|palo siniestro rojo|palo,siniestro,rojo,banner,stripe,right
+ITEM|palo siniestro blanco|palo,siniestro,blanco,banner,stripe,right
+ITEM|palo siniestro amarillo|palo,siniestro,amarillo,banner,stripe,right
+ITEM|canton negro|canton,negro,banner,stripe,top,black
+ITEM|canton azul|canton,azul,banner,stripe,top,blue
+ITEM|canton marron|canton,marron,banner,stripe,top,brown
+ITEM|canton cian|canton,cian,banner,stripe,top,cyan
+ITEM|canton gris|canton,gris,banner,stripe,top,gray
+ITEM|canton verde|canton,verde,banner,stripe,top,green
+ITEM|canton celeste|canton,celeste,banner,stripe,top,light
+ITEM|canton gris claro|canton,gris,claro,banner,stripe,top
+ITEM|canton verde lima|canton,verde,lima,banner,stripe,top
+ITEM|canton magenta|canton,magenta,banner,stripe,top
+ITEM|canton naranja|canton,naranja,banner,stripe,top,orange
+ITEM|canton rosa|canton,rosa,banner,stripe,top,pink
+ITEM|canton violeta|canton,violeta,banner,stripe,top,purple
+ITEM|canton rojo|canton,rojo,banner,stripe,top,red
+ITEM|canton blanco|canton,blanco,banner,stripe,top,white
+ITEM|canton amarillo|canton,amarillo,banner,stripe,top,yellow
+ITEM|chevron negro|chevron,negro,banner,triangle,bottom,black
+ITEM|chevron azul|chevron,azul,banner,triangle,bottom,blue
+ITEM|chevron marron|chevron,marron,banner,triangle,bottom,brown
+ITEM|chevron cian|chevron,cian,banner,triangle,bottom,cyan
+ITEM|chevron gris|chevron,gris,banner,triangle,bottom,gray
+ITEM|chevron verde|chevron,verde,banner,triangle,bottom,green
+ITEM|chevron celeste|chevron,celeste,banner,triangle,bottom,light
+ITEM|chevron gris claro|chevron,gris,claro,banner,triangle,bottom
+ITEM|chevron verde lima|chevron,verde,lima,banner,triangle,bottom
+ITEM|chevron magenta|chevron,magenta,banner,triangle,bottom
+ITEM|chevron naranja|chevron,naranja,banner,triangle,bottom,orange
+ITEM|chevron rosa|chevron,rosa,banner,triangle,bottom,pink
+ITEM|chevron violeta|chevron,violeta,banner,triangle,bottom,purple
+ITEM|chevron rojo|chevron,rojo,banner,triangle,bottom,red
+ITEM|chevron blanco|chevron,blanco,banner,triangle,bottom,white
+ITEM|chevron amarillo|chevron,amarillo,banner,triangle,bottom,yellow
+ITEM|chevron negro invertido|chevron,negro,invertido,banner,triangle,top
+ITEM|chevron azul invertido|chevron,azul,invertido,banner,triangle,top
+ITEM|chevron marron invertido|chevron,marron,invertido,banner,triangle,top
+ITEM|chevron cian invertido|chevron,cian,invertido,banner,triangle,top
+ITEM|chevron gris invertido|chevron,gris,invertido,banner,triangle,top
+ITEM|chevron verde invertido|chevron,verde,invertido,banner,triangle,top
+ITEM|chevron invertido celeste|chevron,invertido,celeste,banner,triangle,top
+ITEM|chevron gris claro invertido|chevron,gris,claro,invertido,banner,triangle
+ITEM|chevron verde lima invertido|chevron,verde,lima,invertido,banner,triangle
+ITEM|chevron magenta invertido|chevron,magenta,invertido,banner,triangle,top
+ITEM|chevron naranja invertido|chevron,naranja,invertido,banner,triangle,top
+ITEM|chevron rosa invertido|chevron,rosa,invertido,banner,triangle,top
+ITEM|chevron violeta invertido|chevron,violeta,invertido,banner,triangle,top
+ITEM|chevron rojo invertido|chevron,rojo,invertido,banner,triangle,top
+ITEM|chevron blanco invertido|chevron,blanco,invertido,banner,triangle,top
+ITEM|chevron amarillo invertido|chevron,amarillo,invertido,banner,triangle,top
+ITEM|campana dentada negra|campana,dentada,negra,banner,triangles,bottom
+ITEM|campana dentada azul|campana,dentada,azul,banner,triangles,bottom
+ITEM|campana dentada marron|campana,dentada,marron,banner,triangles,bottom
+ITEM|campana dentada cian|campana,dentada,cian,banner,triangles,bottom
+ITEM|campana dentada gris|campana,dentada,gris,banner,triangles,bottom
+ITEM|campana dentada verde|campana,dentada,verde,banner,triangles,bottom
+ITEM|campana dentada celeste|campana,dentada,celeste,banner,triangles,bottom
+ITEM|campana dentada gris claro|campana,dentada,gris,claro,banner,triangles
+ITEM|campana dentada verde lima|campana,dentada,verde,lima,banner,triangles
+ITEM|campana dentada magenta|campana,dentada,magenta,banner,triangles,bottom
+ITEM|campana dentada naranja|campana,dentada,naranja,banner,triangles,bottom
+ITEM|campana dentada rosa|campana,dentada,rosa,banner,triangles,bottom
+ITEM|campana dentada violeta|campana,dentada,violeta,banner,triangles,bottom
+ITEM|campana dentada roja|campana,dentada,roja,banner,triangles,bottom
+ITEM|campana dentada blanca|campana,dentada,blanca,banner,triangles,bottom
+ITEM|campana dentada amarilla|campana,dentada,amarilla,banner,triangles,bottom
+ITEM|jefe dentado negro|jefe,dentado,negro,banner,triangles,top
+ITEM|jefe dentado azul|jefe,dentado,azul,banner,triangles,top
+ITEM|jefe dentado marron|jefe,dentado,marron,banner,triangles,top
+ITEM|jefe dentado cian|jefe,dentado,cian,banner,triangles,top
+ITEM|jefe dentado gris|jefe,dentado,gris,banner,triangles,top
+ITEM|jefe dentado verde|jefe,dentado,verde,banner,triangles,top
+ITEM|jefe dentado celeste|jefe,dentado,celeste,banner,triangles,top
+ITEM|jefe dentado gris claro|jefe,dentado,gris,claro,banner,triangles
+ITEM|jefe dentado verde lima|jefe,dentado,verde,lima,banner,triangles
+ITEM|jefe dentado magenta|jefe,dentado,magenta,banner,triangles,top
+ITEM|jefe dentado naranja|jefe,dentado,naranja,banner,triangles,top
+ITEM|jefe dentado rosa|jefe,dentado,rosa,banner,triangles,top
+ITEM|jefe dentado violeta|jefe,dentado,violeta,banner,triangles,top
+ITEM|jefe dentado rojo|jefe,dentado,rojo,banner,triangles,top
+ITEM|jefe dentado blanco|jefe,dentado,blanco,banner,triangles,top
+ITEM|jefe dentado amarillo|jefe,dentado,amarillo,banner,triangles,top
+ITEM|barril|barrel
+ITEM|barrera|barrier
+ITEM|basalto|basalt
+ITEM|faro|beacon
+ITEM|poder principal|poder,principal,beacon,primary
+ITEM|poder secundario|poder,secundario,beacon,secondary
+ITEM|solo podes dormir de noche o durante una tormenta|solo,podes,dormir,noche,durante,tormenta
+ITEM|ahora no podes dormir: hay monstruos cerca|ahora,podes,dormir,hay,monstruos,cerca
+ITEM|esta cama esta obstruida|esta,cama,obstruida,bed,obstructed
+ITEM|esta cama esta ocupada|esta,cama,ocupada,bed,occupied
+ITEM|ahora no podes dormir: la cama esta lejos|ahora,podes,dormir,cama,esta,lejos
+ITEM|piedra madre|piedra,madre,bedrock
+ITEM|colmena|bee,nest
+ITEM|apiario|beehive
+ITEM|remolachas|beetroots
+ITEM|campana|bell
+ITEM|plantaforma|big,dripleaf
+ITEM|tallo de plantaforma|tallo,plantaforma,big,dripleaf,stem
+ITEM|boton de abedul|boton,abedul,birch
+ITEM|puerta de abedul|puerta,abedul,birch
+ITEM|valla de abedul|valla,abedul,birch,fence
+ITEM|puerta de valla de abedul|puerta,valla,abedul,birch,fence,gate
+ITEM|cartel colgante de abedul|cartel,colgante,abedul,birch,hanging,sign
+ITEM|hojas de abedul|hojas,abedul,birch,leaves
+ITEM|tronco de abedul|tronco,abedul,birch,log
+ITEM|madera de abedul|madera,abedul,birch,planks
+ITEM|placa de presion de abedul|placa,presion,abedul,birch
+ITEM|brote de abedul|brote,abedul,birch,sapling
+ITEM|estante de abedul|estante,abedul,birch,shelf
+ITEM|cartel de abedul|cartel,abedul,birch,sign
+ITEM|baldosa de abedul|baldosa,abedul,birch
+ITEM|escaleras de abedul|escaleras,abedul,birch
+ITEM|escotilla de abedul|escotilla,abedul,birch
+ITEM|cartel colgante de abedul en pared|cartel,colgante,abedul,pared,birch,hanging
+ITEM|cartel de abedul en pared|cartel,abedul,pared,birch,sign
+ITEM|leno de abedul|leno,abedul,birch,wood
+ITEM|estandarte negro|estandarte,negro,black,banner
+ITEM|cama negra|cama,negra,black,bed
+ITEM|vela negra|vela,negra,black,candle
+ITEM|torta con vela negra|torta,con,vela,negra,black,candle
+ITEM|alfombra negra|alfombra,negra,black,carpet
+ITEM|concreto negro|concreto,negro,black,concrete
+ITEM|cemento negro|cemento,negro,black,concrete,powder
+ITEM|baldosa de concreto negro|baldosa,concreto,negro,black,concrete
+ITEM|escaleras de concreto negro|escaleras,concreto,negro,black,concrete
+ITEM|azulejo negro|azulejo,negro,black,glazed,terracotta
+ITEM|caja de shulker negra|caja,shulker,negra,black,box
+ITEM|vidrio negro|vidrio,negro,black,stained,glass
+ITEM|panel de vidrio negro|panel,vidrio,negro,black,stained,glass
+ITEM|terracota negra|terracota,negra,black,terracotta
+ITEM|lana negra|lana,negra,black,wool
+ITEM|baldosa de lana negra|baldosa,lana,negra,black,wool
+ITEM|escaleras de lana negra|escaleras,lana,negra,black,wool
+ITEM|piedra negra|piedra,negra,blackstone
+ITEM|baldosa de piedra negra|baldosa,piedra,negra,blackstone
+ITEM|escaleras de piedra negra|escaleras,piedra,negra,blackstone
+ITEM|pared de piedra negra|pared,piedra,negra,blackstone
+ITEM|alto horno|alto,horno,blast,furnace
+ITEM|estandarte azul|estandarte,azul,blue,banner
+ITEM|cama azul|cama,azul,blue,bed
+ITEM|vela azul|vela,azul,blue,candle
+ITEM|torta con vela azul|torta,con,vela,azul,blue,candle
+ITEM|alfombra azul|alfombra,azul,blue,carpet
+ITEM|concreto azul|concreto,azul,blue,concrete
+ITEM|cemento azul|cemento,azul,blue,concrete,powder
+ITEM|baldosa de concreto azul|baldosa,concreto,azul,blue,concrete
+ITEM|escaleras de concreto azul|escaleras,concreto,azul,blue,concrete
+ITEM|azulejo azul|azulejo,azul,blue,glazed,terracotta
+ITEM|hielo azul|hielo,azul,blue,ice
+ITEM|orquidea azul|orquidea,azul,blue,orchid
+ITEM|caja de shulker azul|caja,shulker,azul,blue,box
+ITEM|vidrio azul|vidrio,azul,blue,stained,glass
+ITEM|panel de vidrio azul|panel,vidrio,azul,blue,stained,glass
+ITEM|terracota azul|terracota,azul,blue,terracotta
+ITEM|lana azul|lana,azul,blue,wool
+ITEM|baldosa de lana azul|baldosa,lana,azul,blue,wool
+ITEM|escaleras de lana azul|escaleras,lana,azul,blue,wool
+ITEM|bloque de huesos|bloque,huesos,bone
+ITEM|biblioteca|bookshelf
+ITEM|coral de cerebro|coral,cerebro,brain
+ITEM|bloque de coral de cerebro|bloque,coral,cerebro,brain
+ITEM|gorgonia de cerebro|gorgonia,cerebro,brain,coral,fan
+ITEM|gorgonia de cerebro en pared|gorgonia,cerebro,pared,brain,coral,fan
+ITEM|destiladora|brewing,stand
+ITEM|baldosa de ladrillos|baldosa,ladrillos,brick
+ITEM|escaleras de ladrillos|escaleras,ladrillos,brick
+ITEM|pared de ladrillos|pared,ladrillos,brick
+ITEM|ladrillos|bricks
+ITEM|estandarte marron|estandarte,marron,brown,banner
+ITEM|cama marron|cama,marron,brown,bed
+ITEM|vela marron|vela,marron,brown,candle
+ITEM|torta con vela marron|torta,con,vela,marron,brown,candle
+ITEM|alfombra marron|alfombra,marron,brown,carpet
+ITEM|concreto marron|concreto,marron,brown,concrete
+ITEM|cemento marron|cemento,marron,brown,concrete,powder
+ITEM|baldosa de concreto marron|baldosa,concreto,marron,brown,concrete
+ITEM|escaleras de concreto marron|escaleras,concreto,marron,brown,concrete
+ITEM|azulejo marron|azulejo,marron,brown,glazed,terracotta
+ITEM|hongo marron|hongo,marron,brown,mushroom
+ITEM|bloque de hongo marron|bloque,hongo,marron,brown,mushroom
+ITEM|caja de shulker marron|caja,shulker,marron,brown,box
+ITEM|vidrio marron|vidrio,marron,brown,stained,glass
+ITEM|panel de vidrio marron|panel,vidrio,marron,brown,stained,glass
+ITEM|terracota marron|terracota,marron,brown,terracotta
+ITEM|lana marron|lana,marron,brown,wool
+ITEM|baldosa de lana marron|baldosa,lana,marron,brown,wool
+ITEM|escaleras de lana marron|escaleras,lana,marron,brown,wool
+ITEM|columna de burbujas|columna,burbujas,bubble,column
+ITEM|coral de burbuja|coral,burbuja,bubble
+ITEM|bloque de coral de burbuja|bloque,coral,burbuja,bubble
+ITEM|gorgonia de burbuja|gorgonia,burbuja,bubble,coral,fan
+ITEM|gorgonia de burbuja en pared|gorgonia,burbuja,pared,bubble,coral,fan
+ITEM|brotador de amatista|brotador,amatista,budding,amethyst
+ITEM|arbusto|bush
+ITEM|flor de cactus|flor,cactus,flower
+ITEM|torta|cake
+ITEM|calcita|calcite
+ITEM|sensor de sculk calibrado|sensor,sculk,calibrado,calibrated
+ITEM|fogata|campfire
+ITEM|vela|candle
+ITEM|torta con vela|torta,con,vela,candle,cake
+ITEM|zanahorias|carrots
+ITEM|mesa de cartografia|mesa,cartografia,cartography,table
+ITEM|zapallo esculpido|zapallo,esculpido,carved,pumpkin
+ITEM|caldero|cauldron
+ITEM|aire de cuevas|aire,cuevas,cave,air
+ITEM|enredaderas de cueva|enredaderas,cueva,cave,vines
+ITEM|planta de enredaderas de cueva|planta,enredaderas,cueva,cave,vines,plant
+ITEM|cadena|chain
+ITEM|bloque de comandos en cadena|bloque,comandos,cadena,chain,command
+ITEM|boton de cerezo|boton,cerezo,cherry
+ITEM|puerta de cerezo|puerta,cerezo,cherry
+ITEM|valla de cerezo|valla,cerezo,cherry,fence
+ITEM|puerta de valla de cerezo|puerta,valla,cerezo,cherry,fence,gate
+ITEM|cartel colgante de cerezo|cartel,colgante,cerezo,cherry,hanging,sign
+ITEM|hojas de cerezo|hojas,cerezo,cherry,leaves
+ITEM|tronco de cerezo|tronco,cerezo,cherry,log
+ITEM|madera de cerezo|madera,cerezo,cherry,planks
+ITEM|placa de presion de cerezo|placa,presion,cerezo,cherry
+ITEM|brote de cerezo|brote,cerezo,cherry,sapling
+ITEM|estante de cerezo|estante,cerezo,cherry,shelf
+ITEM|cartel de cerezo|cartel,cerezo,cherry,sign
+ITEM|baldosa de cerezo|baldosa,cerezo,cherry
+ITEM|escaleras de cerezo|escaleras,cerezo,cherry
+ITEM|escotilla de cerezo|escotilla,cerezo,cherry
+ITEM|cartel colgante de cerezo en pared|cartel,colgante,cerezo,pared,cherry,hanging
+ITEM|cartel de cerezo en pared|cartel,cerezo,pared,cherry,sign
+ITEM|leno de cerezo|leno,cerezo,cherry,wood
+ITEM|cofre|chest
+ITEM|yunque danado|yunque,danado,chipped,anvil
+ITEM|estanteria|chiseled,bookshelf
+ITEM|cinabrio cincelado|cinabrio,cincelado,chiseled,cinnabar
+ITEM|cobre cincelado|cobre,cincelado,chiseled,copper
+ITEM|pizarra profunda cincelada|pizarra,profunda,cincelada,chiseled,deepslate
+ITEM|ladrillos del nether cincelados|ladrillos,nether,cincelados,chiseled,bricks
+ITEM|piedra negra pulida cincelada|piedra,negra,pulida,cincelada,chiseled,polished
+ITEM|cuarzo cincelado|cuarzo,cincelado,chiseled,quartz
+ITEM|arenisca rojiza cincelada|arenisca,rojiza,cincelada,chiseled,red,sandstone
+ITEM|ladrillos de resina cincelados|ladrillos,resina,cincelados,chiseled,resin,bricks
+ITEM|arenisca cincelada|arenisca,cincelada,chiseled,sandstone
+ITEM|ladrillos de piedra cincelados|ladrillos,piedra,cincelados,chiseled,stone,bricks
+ITEM|azufre cincelado|azufre,cincelado,chiseled,sulfur
+ITEM|toba cincelada|toba,cincelada,chiseled,tuff
+ITEM|ladrillos de toba cincelados|ladrillos,toba,cincelados,chiseled,tuff,bricks
+ITEM|flor de chorus|flor,chorus,flower
+ITEM|chorus|plant
+ITEM|cinabrio|cinnabar
+ITEM|baldosa de ladrillos de cinabrio|baldosa,ladrillos,cinabrio,cinnabar,brick
+ITEM|escaleras de ladrillos de cinabrio|escaleras,ladrillos,cinabrio,cinnabar,brick
+ITEM|pared de ladrillos de cinabrio|pared,ladrillos,cinabrio,cinnabar,brick
+ITEM|ladrillos de cinabrio|ladrillos,cinabrio,cinnabar,bricks
+ITEM|baldosa de cinabrio|baldosa,cinabrio,cinnabar
+ITEM|escaleras de cinabrio|escaleras,cinabrio,cinnabar
+ITEM|pared de cinabrio|pared,cinabrio,cinnabar
+ITEM|arcilla|clay
+ITEM|miraflor cerrada|miraflor,cerrada,closed,eyeblossom
+ITEM|bloque de carbon|bloque,carbon,coal
+ITEM|mineral de carbon|mineral,carbon,coal,ore
+ITEM|tierra infertil|tierra,infertil,coarse,dirt
+ITEM|adoquin de pizarra profunda|adoquin,pizarra,profunda,cobbled,deepslate
+ITEM|baldosa de adoquin de pizarra profunda|baldosa,adoquin,pizarra,profunda,cobbled,deepslate
+ITEM|escaleras de adoquin de pizarra profunda|escaleras,adoquin,pizarra,profunda,cobbled,deepslate
+ITEM|pared de adoquin de pizarra profunda|pared,adoquin,pizarra,profunda,cobbled,deepslate
+ITEM|adoquin|cobblestone
+ITEM|baldosa de adoquin|baldosa,adoquin,cobblestone
+ITEM|escaleras de adoquin|escaleras,adoquin,cobblestone
+ITEM|pared de adoquin|pared,adoquin,cobblestone
+ITEM|telarana|cobweb
+ITEM|cacao|cocoa
+ITEM|bloque de comandos|bloque,comandos,command
+ITEM|comparador de redstone|comparador,redstone,comparator
+ITEM|compostera|composter
+ITEM|canalizador|conduit
+ITEM|barrotes de cobre|barrotes,cobre,copper,bars
+ITEM|bloque de cobre|bloque,cobre,copper
+ITEM|lampara de cobre|lampara,cobre,copper,bulb
+ITEM|cadena de cobre|cadena,cobre,copper,chain
+ITEM|cofre de cobre|cofre,cobre,copper,chest
+ITEM|puerta de cobre|puerta,cobre,copper
+ITEM|estatua de golem de cobre|estatua,golem,cobre,copper,statue
+ITEM|rejilla de cobre|rejilla,cobre,copper,grate
+ITEM|farol de cobre|farol,cobre,copper,lantern
+ITEM|mineral de cobre|mineral,cobre,copper,ore
+ITEM|antorcha de cobre|antorcha,cobre,copper,torch
+ITEM|escotilla de cobre|escotilla,cobre,copper
+ITEM|antorcha de cobre en pared|antorcha,cobre,pared,copper,torch
+ITEM|aciano|cornflower
+ITEM|ladrillos de pizarra profunda quebrados|ladrillos,pizarra,profunda,quebrados,cracked,deepslate
+ITEM|losetas de pizarra profunda quebradas|losetas,pizarra,profunda,quebradas,cracked,deepslate
+ITEM|ladrillos del nether quebrados|ladrillos,nether,quebrados,cracked,bricks
+ITEM|ladrillos de piedra negra pulida agrietada|ladrillos,piedra,negra,pulida,agrietada,cracked
+ITEM|ladrillos de piedra quebrados|ladrillos,piedra,quebrados,cracked,stone,bricks
+ITEM|fabricador|crafter
+ITEM|mesa de crafteo|mesa,crafteo,crafting,table
+ITEM|corazon de crujidor|corazon,crujidor,creaking,heart
+ITEM|cabeza de creeper|cabeza,creeper,head
+ITEM|cabeza de creeper en pared|cabeza,creeper,pared,head
+ITEM|boton carmesi|boton,carmesi,crimson
+ITEM|puerta carmesi|puerta,carmesi,crimson
+ITEM|valla carmesi|valla,carmesi,crimson,fence
+ITEM|puerta de valla carmesi|puerta,valla,carmesi,crimson,fence,gate
+ITEM|hongo carmesi|hongo,carmesi,crimson,fungus
+ITEM|cartel colgante carmesi|cartel,colgante,carmesi,crimson,hanging,sign
+ITEM|hifas carmesi|hifas,carmesi,crimson,hyphae
+ITEM|nilio carmesi|nilio,carmesi,crimson,nylium
+ITEM|madera carmesi|madera,carmesi,crimson,planks
+ITEM|placa de presion carmesi|placa,presion,carmesi,crimson
+ITEM|yuyos carmesi|yuyos,carmesi,crimson,roots
+ITEM|estante carmesi|estante,carmesi,crimson,shelf
+ITEM|cartel carmesi|cartel,carmesi,crimson,sign
+ITEM|baldosa carmesi|baldosa,carmesi,crimson
+ITEM|escaleras carmesi|escaleras,carmesi,crimson
+ITEM|tallo carmesi|tallo,carmesi,crimson,stem
+ITEM|escotilla carmesi|escotilla,carmesi,crimson
+ITEM|cartel colgante carmesi en pared|cartel,colgante,carmesi,pared,crimson,hanging
+ITEM|cartel carmesi en pared|cartel,carmesi,pared,crimson,sign
+ITEM|obsidiana llorosa|obsidiana,llorosa,crying,obsidian
+ITEM|cobre cortado|cobre,cortado,cut,copper
+ITEM|baldosa de cobre cortado|baldosa,cobre,cortado,cut,copper
+ITEM|escaleras de cobre cortado|escaleras,cobre,cortado,cut,copper
+ITEM|arenisca rojiza cortada|arenisca,rojiza,cortada,cut,red,sandstone
+ITEM|baldosa de arenisca rojiza cortada|baldosa,arenisca,rojiza,cortada,cut,red
+ITEM|arenisca cortada|arenisca,cortada,cut,sandstone
+ITEM|baldosa de arenisca cortada|baldosa,arenisca,cortada,cut,sandstone
+ITEM|estandarte cian|estandarte,cian,cyan,banner
+ITEM|cama cian|cama,cian,cyan,bed
+ITEM|vela cian|vela,cian,cyan,candle
+ITEM|torta con vela cian|torta,con,vela,cian,cyan,candle
+ITEM|alfombra cian|alfombra,cian,cyan,carpet
+ITEM|concreto cian|concreto,cian,cyan,concrete
+ITEM|cemento cian|cemento,cian,cyan,concrete,powder
+ITEM|baldosa de concreto cian|baldosa,concreto,cian,cyan,concrete
+ITEM|escaleras de concreto cian|escaleras,concreto,cian,cyan,concrete
+ITEM|azulejo cian|azulejo,cian,cyan,glazed,terracotta
+ITEM|caja de shulker cian|caja,shulker,cian,cyan,box
+ITEM|vidrio cian|vidrio,cian,cyan,stained,glass
+ITEM|panel de vidrio cian|panel,vidrio,cian,cyan,stained,glass
+ITEM|terracota cian|terracota,cian,cyan,terracotta
+ITEM|lana cian|lana,cian,cyan,wool
+ITEM|baldosa de lana cian|baldosa,lana,cian,cyan,wool
+ITEM|escaleras de lana cian|escaleras,lana,cian,cyan,wool
+ITEM|yunque muy danado|yunque,muy,danado,damaged,anvil
+ITEM|diente de leon|diente,leon,dandelion
+ITEM|boton de roble oscuro|boton,roble,oscuro,dark,oak
+ITEM|puerta de roble oscuro|puerta,roble,oscuro,dark,oak
+ITEM|valla de roble oscuro|valla,roble,oscuro,dark,oak,fence
+ITEM|puerta de valla de roble oscuro|puerta,valla,roble,oscuro,dark,oak
+ITEM|cartel colgante de roble oscuro|cartel,colgante,roble,oscuro,dark,oak
+ITEM|hojas de roble oscuro|hojas,roble,oscuro,dark,oak,leaves
+ITEM|tronco de roble oscuro|tronco,roble,oscuro,dark,oak,log
+ITEM|madera de roble oscuro|madera,roble,oscuro,dark,oak,planks
+ITEM|placa de presion de roble oscuro|placa,presion,roble,oscuro,dark,oak
+ITEM|brote de roble oscuro|brote,roble,oscuro,dark,oak,sapling
+ITEM|estante de roble oscuro|estante,roble,oscuro,dark,oak,shelf
+ITEM|cartel de roble oscuro|cartel,roble,oscuro,dark,oak,sign
+ITEM|baldosa de roble oscuro|baldosa,roble,oscuro,dark,oak
+ITEM|escaleras de roble oscuro|escaleras,roble,oscuro,dark,oak
+ITEM|escotilla de roble oscuro|escotilla,roble,oscuro,dark,oak
+ITEM|cartel colgante de roble oscuro en pared|cartel,colgante,roble,oscuro,pared,dark
+ITEM|cartel de roble oscuro en pared|cartel,roble,oscuro,pared,dark,oak
+ITEM|leno de roble oscuro|leno,roble,oscuro,dark,oak,wood
+ITEM|prismarina oscura|prismarina,oscura,dark,prismarine
+ITEM|baldosa de prismarina oscura|baldosa,prismarina,oscura,dark,prismarine
+ITEM|escaleras de prismarina oscura|escaleras,prismarina,oscura,dark,prismarine
+ITEM|sensor de luz solar|sensor,luz,solar,daylight,detector
+ITEM|coral de cerebro muerto|coral,cerebro,muerto,dead,brain
+ITEM|bloque de coral de cerebro muerto|bloque,coral,cerebro,muerto,dead,brain
+ITEM|gorgonia de cerebro muerta|gorgonia,cerebro,muerta,dead,brain,coral
+ITEM|gorgonia de cerebro muerta en pared|gorgonia,cerebro,muerta,pared,dead,brain
+ITEM|coral de burbuja muerto|coral,burbuja,muerto,dead,bubble
+ITEM|bloque de coral de burbuja muerto|bloque,coral,burbuja,muerto,dead,bubble
+ITEM|gorgonia de burbuja muerta|gorgonia,burbuja,muerta,dead,bubble,coral
+ITEM|gorgonia de burbuja muerta en pared|gorgonia,burbuja,muerta,pared,dead,bubble
+ITEM|arbusto muerto|arbusto,muerto,dead,bush
+ITEM|coral de fuego muerto|coral,fuego,muerto,dead,fire
+ITEM|bloque de coral de fuego muerto|bloque,coral,fuego,muerto,dead,fire
+ITEM|gorgonia de fuego muerta|gorgonia,fuego,muerta,dead,fire,coral
+ITEM|gorgonia de fuego muerta en pared|gorgonia,fuego,muerta,pared,dead,fire
+ITEM|coral de cuerno muerto|coral,cuerno,muerto,dead,horn
+ITEM|bloque de coral de cuerno muerto|bloque,coral,cuerno,muerto,dead,horn
+ITEM|gorgonia de cuerno muerta|gorgonia,cuerno,muerta,dead,horn,coral
+ITEM|gorgonia de cuerno muerta en pared|gorgonia,cuerno,muerta,pared,dead,horn
+ITEM|coral de tubo muerto|coral,tubo,muerto,dead,tube
+ITEM|bloque de coral de tubo muerto|bloque,coral,tubo,muerto,dead,tube
+ITEM|gorgonia de tubo muerta|gorgonia,tubo,muerta,dead,tube,coral
+ITEM|gorgonia de tubo muerta en pared|gorgonia,tubo,muerta,pared,dead,tube
+ITEM|maceta decorada|maceta,decorada,pot
+ITEM|pizarra profunda|pizarra,profunda,deepslate
+ITEM|baldosa de ladrillos de pizarra profunda|baldosa,ladrillos,pizarra,profunda,deepslate,brick
+ITEM|escaleras de ladrillos de pizarra profunda|escaleras,ladrillos,pizarra,profunda,deepslate,brick
+ITEM|pared de ladrillos de pizarra profunda|pared,ladrillos,pizarra,profunda,deepslate,brick
+ITEM|ladrillos de pizarra profunda|ladrillos,pizarra,profunda,deepslate,bricks
+ITEM|mineral de carbon de pizarra profunda|mineral,carbon,pizarra,profunda,deepslate,coal
+ITEM|mineral de cobre de pizarra profunda|mineral,cobre,pizarra,profunda,deepslate,copper
+ITEM|mineral de diamante de pizarra profunda|mineral,diamante,pizarra,profunda,deepslate,diamond
+ITEM|mineral de esmeralda de pizarra profunda|mineral,esmeralda,pizarra,profunda,deepslate,emerald
+ITEM|mineral de oro de pizarra profunda|mineral,oro,pizarra,profunda,deepslate,gold
+ITEM|mineral de hierro de pizarra profunda|mineral,hierro,pizarra,profunda,deepslate,iron
+ITEM|mineral de lapizlazuli de pizarra profunda|mineral,lapizlazuli,pizarra,profunda,deepslate,lapis
+ITEM|mineral de redstone de pizarra profunda|mineral,redstone,pizarra,profunda,deepslate,ore
+ITEM|baldosa de losetas de pizarra profunda|baldosa,losetas,pizarra,profunda,deepslate,tile
+ITEM|escaleras de losetas de pizarra profunda|escaleras,losetas,pizarra,profunda,deepslate,tile
+ITEM|pared de losetas de pizarra profunda|pared,losetas,pizarra,profunda,deepslate,tile
+ITEM|losetas de pizarra profunda|losetas,pizarra,profunda,deepslate,tiles
+ITEM|via detectora|via,detectora,detector,rail
+ITEM|bloque de diamante|bloque,diamante,diamond
+ITEM|mineral de diamante|mineral,diamante,diamond,ore
+ITEM|diorita|diorite
+ITEM|baldosa de diorita|baldosa,diorita,diorite
+ITEM|escaleras de diorita|escaleras,diorita,diorite
+ITEM|pared de diorita|pared,diorita,diorite
+ITEM|tierra|dirt
+ITEM|camino de tierra|camino,tierra,dirt,path
+ITEM|dispensador|dispenser
+ITEM|huevo de dragon|huevo,dragon,egg
+ITEM|cabeza de dragon|cabeza,dragon,head
+ITEM|cabeza de dragon en pared|cabeza,dragon,pared,head
+ITEM|ghast seco|ghast,seco,dried
+ITEM|bloque de algas secas|bloque,algas,secas,dried,kelp
+ITEM|bloque de espeleotema|bloque,espeleotema,dripstone
+ITEM|soltador|dropper
+ITEM|bloque de esmeralda|bloque,esmeralda,emerald
+ITEM|mineral de esmeralda|mineral,esmeralda,emerald,ore
+ITEM|mesa de encantamientos|mesa,encantamientos,enchanting,table
+ITEM|acceso al end|acceso,end,gateway
+ITEM|marco del portal al end|marco,portal,end
+ITEM|marco del portal del end|marco,portal,end,frame
+ITEM|vara del end|vara,end,rod
+ITEM|piedra del end|piedra,end,stone
+ITEM|baldosa de ladrillos de piedra del end|baldosa,ladrillos,piedra,end,stone,brick
+ITEM|escaleras de ladrillos de piedra del end|escaleras,ladrillos,piedra,end,stone,brick
+ITEM|pared de ladrillos de piedra del end|pared,ladrillos,piedra,end,stone,brick
+ITEM|ladrillos de piedra del end|ladrillos,piedra,end,stone,bricks
+ITEM|cofre de ender|cofre,ender,chest
+ITEM|cobre cincelado expuesto|cobre,cincelado,expuesto,exposed,chiseled,copper
+ITEM|cobre expuesto|cobre,expuesto,exposed,copper
+ITEM|barrotes de cobre expuesto|barrotes,cobre,expuesto,exposed,copper,bars
+ITEM|lampara de cobre expuesto|lampara,cobre,expuesto,exposed,copper,bulb
+ITEM|cadena de cobre expuesto|cadena,cobre,expuesto,exposed,copper,chain
+ITEM|cofre de cobre expuesto|cofre,cobre,expuesto,exposed,copper,chest
+ITEM|puerta de cobre expuesto|puerta,cobre,expuesto,exposed,copper
+ITEM|estatua de golem de cobre expuesto|estatua,golem,cobre,expuesto,exposed,copper
+ITEM|rejilla de cobre expuesto|rejilla,cobre,expuesto,exposed,copper,grate
+ITEM|farol de cobre expuesto|farol,cobre,expuesto,exposed,copper,lantern
+ITEM|escotilla de cobre expuesto|escotilla,cobre,expuesto,exposed,copper
+ITEM|cobre cortado expuesto|cobre,cortado,expuesto,exposed,cut,copper
+ITEM|baldosa de cobre cortado expuesto|baldosa,cobre,cortado,expuesto,exposed,cut
+ITEM|escaleras de cobre cortado expuesto|escaleras,cobre,cortado,expuesto,exposed,cut
+ITEM|pararrayos expuesto|pararrayos,expuesto,exposed,lightning,rod
+ITEM|tierra de cultivo|tierra,cultivo,farmland
+ITEM|helecho|fern
+ITEM|fuego|fire
+ITEM|coral de fuego|coral,fuego,fire
+ITEM|bloque de coral de fuego|bloque,coral,fuego,fire
+ITEM|gorgonia de fuego|gorgonia,fuego,fire,coral,fan
+ITEM|gorgonia de fuego en pared|gorgonia,fuego,pared,fire,coral,fan
+ITEM|arbusto de luciernagas|arbusto,luciernagas,firefly,bush
+ITEM|mesa de arqueria|mesa,arqueria,fletching,table
+ITEM|maceta|flower,pot
+ITEM|azalea florida|azalea,florida,flowering
+ITEM|hojas de azalea florida|hojas,azalea,florida,flowering,leaves
+ITEM|desove de sapo|desove,sapo,frogspawn
+ITEM|hielo escarchado|hielo,escarchado,frosted,ice
+ITEM|horno|furnace
+ITEM|piedra negra dorada|piedra,negra,dorada,gilded,blackstone
+ITEM|vidrio|glass
+ITEM|panel de vidrio|panel,vidrio,glass,pane
+ITEM|liquen luminoso|liquen,luminoso,glow,lichen
+ITEM|piedra luminosa|piedra,luminosa,glowstone
+ITEM|bloque de oro|bloque,oro,gold
+ITEM|mineral de oro|mineral,oro,gold,ore
+ITEM|diente de leon dorado|diente,leon,dorado,golden,dandelion
+ITEM|granito|granite
+ITEM|baldosa de granito|baldosa,granito,granite
+ITEM|escaleras de granito|escaleras,granito,granite
+ITEM|pared de granito|pared,granito,granite
+ITEM|pasto|grass
+ITEM|bloque de pasto|bloque,pasto,grass
+ITEM|grava|gravel
+ITEM|estandarte gris|estandarte,gris,gray,banner
+ITEM|cama gris|cama,gris,gray,bed
+ITEM|vela gris|vela,gris,gray,candle
+ITEM|torta con vela gris|torta,con,vela,gris,gray,candle
+ITEM|alfombra gris|alfombra,gris,gray,carpet
+ITEM|concreto gris|concreto,gris,gray,concrete
+ITEM|cemento gris|cemento,gris,gray,concrete,powder
+ITEM|baldosa de concreto gris|baldosa,concreto,gris,gray,concrete
+ITEM|escaleras de concreto gris|escaleras,concreto,gris,gray,concrete
+ITEM|azulejo gris|azulejo,gris,gray,glazed,terracotta
+ITEM|caja de shulker gris|caja,shulker,gris,gray,box
+ITEM|vidrio gris|vidrio,gris,gray,stained,glass
+ITEM|panel de vidrio gris|panel,vidrio,gris,gray,stained,glass
+ITEM|terracota gris|terracota,gris,gray,terracotta
+ITEM|lana gris|lana,gris,gray,wool
+ITEM|baldosa de lana gris|baldosa,lana,gris,gray,wool
+ITEM|escaleras de lana gris|escaleras,lana,gris,gray,wool
+ITEM|estandarte verde|estandarte,verde,green,banner
+ITEM|cama verde|cama,verde,green,bed
+ITEM|vela verde|vela,verde,green,candle
+ITEM|torta con vela verde|torta,con,vela,verde,green,candle
+ITEM|alfombra verde|alfombra,verde,green,carpet
+ITEM|concreto verde|concreto,verde,green,concrete
+ITEM|cemento verde|cemento,verde,green,concrete,powder
+ITEM|baldosa de concreto verde|baldosa,concreto,verde,green,concrete
+ITEM|escaleras de concreto verde|escaleras,concreto,verde,green,concrete
+ITEM|azulejo verde|azulejo,verde,green,glazed,terracotta
+ITEM|caja de shulker verde|caja,shulker,verde,green,box
+ITEM|vidrio verde|vidrio,verde,green,stained,glass
+ITEM|panel de vidrio verde|panel,vidrio,verde,green,stained,glass
+ITEM|terracota verde|terracota,verde,green,terracotta
+ITEM|lana verde|lana,verde,green,wool
+ITEM|baldosa de lana verde|baldosa,lana,verde,green,wool
+ITEM|escaleras de lana verde|escaleras,lana,verde,green,wool
+ITEM|afiladora|grindstone
+ITEM|raices colgantes|raices,colgantes,hanging,roots
+ITEM|bloque de heno|bloque,heno,hay
+ITEM|nucleo pesado|nucleo,pesado,heavy,core
+ITEM|placa de presion ponderada (pesada)|placa,presion,ponderada,pesada,heavy,weighted
+ITEM|bloque de miel|bloque,miel,honey
+ITEM|bloque de panal|bloque,panal,honeycomb
+ITEM|tolva|hopper
+ITEM|coral de cuerno|coral,cuerno,horn
+ITEM|bloque de coral de cuerno|bloque,coral,cuerno,horn
+ITEM|gorgonia de cuerno|gorgonia,cuerno,horn,coral,fan
+ITEM|gorgonia de cuerno en pared|gorgonia,cuerno,pared,horn,coral,fan
+ITEM|hielo|ice
+ITEM|ladrillos de piedra cincelados infestados|ladrillos,piedra,cincelados,infestados,infested,chiseled
+ITEM|adoquin infestado|adoquin,infestado,infested,cobblestone
+ITEM|ladrillos de piedra quebrados infestados|ladrillos,piedra,quebrados,infestados,infested,cracked
+ITEM|pizarra profunda infestada|pizarra,profunda,infestada,infested,deepslate
+ITEM|ladrillos de piedra musgosos infestados|ladrillos,piedra,musgosos,infestados,infested,mossy
+ITEM|piedra infestada|piedra,infestada,infested,stone
+ITEM|ladrillos de piedra infestados|ladrillos,piedra,infestados,infested,stone,bricks
+ITEM|barrotes de hierro|barrotes,hierro,iron,bars
+ITEM|bloque de hierro|bloque,hierro,iron
+ITEM|cadena de hierro|cadena,hierro,iron,chain
+ITEM|puerta de hierro|puerta,hierro,iron
+ITEM|mineral de hierro|mineral,hierro,iron,ore
+ITEM|escotilla de hierro|escotilla,hierro,iron
+ITEM|zapallo de halloween|zapallo,halloween,jack,lantern
+ITEM|bloque de rompecabezas|bloque,rompecabezas,jigsaw
+ITEM|tocadiscos|jukebox
+ITEM|boton de jungla|boton,jungla,jungle
+ITEM|puerta de jungla|puerta,jungla,jungle
+ITEM|valla de jungla|valla,jungla,jungle,fence
+ITEM|puerta de valla de jungla|puerta,valla,jungla,jungle,fence,gate
+ITEM|cartel colgante de jungla|cartel,colgante,jungla,jungle,hanging,sign
+ITEM|hojas de jungla|hojas,jungla,jungle,leaves
+ITEM|tronco de jungla|tronco,jungla,jungle,log
+ITEM|madera de jungla|madera,jungla,jungle,planks
+ITEM|placa de presion de jungla|placa,presion,jungla,jungle
+ITEM|brote de jungla|brote,jungla,jungle,sapling
+ITEM|estante de jungla|estante,jungla,jungle,shelf
+ITEM|cartel de jungla|cartel,jungla,jungle,sign
+ITEM|baldosa de jungla|baldosa,jungla,jungle
+ITEM|escaleras de jungla|escaleras,jungla,jungle
+ITEM|escotilla de jungla|escotilla,jungla,jungle
+ITEM|cartel colgante de jungla en pared|cartel,colgante,jungla,pared,jungle,hanging
+ITEM|cartel de jungla en pared|cartel,jungla,pared,jungle,sign
+ITEM|leno de jungla|leno,jungla,jungle,wood
+ITEM|alga|kelp
+ITEM|tallo de alga|tallo,alga,kelp,plant
+ITEM|escalera|ladder
+ITEM|farol|lantern
+ITEM|bloque de lapislazuli|bloque,lapislazuli,lapis
+ITEM|mineral de lapislazuli|mineral,lapislazuli,lapis,ore
+ITEM|brote de amatista grande|brote,amatista,grande,large,amethyst,bud
+ITEM|helecho alto|helecho,alto,large,fern
+ITEM|caldero con lava|caldero,con,lava,cauldron
+ITEM|hojas secas|hojas,secas,leaf,litter
+ITEM|atril|lectern
+ITEM|palanca|lever
+ITEM|luz|light
+ITEM|estandarte celeste|estandarte,celeste,light,blue,banner
+ITEM|cama celeste|cama,celeste,light,blue,bed
+ITEM|vela celeste|vela,celeste,light,blue,candle
+ITEM|torta con vela celeste|torta,con,vela,celeste,light,blue
+ITEM|alfombra celeste|alfombra,celeste,light,blue,carpet
+ITEM|concreto celeste|concreto,celeste,light,blue,concrete
+ITEM|cemento celeste|cemento,celeste,light,blue,concrete,powder
+ITEM|baldosa de concreto celeste|baldosa,concreto,celeste,light,blue,concrete
+ITEM|escaleras de concreto celeste|escaleras,concreto,celeste,light,blue,concrete
+ITEM|azulejo celeste|azulejo,celeste,light,blue,glazed,terracotta
+ITEM|caja de shulker celeste|caja,shulker,celeste,light,blue,box
+ITEM|vidrio celeste|vidrio,celeste,light,blue,stained,glass
+ITEM|panel de vidrio celeste|panel,vidrio,celeste,light,blue,stained
+ITEM|terracota celeste|terracota,celeste,light,blue,terracotta
+ITEM|lana celeste|lana,celeste,light,blue,wool
+ITEM|baldosa de lana celeste|baldosa,lana,celeste,light,blue,wool
+ITEM|escaleras de lana celeste|escaleras,lana,celeste,light,blue,wool
+ITEM|estandarte gris claro|estandarte,gris,claro,light,gray,banner
+ITEM|cama gris claro|cama,gris,claro,light,gray,bed
+ITEM|vela gris claro|vela,gris,claro,light,gray,candle
+ITEM|torta con vela gris claro|torta,con,vela,gris,claro,light
+ITEM|alfombra gris claro|alfombra,gris,claro,light,gray,carpet
+ITEM|concreto gris claro|concreto,gris,claro,light,gray,concrete
+ITEM|cemento gris claro|cemento,gris,claro,light,gray,concrete
+ITEM|baldosa de concreto gris claro|baldosa,concreto,gris,claro,light,gray
+ITEM|escaleras de concreto gris claro|escaleras,concreto,gris,claro,light,gray
+ITEM|azulejo gris claro|azulejo,gris,claro,light,gray,glazed
+ITEM|caja de shulker gris claro|caja,shulker,gris,claro,light,gray
+ITEM|vidrio gris claro|vidrio,gris,claro,light,gray,stained
+ITEM|panel de vidrio gris claro|panel,vidrio,gris,claro,light,gray
+ITEM|terracota gris claro|terracota,gris,claro,light,gray,terracotta
+ITEM|lana gris claro|lana,gris,claro,light,gray,wool
+ITEM|baldosa de lana gris claro|baldosa,lana,gris,claro,light,gray
+ITEM|escaleras de lana gris claro|escaleras,lana,gris,claro,light,gray
+ITEM|placa de presion ponderada (ligera)|placa,presion,ponderada,ligera,light,weighted
+ITEM|pararrayos|lightning,rod
+ITEM|lila|lilac
+ITEM|lirio del valle|lirio,valle,lily,valley
+ITEM|lirio de agua|lirio,agua,lily,pad
+ITEM|estandarte verde lima|estandarte,verde,lima,lime,banner
+ITEM|cama verde lima|cama,verde,lima,lime,bed
+ITEM|vela verde lima|vela,verde,lima,lime,candle
+ITEM|torta con vela verde lima|torta,con,vela,verde,lima,lime
+ITEM|alfombra verde lima|alfombra,verde,lima,lime,carpet
+ITEM|concreto verde lima|concreto,verde,lima,lime,concrete
+ITEM|cemento verde lima|cemento,verde,lima,lime,concrete,powder
+ITEM|baldosa de concreto verde lima|baldosa,concreto,verde,lima,lime,concrete
+ITEM|escaleras de concreto verde lima|escaleras,concreto,verde,lima,lime,concrete
+ITEM|azulejo verde lima|azulejo,verde,lima,lime,glazed,terracotta
+ITEM|caja de shulker verde lima|caja,shulker,verde,lima,lime,box
+ITEM|vidrio verde lima|vidrio,verde,lima,lime,stained,glass
+ITEM|panel de vidrio verde lima|panel,vidrio,verde,lima,lime,stained
+ITEM|terracota verde lima|terracota,verde,lima,lime,terracotta
+ITEM|lana verde lima|lana,verde,lima,lime,wool
+ITEM|baldosa de lana lima|baldosa,lana,lima,lime,wool
+ITEM|escaleras de lana lima|escaleras,lana,lima,lime,wool
+ITEM|magnetita|lodestone
+ITEM|maquina de telar|maquina,telar,loom
+ITEM|estandarte magenta|estandarte,magenta,banner
+ITEM|cama magenta|cama,magenta,bed
+ITEM|vela magenta|vela,magenta,candle
+ITEM|torta con vela magenta|torta,con,vela,magenta,candle,cake
+ITEM|alfombra magenta|alfombra,magenta,carpet
+ITEM|concreto magenta|concreto,magenta,concrete
+ITEM|cemento magenta|cemento,magenta,concrete,powder
+ITEM|baldosa de concreto magenta|baldosa,concreto,magenta,concrete
+ITEM|escaleras de concreto magenta|escaleras,concreto,magenta,concrete
+ITEM|azulejo magenta|azulejo,magenta,glazed,terracotta
+ITEM|caja de shulker magenta|caja,shulker,magenta,box
+ITEM|vidrio magenta|vidrio,magenta,stained,glass
+ITEM|panel de vidrio magenta|panel,vidrio,magenta,stained,glass,pane
+ITEM|terracota magenta|terracota,magenta,terracotta
+ITEM|lana magenta|lana,magenta,wool
+ITEM|baldosa de lana magenta|baldosa,lana,magenta,wool
+ITEM|escaleras de lana magenta|escaleras,lana,magenta,wool
+ITEM|bloque de magma|bloque,magma
+ITEM|boton de mangle|boton,mangle,mangrove
+ITEM|puerta de mangle|puerta,mangle,mangrove
+ITEM|valla de mangle|valla,mangle,mangrove,fence
+ITEM|puerta de valla de mangle|puerta,valla,mangle,mangrove,fence,gate
+ITEM|cartel colgante de mangle|cartel,colgante,mangle,mangrove,hanging,sign
+ITEM|hojas de mangle|hojas,mangle,mangrove,leaves
+ITEM|tronco de mangle|tronco,mangle,mangrove,log
+ITEM|madera de mangle|madera,mangle,mangrove,planks
+ITEM|placa de presion de mangle|placa,presion,mangle,mangrove
+ITEM|propagulo de mangle|propagulo,mangle,mangrove,propagule
+ITEM|raices de mangle|raices,mangle,mangrove,roots
+ITEM|estante de mangle|estante,mangle,mangrove,shelf
+ITEM|cartel de mangle|cartel,mangle,mangrove,sign
+ITEM|baldosa de mangle|baldosa,mangle,mangrove
+ITEM|escaleras de mangle|escaleras,mangle,mangrove
+ITEM|escotilla de mangle|escotilla,mangle,mangrove
+ITEM|cartel colgante de mangle en pared|cartel,colgante,mangle,pared,mangrove,hanging
+ITEM|cartel de mangle en pared|cartel,mangle,pared,mangrove,sign
+ITEM|leno de mangle|leno,mangle,mangrove,wood
+ITEM|brote de amatista mediano|brote,amatista,mediano,medium,amethyst,bud
+ITEM|sandia|melon
+ITEM|tallo de sandia|tallo,sandia,melon,stem
+ITEM|bloque de musgo|bloque,musgo,moss
+ITEM|alfombra de musgo|alfombra,musgo,moss,carpet
+ITEM|adoquin musgoso|adoquin,musgoso,mossy,cobblestone
+ITEM|baldosa de adoquin musgoso|baldosa,adoquin,musgoso,mossy,cobblestone
+ITEM|escaleras de adoquin musgoso|escaleras,adoquin,musgoso,mossy,cobblestone
+ITEM|pared de adoquin musgoso|pared,adoquin,musgoso,mossy,cobblestone
+ITEM|baldosa de ladrillos de piedra musgosos|baldosa,ladrillos,piedra,musgosos,mossy,stone
+ITEM|escaleras de ladrillos de piedra musgosos|escaleras,ladrillos,piedra,musgosos,mossy,stone
+ITEM|pared de ladrillos de piedra musgosos|pared,ladrillos,piedra,musgosos,mossy,stone
+ITEM|ladrillos de piedra musgosos|ladrillos,piedra,musgosos,mossy,stone,bricks
+ITEM|piston en movimiento|piston,movimiento,moving
+ITEM|barro|mud
+ITEM|baldosa de ladrillos de adobe|baldosa,ladrillos,adobe,mud,brick
+ITEM|escaleras de ladrillos de adobe|escaleras,ladrillos,adobe,mud,brick
+ITEM|pared de ladrillos de adobe|pared,ladrillos,adobe,mud,brick
+ITEM|ladrillos de adobe|ladrillos,adobe,mud,bricks
+ITEM|raices de mangle sucias|raices,mangle,sucias,muddy,mangrove,roots
+ITEM|tallo de hongo|tallo,hongo,mushroom,stem
+ITEM|micelio|mycelium
+ITEM|valla de ladrillos del nether|valla,ladrillos,nether,brick,fence
+ITEM|baldosa de ladrillos del nether|baldosa,ladrillos,nether,brick
+ITEM|escaleras de ladrillos del nether|escaleras,ladrillos,nether,brick
+ITEM|pared de ladrillos del nether|pared,ladrillos,nether,brick
+ITEM|ladrillos del nether|ladrillos,nether,bricks
+ITEM|mineral de oro del nether|mineral,oro,nether,gold,ore
+ITEM|portal del nether|portal,nether
+ITEM|mineral de cuarzo del nether|mineral,cuarzo,nether,quartz,ore
+ITEM|brotes del nether|brotes,nether,sprouts
+ITEM|verruga del nether|verruga,nether,wart
+ITEM|bloque de verrugas del nether|bloque,verrugas,nether,wart
+ITEM|bloque de netherita|bloque,netherita,netherite
+ITEM|bloque musical|bloque,musical,note
+ITEM|boton de roble|boton,roble,oak
+ITEM|puerta de roble|puerta,roble,oak
+ITEM|valla de roble|valla,roble,oak,fence
+ITEM|puerta de valla de roble|puerta,valla,roble,oak,fence,gate
+ITEM|cartel colgante de roble|cartel,colgante,roble,oak,hanging,sign
+ITEM|hojas de roble|hojas,roble,oak,leaves
+ITEM|tronco de roble|tronco,roble,oak,log
+ITEM|madera de roble|madera,roble,oak,planks
+ITEM|placa de presion de roble|placa,presion,roble,oak
+ITEM|brote de roble|brote,roble,oak,sapling
+ITEM|estante de roble|estante,roble,oak,shelf
+ITEM|cartel de roble|cartel,roble,oak,sign
+ITEM|baldosa de roble|baldosa,roble,oak
+ITEM|escaleras de roble|escaleras,roble,oak
+ITEM|escotilla de roble|escotilla,roble,oak
+ITEM|cartel colgante de roble en pared|cartel,colgante,roble,pared,oak,hanging
+ITEM|cartel de roble en pared|cartel,roble,pared,oak,sign
+ITEM|leno de roble|leno,roble,oak,wood
+ITEM|observador|observer
+ITEM|obsidiana|obsidian
+ITEM|luzapo ocre|luzapo,ocre,ochre,froglight
+ITEM|estandarte siniestro|estandarte,siniestro,ominous,banner
+ITEM|miraflor abierta|miraflor,abierta,open,eyeblossom
+ITEM|estandarte naranja|estandarte,naranja,orange,banner
+ITEM|cama naranja|cama,naranja,orange,bed
+ITEM|vela naranja|vela,naranja,orange,candle
+ITEM|torta con vela naranja|torta,con,vela,naranja,orange,candle
+ITEM|alfombra naranja|alfombra,naranja,orange,carpet
+ITEM|concreto naranja|concreto,naranja,orange,concrete
+ITEM|cemento naranja|cemento,naranja,orange,concrete,powder
+ITEM|baldosa de concreto naranja|baldosa,concreto,naranja,orange,concrete
+ITEM|escaleras de concreto naranja|escaleras,concreto,naranja,orange,concrete
+ITEM|azulejo naranja|azulejo,naranja,orange,glazed,terracotta
+ITEM|hojas de alamo naranjas|hojas,alamo,naranjas,orange,poplar,leaves
+ITEM|caja de shulker naranja|caja,shulker,naranja,orange,box
+ITEM|vidrio naranja|vidrio,naranja,orange,stained,glass
+ITEM|panel de vidrio naranja|panel,vidrio,naranja,orange,stained,glass
+ITEM|terracota naranja|terracota,naranja,orange,terracotta
+ITEM|tulipan naranja|tulipan,naranja,orange,tulip
+ITEM|lana naranja|lana,naranja,orange,wool
+ITEM|baldosa de lana naranja|baldosa,lana,naranja,orange,wool
+ITEM|escaleras de lana naranja|escaleras,lana,naranja,orange,wool
+ITEM|margarita|oxeye,daisy
+ITEM|cobre cincelado oxidado|cobre,cincelado,oxidado,oxidized,chiseled,copper
+ITEM|cobre oxidado|cobre,oxidado,oxidized,copper
+ITEM|barrotes de cobre oxidado|barrotes,cobre,oxidado,oxidized,copper,bars
+ITEM|lampara de cobre oxidado|lampara,cobre,oxidado,oxidized,copper,bulb
+ITEM|cadena de cobre oxidado|cadena,cobre,oxidado,oxidized,copper,chain
+ITEM|cofre de cobre oxidado|cofre,cobre,oxidado,oxidized,copper,chest
+ITEM|puerta de cobre oxidado|puerta,cobre,oxidado,oxidized,copper
+ITEM|estatua de golem de cobre oxidado|estatua,golem,cobre,oxidado,oxidized,copper
+ITEM|rejilla de cobre oxidado|rejilla,cobre,oxidado,oxidized,copper,grate
+ITEM|farol de cobre oxidado|farol,cobre,oxidado,oxidized,copper,lantern
+ITEM|escotilla de cobre oxidado|escotilla,cobre,oxidado,oxidized,copper
+ITEM|cobre cortado oxidado|cobre,cortado,oxidado,oxidized,cut,copper
+ITEM|baldosa de cobre cortado oxidado|baldosa,cobre,cortado,oxidado,oxidized,cut
+ITEM|escaleras de cobre cortado oxidado|escaleras,cobre,cortado,oxidado,oxidized,cut
+ITEM|pararrayos oxidado|pararrayos,oxidado,oxidized,lightning,rod
+ITEM|hielo comprimido|hielo,comprimido,packed,ice
+ITEM|adobe|packed,mud
+ITEM|musgo palido colgante|musgo,palido,colgante,pale,hanging,moss
+ITEM|bloque de musgo palido|bloque,musgo,palido,pale,moss
+ITEM|alfombra de musgo palido|alfombra,musgo,palido,pale,moss,carpet
+ITEM|boton de roble palido|boton,roble,palido,pale,oak
+ITEM|puerta de roble palido|puerta,roble,palido,pale,oak
+ITEM|valla de roble palido|valla,roble,palido,pale,oak,fence
+ITEM|puerta de valla de roble palido|puerta,valla,roble,palido,pale,oak
+ITEM|cartel colgante de roble palido|cartel,colgante,roble,palido,pale,oak
+ITEM|hojas de roble palido|hojas,roble,palido,pale,oak,leaves
+ITEM|tronco de roble palido|tronco,roble,palido,pale,oak,log
+ITEM|madera de roble palido|madera,roble,palido,pale,oak,planks
+ITEM|placa de presion de roble palido|placa,presion,roble,palido,pale,oak
+ITEM|brote de roble palido|brote,roble,palido,pale,oak,sapling
+ITEM|estante de roble palido|estante,roble,palido,pale,oak,shelf
+ITEM|cartel de roble palido|cartel,roble,palido,pale,oak,sign
+ITEM|baldosa de roble palido|baldosa,roble,palido,pale,oak
+ITEM|escaleras de roble palido|escaleras,roble,palido,pale,oak
+ITEM|escotilla de roble palido|escotilla,roble,palido,pale,oak
+ITEM|cartel colgante de roble palido en pared|cartel,colgante,roble,palido,pared,pale
+ITEM|cartel de roble palido en pared|cartel,roble,palido,pared,pale,oak
+ITEM|leno de roble palido|leno,roble,palido,pale,oak,wood
+ITEM|luzapo perlada|luzapo,perlada,pearlescent,froglight
+ITEM|peonia|peony
+ITEM|baldosa de roble petrificada|baldosa,roble,petrificada,petrified,oak
+ITEM|cabeza de piglin|cabeza,piglin,head
+ITEM|cabeza de piglin en pared|cabeza,piglin,pared,head
+ITEM|estandarte rosa|estandarte,rosa,pink,banner
+ITEM|cama rosa|cama,rosa,pink,bed
+ITEM|vela rosada|vela,rosada,pink,candle
+ITEM|torta con vela rosada|torta,con,vela,rosada,pink,candle
+ITEM|alfombra rosa|alfombra,rosa,pink,carpet
+ITEM|concreto rosa|concreto,rosa,pink,concrete
+ITEM|cemento rosa|cemento,rosa,pink,concrete,powder
+ITEM|baldosa de concreto rosa|baldosa,concreto,rosa,pink,concrete
+ITEM|escaleras de concreto rosa|escaleras,concreto,rosa,pink,concrete
+ITEM|azulejo rosa|azulejo,rosa,pink,glazed,terracotta
+ITEM|petalos rosas|petalos,rosas,pink,petals
+ITEM|caja de shulker rosa|caja,shulker,rosa,pink,box
+ITEM|vidrio rosa|vidrio,rosa,pink,stained,glass
+ITEM|panel de vidrio rosa|panel,vidrio,rosa,pink,stained,glass
+ITEM|terracota rosa|terracota,rosa,pink,terracotta
+ITEM|tulipan rosa|tulipan,rosa,pink,tulip
+ITEM|lana rosa|lana,rosa,pink,wool
+ITEM|baldosa de lana rosa|baldosa,lana,rosa,pink,wool
+ITEM|escaleras de lana rosa|escaleras,lana,rosa,pink,wool
+ITEM|cabeza de piston|cabeza,piston,head
+ITEM|cultivo de odre|cultivo,odre,pitcher,crop
+ITEM|planta odre|planta,odre,pitcher,plant
+ITEM|cabeza de jugador|cabeza,jugador,player,head
+ITEM|cabeza de jugador en pared|cabeza,jugador,pared,player,head
+ITEM|podsol|podzol
+ITEM|espeleotema puntiagudo|espeleotema,puntiagudo,pointed,dripstone
+ITEM|andesita pulida|andesita,pulida,polished,andesite
+ITEM|baldosa de andesita pulida|baldosa,andesita,pulida,polished,andesite
+ITEM|escaleras de andesita pulida|escaleras,andesita,pulida,polished,andesite
+ITEM|basalto pulido|basalto,pulido,polished,basalt
+ITEM|piedra negra pulida|piedra,negra,pulida,polished,blackstone
+ITEM|baldosa de ladrillos de piedra negra pulida|baldosa,ladrillos,piedra,negra,pulida,polished
+ITEM|escaleras de ladrillos de piedra negra pulida|escaleras,ladrillos,piedra,negra,pulida,polished
+ITEM|pared de ladrillos de piedra negra pulida|pared,ladrillos,piedra,negra,pulida,polished
+ITEM|ladrillos de piedra negra pulida|ladrillos,piedra,negra,pulida,polished,blackstone
+ITEM|boton de piedra negra pulida|boton,piedra,negra,pulida,polished,blackstone
+ITEM|placa de presion de piedra negra pulida|placa,presion,piedra,negra,pulida,polished
+ITEM|baldosa de piedra negra pulida|baldosa,piedra,negra,pulida,polished,blackstone
+ITEM|escaleras de piedra negra pulida|escaleras,piedra,negra,pulida,polished,blackstone
+ITEM|pared de piedra negra pulida|pared,piedra,negra,pulida,polished,blackstone
+ITEM|cinabrio pulido|cinabrio,pulido,polished,cinnabar
+ITEM|baldosa de cinabrio pulido|baldosa,cinabrio,pulido,polished,cinnabar
+ITEM|escaleras de cinabrio pulido|escaleras,cinabrio,pulido,polished,cinnabar
+ITEM|pared de cinabrio pulido|pared,cinabrio,pulido,polished,cinnabar
+ITEM|pizarra profunda pulida|pizarra,profunda,pulida,polished,deepslate
+ITEM|baldosa de pizarra profunda pulida|baldosa,pizarra,profunda,pulida,polished,deepslate
+ITEM|escaleras de pizarra profunda pulida|escaleras,pizarra,profunda,pulida,polished,deepslate
+ITEM|pared de pizarra profunda pulida|pared,pizarra,profunda,pulida,polished,deepslate
+ITEM|diorita pulida|diorita,pulida,polished,diorite
+ITEM|baldosa de diorita pulida|baldosa,diorita,pulida,polished,diorite
+ITEM|escaleras de diorita pulida|escaleras,diorita,pulida,polished,diorite
+ITEM|granito pulido|granito,pulido,polished,granite
+ITEM|baldosa de granito pulido|baldosa,granito,pulido,polished,granite
+ITEM|escaleras de granito pulido|escaleras,granito,pulido,polished,granite
+ITEM|azufre pulido|azufre,pulido,polished,sulfur
+ITEM|baldosa de azufre pulido|baldosa,azufre,pulido,polished,sulfur
+ITEM|escaleras de azufre pulido|escaleras,azufre,pulido,polished,sulfur
+ITEM|pared de azufre pulido|pared,azufre,pulido,polished,sulfur
+ITEM|toba pulida|toba,pulida,polished,tuff
+ITEM|baldosa de toba pulida|baldosa,toba,pulida,polished,tuff
+ITEM|escaleras de toba pulida|escaleras,toba,pulida,polished,tuff
+ITEM|pared de toba pulida|pared,toba,pulida,polished,tuff
+ITEM|boton de alamo|boton,alamo,poplar
+ITEM|puerta de alamo|puerta,alamo,poplar
+ITEM|valla de alamo|valla,alamo,poplar,fence
+ITEM|puerta de valla de alamo|puerta,valla,alamo,poplar,fence,gate
+ITEM|cartel colgante de alamo|cartel,colgante,alamo,poplar,hanging,sign
+ITEM|hojas de alamo|hojas,alamo,poplar,leaves
+ITEM|tronco de alamo|tronco,alamo,poplar,log
+ITEM|madera de alamo|madera,alamo,poplar,planks
+ITEM|placa de presion de alamo|placa,presion,alamo,poplar
+ITEM|brote de alamo|brote,alamo,poplar,sapling
+ITEM|estante de alamo|estante,alamo,poplar,shelf
+ITEM|cartel de alamo|cartel,alamo,poplar,sign
+ITEM|baldosa de alamo|baldosa,alamo,poplar
+ITEM|escaleras de alamo|escaleras,alamo,poplar
+ITEM|escotilla de alamo|escotilla,alamo,poplar
+ITEM|cartel colgante de alamo en pared|cartel,colgante,alamo,pared,poplar,hanging
+ITEM|cartel de alamo en pared|cartel,alamo,pared,poplar,sign
+ITEM|leno de alamo|leno,alamo,poplar,wood
+ITEM|amapola|poppy
+ITEM|papas|potatoes
+ITEM|azufre potente|azufre,potente,potent,sulfur
+ITEM|maceta con brote de acacia|maceta,con,brote,acacia,potted,sapling
+ITEM|maceta con allium|maceta,con,allium,potted
+ITEM|maceta con azalea|maceta,con,azalea,potted,bush
+ITEM|maceta con rubiacea|maceta,con,rubiacea,potted,azure,bluet
+ITEM|maceta con bambu|maceta,con,bambu,potted,bamboo
+ITEM|maceta con brote de abedul|maceta,con,brote,abedul,potted,birch
+ITEM|maceta con orquidea azul|maceta,con,orquidea,azul,potted,blue
+ITEM|maceta con hongo marron|maceta,con,hongo,marron,potted,brown
+ITEM|maceta con cactus|maceta,con,cactus,potted
+ITEM|jarron con brote de cerezo|jarron,con,brote,cerezo,potted,cherry
+ITEM|maceta con miraflor cerrada|maceta,con,miraflor,cerrada,potted,closed
+ITEM|maceta con aciano|maceta,con,aciano,potted,cornflower
+ITEM|maceta con hongo carmesi|maceta,con,hongo,carmesi,potted,crimson
+ITEM|maceta con yuyos carmesi|maceta,con,yuyos,carmesi,potted,crimson
+ITEM|maceta con diente de leon|maceta,con,diente,leon,potted,dandelion
+ITEM|maceta con brote de roble oscuro|maceta,con,brote,roble,oscuro,potted
+ITEM|maceta con arbusto muerto|maceta,con,arbusto,muerto,potted,dead
+ITEM|maceta con helecho|maceta,con,helecho,potted,fern
+ITEM|maceta con azalea florida|maceta,con,azalea,florida,potted,flowering
+ITEM|maceta con diente de leon dorado|maceta,con,diente,leon,dorado,potted
+ITEM|maceta con brote de jungla|maceta,con,brote,jungla,potted,jungle
+ITEM|maceta con lirio del valle|maceta,con,lirio,valle,potted,lily
+ITEM|maceta con propagulo de mangle|maceta,con,propagulo,mangle,potted,mangrove
+ITEM|maceta con brote de roble|maceta,con,brote,roble,potted,oak
+ITEM|maceta con miraflor abierta|maceta,con,miraflor,abierta,potted,open
+ITEM|maceta con tulipan naranja|maceta,con,tulipan,naranja,potted,orange
+ITEM|maceta con margarita|maceta,con,margarita,potted,oxeye,daisy
+ITEM|maceta con brote de roble palido|maceta,con,brote,roble,palido,potted
+ITEM|maceta con tulipan rosa|maceta,con,tulipan,rosa,potted,pink
+ITEM|maceta con brote de alamo|maceta,con,brote,alamo,potted,poplar
+ITEM|maceta con amapola|maceta,con,amapola,potted,poppy
+ITEM|maceta con hongo rojo|maceta,con,hongo,rojo,potted,red
+ITEM|maceta con tulipan rojo|maceta,con,tulipan,rojo,potted,red
+ITEM|maceta con brote de abeto|maceta,con,brote,abeto,potted,spruce
+ITEM|maceta con anflorcha|maceta,con,anflorcha,potted,torchflower
+ITEM|maceta con hongo distorsionado|maceta,con,hongo,distorsionado,potted,warped
+ITEM|maceta con yuyos distorsionados|maceta,con,yuyos,distorsionados,potted,warped
+ITEM|maceta con tulipan blanco|maceta,con,tulipan,blanco,potted,white
+ITEM|maceta con rosa del wither|maceta,con,rosa,wither,potted,rose
+ITEM|nieve polvo|nieve,polvo,powder,snow
+ITEM|caldero con nieve polvo|caldero,con,nieve,polvo,powder,snow
+ITEM|via propulsora|via,propulsora,powered,rail
+ITEM|prismarina|prismarine
+ITEM|baldosa de ladrillos de prismarina|baldosa,ladrillos,prismarina,prismarine,brick
+ITEM|escaleras de ladrillos de prismarina|escaleras,ladrillos,prismarina,prismarine,brick
+ITEM|ladrillos de prismarina|ladrillos,prismarina,prismarine,bricks
+ITEM|baldosa de prismarina|baldosa,prismarina,prismarine
+ITEM|escaleras de prismarina|escaleras,prismarina,prismarine
+ITEM|pared de prismarina|pared,prismarina,prismarine
+ITEM|zapallo|pumpkin
+ITEM|tallo de zapallo|tallo,zapallo,pumpkin,stem
+ITEM|estandarte violeta|estandarte,violeta,purple,banner
+ITEM|cama violeta|cama,violeta,purple,bed
+ITEM|vela violeta|vela,violeta,purple,candle
+ITEM|torta con vela violeta|torta,con,vela,violeta,purple,candle
+ITEM|alfombra violeta|alfombra,violeta,purple,carpet
+ITEM|concreto violeta|concreto,violeta,purple,concrete
+ITEM|cemento violeta|cemento,violeta,purple,concrete,powder
+ITEM|baldosa de concreto violeta|baldosa,concreto,violeta,purple,concrete
+ITEM|escaleras de concreto violeta|escaleras,concreto,violeta,purple,concrete
+ITEM|azulejo violeta|azulejo,violeta,purple,glazed,terracotta
+ITEM|caja de shulker violeta|caja,shulker,violeta,purple,box
+ITEM|vidrio violeta|vidrio,violeta,purple,stained,glass
+ITEM|panel de vidrio violeta|panel,vidrio,violeta,purple,stained,glass
+ITEM|terracota violeta|terracota,violeta,purple,terracotta
+ITEM|lana violeta|lana,violeta,purple,wool
+ITEM|baldosa de lana violeta|baldosa,lana,violeta,purple,wool
+ITEM|escaleras de lana violeta|escaleras,lana,violeta,purple,wool
+ITEM|columna de purpur|columna,purpur,pillar
+ITEM|baldosa de purpur|baldosa,purpur
+ITEM|escaleras de purpur|escaleras,purpur
+ITEM|cuarzo|quartz
+ITEM|ladrillos de cuarzo|ladrillos,cuarzo,quartz,bricks
+ITEM|columna de cuarzo|columna,cuarzo,quartz,pillar
+ITEM|baldosa de cuarzo|baldosa,cuarzo,quartz
+ITEM|escaleras de cuarzo|escaleras,cuarzo,quartz
+ITEM|via|rail
+ITEM|bloque de cobre crudo|bloque,cobre,crudo,raw,copper
+ITEM|bloque de oro crudo|bloque,oro,crudo,raw,gold
+ITEM|bloque de hierro crudo|bloque,hierro,crudo,raw,iron
+ITEM|estandarte rojo|estandarte,rojo,red,banner
+ITEM|cama roja|cama,roja,red,bed
+ITEM|vela roja|vela,roja,red,candle
+ITEM|torta con vela roja|torta,con,vela,roja,red,candle
+ITEM|alfombra roja|alfombra,roja,red,carpet
+ITEM|concreto rojo|concreto,rojo,red,concrete
+ITEM|cemento rojo|cemento,rojo,red,concrete,powder
+ITEM|baldosa de concreto rojo|baldosa,concreto,rojo,red,concrete
+ITEM|escaleras de concreto rojo|escaleras,concreto,rojo,red,concrete
+ITEM|azulejo rojo|azulejo,rojo,red,glazed,terracotta
+ITEM|hongo rojo|hongo,rojo,red,mushroom
+ITEM|bloque de hongo rojo|bloque,hongo,rojo,red,mushroom
+ITEM|baldosa de ladrillos del nether rojos|baldosa,ladrillos,nether,rojos,red,brick
+ITEM|escaleras de ladrillos del nether rojos|escaleras,ladrillos,nether,rojos,red,brick
+ITEM|pared de ladrillos del nether rojos|pared,ladrillos,nether,rojos,red,brick
+ITEM|ladrillos del nether rojos|ladrillos,nether,rojos,red,bricks
+ITEM|hojas de alamo rojas|hojas,alamo,rojas,red,poplar,leaves
+ITEM|arena rojiza|arena,rojiza,red,sand
+ITEM|arenisca rojiza|arenisca,rojiza,red,sandstone
+ITEM|baldosa de arenisca rojiza|baldosa,arenisca,rojiza,red,sandstone
+ITEM|escaleras de arenisca rojiza|escaleras,arenisca,rojiza,red,sandstone
+ITEM|pared de arenisca rojiza|pared,arenisca,rojiza,red,sandstone
+ITEM|arbusto rojo|arbusto,rojo,red,shrub
+ITEM|caja de shulker roja|caja,shulker,roja,red,box
+ITEM|vidrio rojo|vidrio,rojo,red,stained,glass
+ITEM|panel de vidrio rojo|panel,vidrio,rojo,red,stained,glass
+ITEM|terracota roja|terracota,roja,red,terracotta
+ITEM|tulipan rojo|tulipan,rojo,red,tulip
+ITEM|lana roja|lana,roja,red,wool
+ITEM|baldosa de lana roja|baldosa,lana,roja,red,wool
+ITEM|escaleras de lana roja|escaleras,lana,roja,red,wool
+ITEM|bloque de redstone|bloque,redstone
+ITEM|lampara de redstone|lampara,redstone,lamp
+ITEM|mineral de redstone|mineral,redstone,ore
+ITEM|antorcha de redstone|antorcha,redstone,torch
+ITEM|antorcha de redstone en pared|antorcha,redstone,pared,torch
+ITEM|cable de redstone|cable,redstone,wire
+ITEM|pizarra profunda reforzada|pizarra,profunda,reforzada,reinforced,deepslate
+ITEM|repetidor de redstone|repetidor,redstone,repeater
+ITEM|bloque de comandos de repeticion|bloque,comandos,repeticion,repeating,command
+ITEM|bloque de resina|bloque,resina,resin
+ITEM|baldosa de ladrillos de resina|baldosa,ladrillos,resina,resin,brick
+ITEM|escaleras de ladrillos de resina|escaleras,ladrillos,resina,resin,brick
+ITEM|pared de ladrillos de resina|pared,ladrillos,resina,resin,brick
+ITEM|bloque de ladrillos de resina|bloque,ladrillos,resina,resin,bricks
+ITEM|terron de resina|terron,resina,resin,clump
+ITEM|nexo de reaparicion|nexo,reaparicion,respawn,anchor
+ITEM|tierra enraizada|tierra,enraizada,rooted,dirt
+ITEM|rosal|rose,bush
+ITEM|arena|sand
+ITEM|arenisca|sandstone
+ITEM|baldosa de arenisca|baldosa,arenisca,sandstone
+ITEM|escaleras de arenisca|escaleras,arenisca,sandstone
+ITEM|pared de arenisca|pared,arenisca,sandstone
+ITEM|andamio|scaffolding
+ITEM|catalizador de sculk|catalizador,sculk,catalyst
+ITEM|sensor de sculk|sensor,sculk
+ITEM|chillador de sculk|chillador,sculk,shrieker
+ITEM|vena de sculk|vena,sculk,vein
+ITEM|linterna del mar|linterna,mar,sea,lantern
+ITEM|pepino de mar|pepino,mar,sea,pickle
+ITEM|planta marina|planta,marina,seagrass
+ITEM|se establecio el punto de reaparicion|establecio,punto,reaparicion,set,spawn
+ITEM|hongo de repisa|hongo,repisa,shelf,mushroom
+ITEM|pasto seco corto|pasto,seco,corto,short,dry,grass
+ITEM|pasto corto|pasto,corto,short,grass
+ITEM|hongo luminoso|hongo,luminoso,shroomlight
+ITEM|caja de shulker|caja,shulker,box
+ITEM|craneo de esqueleto|craneo,esqueleto,skeleton,skull
+ITEM|craneo de esqueleto en pared|craneo,esqueleto,pared,skeleton,skull
+ITEM|bloque de slime|bloque,slime
+ITEM|brote de amatista pequeno|brote,amatista,pequeno,small,amethyst,bud
+ITEM|plantaforma pequena|plantaforma,pequena,small,dripleaf
+ITEM|mesa de herreria|mesa,herreria,smithing,table
+ITEM|ahumador|smoker
+ITEM|basalto liso|basalto,liso,smooth,basalt
+ITEM|cuarzo liso|cuarzo,liso,smooth,quartz
+ITEM|baldosa de cuarzo liso|baldosa,cuarzo,liso,smooth,quartz
+ITEM|escaleras de cuarzo liso|escaleras,cuarzo,liso,smooth,quartz
+ITEM|arenisca rojiza lisa|arenisca,rojiza,lisa,smooth,red,sandstone
+ITEM|baldosa de arenisca rojiza lisa|baldosa,arenisca,rojiza,lisa,smooth,red
+ITEM|escaleras de arenisca rojiza lisa|escaleras,arenisca,rojiza,lisa,smooth,red
+ITEM|arenisca lisa|arenisca,lisa,smooth,sandstone
+ITEM|baldosa de arenisca lisa|baldosa,arenisca,lisa,smooth,sandstone
+ITEM|escaleras de arenisca lisa|escaleras,arenisca,lisa,smooth,sandstone
+ITEM|piedra lisa|piedra,lisa,smooth,stone
+ITEM|baldosa de piedra lisa|baldosa,piedra,lisa,smooth,stone
+ITEM|huevo de sniffer|huevo,sniffer,egg
+ITEM|nieve|snow
+ITEM|bloque de nieve|bloque,nieve,snow
+ITEM|fogata de almas|fogata,almas,soul,campfire
+ITEM|fuego de almas|fuego,almas,soul,fire
+ITEM|farol de almas|farol,almas,soul,lantern
+ITEM|arena de almas|arena,almas,soul,sand
+ITEM|tierra de almas|tierra,almas,soul,soil
+ITEM|antorcha de almas|antorcha,almas,soul,torch
+ITEM|antorcha de almas en pared|antorcha,almas,pared,soul,torch
+ITEM|no tenes cama ni nexo de reaparicion cargado, o estan obstruidos|tenes,cama,nexo,reaparicion,cargado,estan
+ITEM|generador de criaturas|generador,criaturas,spawner
+ITEM|interactua con un huevo generador:|interactua,con,huevo,generador,spawner,desc1
+ITEM|establece el tipo de criatura|establece,tipo,criatura,spawner,desc2
+ITEM|esponja|sponge
+ITEM|flor de esporas|flor,esporas,spore,blossom
+ITEM|boton de abeto|boton,abeto,spruce
+ITEM|puerta de abeto|puerta,abeto,spruce
+ITEM|valla de abeto|valla,abeto,spruce,fence
+ITEM|puerta de valla de abeto|puerta,valla,abeto,spruce,fence,gate
+ITEM|cartel colgante de abeto|cartel,colgante,abeto,spruce,hanging,sign
+ITEM|hojas de abeto|hojas,abeto,spruce,leaves
+ITEM|tronco de abeto|tronco,abeto,spruce,log
+ITEM|madera de abeto|madera,abeto,spruce,planks
+ITEM|placa de presion de abeto|placa,presion,abeto,spruce
+ITEM|brote de abeto|brote,abeto,spruce,sapling
+ITEM|estante de abeto|estante,abeto,spruce,shelf
+ITEM|cartel de abeto|cartel,abeto,spruce,sign
+ITEM|baldosa de abeto|baldosa,abeto,spruce
+ITEM|escaleras de abeto|escaleras,abeto,spruce
+ITEM|escotilla de abeto|escotilla,abeto,spruce
+ITEM|cartel colgante de abeto en pared|cartel,colgante,abeto,pared,spruce,hanging
+ITEM|cartel de abeto en pared|cartel,abeto,pared,spruce,sign
+ITEM|leno de abeto|leno,abeto,spruce,wood
+ITEM|piston pegajoso|piston,pegajoso,sticky
+ITEM|piedra|stone
+ITEM|baldosa de ladrillos de piedra|baldosa,ladrillos,piedra,stone,brick
+ITEM|escaleras de ladrillos de piedra|escaleras,ladrillos,piedra,stone,brick
+ITEM|pared de ladrillos de piedra|pared,ladrillos,piedra,stone,brick
+ITEM|ladrillos de piedra|ladrillos,piedra,stone,bricks
+ITEM|boton de piedra|boton,piedra,stone
+ITEM|placa de presion de piedra|placa,presion,piedra,stone
+ITEM|baldosa de piedra|baldosa,piedra,stone
+ITEM|escaleras de piedra|escaleras,piedra,stone
+ITEM|cortapiedras|stonecutter
+ITEM|cama de heno|cama,heno,straw,bed
+ITEM|tronco de acacia sin corteza|tronco,acacia,sin,corteza,stripped,log
+ITEM|leno de acacia sin corteza|leno,acacia,sin,corteza,stripped,wood
+ITEM|bloque de bambu sin corteza|bloque,bambu,sin,corteza,stripped,bamboo
+ITEM|tronco de abedul sin corteza|tronco,abedul,sin,corteza,stripped,birch
+ITEM|leno de abedul sin corteza|leno,abedul,sin,corteza,stripped,birch
+ITEM|tronco de cerezo sin corteza|tronco,cerezo,sin,corteza,stripped,cherry
+ITEM|leno de cerezo sin corteza|leno,cerezo,sin,corteza,stripped,cherry
+ITEM|hifas carmesi sin corteza|hifas,carmesi,sin,corteza,stripped,crimson
+ITEM|tallo carmesi sin corteza|tallo,carmesi,sin,corteza,stripped,crimson
+ITEM|tronco de roble oscuro sin corteza|tronco,roble,oscuro,sin,corteza,stripped
+ITEM|leno de roble oscuro sin corteza|leno,roble,oscuro,sin,corteza,stripped
+ITEM|tronco de jungla sin corteza|tronco,jungla,sin,corteza,stripped,jungle
+ITEM|leno de jungla sin corteza|leno,jungla,sin,corteza,stripped,jungle
+ITEM|tronco de mangle sin corteza|tronco,mangle,sin,corteza,stripped,mangrove
+ITEM|leno de mangle sin corteza|leno,mangle,sin,corteza,stripped,mangrove
+ITEM|tronco de roble sin corteza|tronco,roble,sin,corteza,stripped,oak
+ITEM|leno de roble sin corteza|leno,roble,sin,corteza,stripped,oak
+ITEM|tronco de roble palido sin corteza|tronco,roble,palido,sin,corteza,stripped
+ITEM|leno de roble palido sin corteza|leno,roble,palido,sin,corteza,stripped
+ITEM|tronco de alamo sin corteza|tronco,alamo,sin,corteza,stripped,poplar
+ITEM|leno de alamo sin corteza|leno,alamo,sin,corteza,stripped,poplar
+ITEM|tronco de abeto sin corteza|tronco,abeto,sin,corteza,stripped,spruce
+ITEM|leno de abeto sin corteza|leno,abeto,sin,corteza,stripped,spruce
+ITEM|hifas distorsionadas sin corteza|hifas,distorsionadas,sin,corteza,stripped,warped
+ITEM|tallo distorsionado sin corteza|tallo,distorsionado,sin,corteza,stripped,warped
+ITEM|bloque de estructuras|bloque,estructuras,structure
+ITEM|vacio de estructuras|vacio,estructuras,structure,void
+ITEM|cana de azucar|cana,azucar,sugar,cane
+ITEM|azufre|sulfur
+ITEM|baldosa de ladrillos de azufre|baldosa,ladrillos,azufre,sulfur,brick
+ITEM|escaleras de ladrillos de azufre|escaleras,ladrillos,azufre,sulfur,brick
+ITEM|pared de ladrillos de azufre|pared,ladrillos,azufre,sulfur,brick
+ITEM|ladrillos de azufre|ladrillos,azufre,sulfur,bricks
+ITEM|baldosa de azufre|baldosa,azufre,sulfur
+ITEM|azufre puntiagudo|azufre,puntiagudo,sulfur,spike
+ITEM|escaleras de azufre|escaleras,azufre,sulfur
+ITEM|pared de azufre|pared,azufre,sulfur
+ITEM|girasol|sunflower
+ITEM|grava sospechosa|grava,sospechosa,suspicious,gravel
+ITEM|arena sospechosa|arena,sospechosa,suspicious,sand
+ITEM|arbusto de bayas dulces|arbusto,bayas,dulces,sweet,berry,bush
+ITEM|pasto seco alto|pasto,seco,alto,tall,dry,grass
+ITEM|pasto alto|pasto,alto,tall,grass
+ITEM|planta marina alta|planta,marina,alta,tall,seagrass
+ITEM|diana|target
+ITEM|terracota|terracotta
+ITEM|bloque de pruebas|bloque,pruebas,test
+ITEM|bloque de caso de prueba|bloque,caso,prueba,test,instance
+ITEM|vidrio opaco|vidrio,opaco,tinted,glass
+ITEM|las explosiones de tnt estan desactivadas|explosiones,tnt,estan,desactivadas,disabled
+ITEM|antorcha|torch
+ITEM|anflorcha|torchflower
+ITEM|cultivo de anflorcha|cultivo,anflorcha,torchflower,crop
+ITEM|cofre con trampa|cofre,con,trampa,trapped,chest
+ITEM|generador de desafio|generador,desafio,trial,spawner
+ITEM|hilo trampa|hilo,trampa,tripwire
+ITEM|gancho de hilo|gancho,hilo,tripwire,hook
+ITEM|coral de tubo|coral,tubo,tube
+ITEM|bloque de coral de tubo|bloque,coral,tubo,tube
+ITEM|gorgonia de tubo|gorgonia,tubo,tube,coral,fan
+ITEM|gorgonia de tubo en pared|gorgonia,tubo,pared,tube,coral,fan
+ITEM|toba|tuff
+ITEM|baldosa de ladrillos de toba|baldosa,ladrillos,toba,tuff,brick
+ITEM|escaleras de ladrillos de toba|escaleras,ladrillos,toba,tuff,brick
+ITEM|pared de ladrillos de toba|pared,ladrillos,toba,tuff,brick
+ITEM|ladrillos de toba|ladrillos,toba,tuff,bricks
+ITEM|baldosa de toba|baldosa,toba,tuff
+ITEM|escaleras de toba|escaleras,toba,tuff
+ITEM|pared de toba|pared,toba,tuff
+ITEM|huevo de tortuga|huevo,tortuga,turtle,egg
+ITEM|enredaderas retorcidas|enredaderas,retorcidas,twisting,vines
+ITEM|planta de enredaderas retorcidas|planta,enredaderas,retorcidas,twisting,vines,plant
+ITEM|arca|vault
+ITEM|luzapo verdosa|luzapo,verdosa,verdant,froglight
+ITEM|enredaderas|vine
+ITEM|aire del vacio|aire,vacio,void,air
+ITEM|antorcha en pared|antorcha,pared,torch
+ITEM|boton distorsionado|boton,distorsionado,warped
+ITEM|puerta distorsionada|puerta,distorsionada,warped
+ITEM|valla distorsionada|valla,distorsionada,warped,fence
+ITEM|puerta de valla distorsionada|puerta,valla,distorsionada,warped,fence,gate
+ITEM|hongo distorsionado|hongo,distorsionado,warped,fungus
+ITEM|cartel colgante distorsionado|cartel,colgante,distorsionado,warped,hanging,sign
+ITEM|hifas distorsionadas|hifas,distorsionadas,warped,hyphae
+ITEM|nilio distorsionado|nilio,distorsionado,warped,nylium
+ITEM|madera distorsionada|madera,distorsionada,warped,planks
+ITEM|placa de presion distorsionada|placa,presion,distorsionada,warped
+ITEM|yuyos distorsionados|yuyos,distorsionados,warped,roots
+ITEM|estante distorsionado|estante,distorsionado,warped,shelf
+ITEM|cartel distorsionado|cartel,distorsionado,warped,sign
+ITEM|baldosa distorsionada|baldosa,distorsionada,warped
+ITEM|escaleras distorsionadas|escaleras,distorsionadas,warped
+ITEM|tallo distorsionado|tallo,distorsionado,warped,stem
+ITEM|escotilla distorsionada|escotilla,distorsionada,warped
+ITEM|cartel colgante distorsionado en pared|cartel,colgante,distorsionado,pared,warped,hanging
+ITEM|cartel distorsionado en pared|cartel,distorsionado,pared,warped,sign
+ITEM|bloque de verrugas distorsionadas|bloque,verrugas,distorsionadas,warped,wart
+ITEM|agua|water
+ITEM|caldero con agua|caldero,con,agua,water,cauldron
+ITEM|cobre cincelado encerado|cobre,cincelado,encerado,waxed,chiseled,copper
+ITEM|barrotes de cobre encerado|barrotes,cobre,encerado,waxed,copper,bars
+ITEM|bloque de cobre encerado|bloque,cobre,encerado,waxed,copper
+ITEM|lampara de cobre encerado|lampara,cobre,encerado,waxed,copper,bulb
+ITEM|cadena de cobre encerado|cadena,cobre,encerado,waxed,copper,chain
+ITEM|cofre de cobre encerado|cofre,cobre,encerado,waxed,copper,chest
+ITEM|puerta de cobre encerado|puerta,cobre,encerado,waxed,copper
+ITEM|estatua de golem de cobre encerado|estatua,golem,cobre,encerado,waxed,copper
+ITEM|rejilla de cobre encerado|rejilla,cobre,encerado,waxed,copper,grate
+ITEM|farol de cobre encerado|farol,cobre,encerado,waxed,copper,lantern
+ITEM|escotilla de cobre encerado|escotilla,cobre,encerado,waxed,copper
+ITEM|cobre cortado encerado|cobre,cortado,encerado,waxed,cut,copper
+ITEM|baldosa de cobre cortado encerado|baldosa,cobre,cortado,encerado,waxed,cut
+ITEM|escaleras de cobre cortado encerado|escaleras,cobre,cortado,encerado,waxed,cut
+ITEM|cobre cincelado expuesto encerado|cobre,cincelado,expuesto,encerado,waxed,exposed
+ITEM|cobre expuesto encerado|cobre,expuesto,encerado,waxed,exposed,copper
+ITEM|barrotes de cobre expuesto encerado|barrotes,cobre,expuesto,encerado,waxed,exposed
+ITEM|lampara de cobre expuesto encerado|lampara,cobre,expuesto,encerado,waxed,exposed
+ITEM|cadena de cobre expuesto encerado|cadena,cobre,expuesto,encerado,waxed,exposed
+ITEM|cofre de cobre expuesto encerado|cofre,cobre,expuesto,encerado,waxed,exposed
+ITEM|puerta de cobre expuesto encerado|puerta,cobre,expuesto,encerado,waxed,exposed
+ITEM|estatua de golem de cobre expuesto encerado|estatua,golem,cobre,expuesto,encerado,waxed
+ITEM|rejilla de cobre expuesto encerado|rejilla,cobre,expuesto,encerado,waxed,exposed
+ITEM|farol de cobre expuesto encerado|farol,cobre,expuesto,encerado,waxed,exposed
+ITEM|escotilla de cobre expuesto encerado|escotilla,cobre,expuesto,encerado,waxed,exposed
+ITEM|cobre cortado expuesto encerado|cobre,cortado,expuesto,encerado,waxed,exposed
+ITEM|baldosa de cobre cortado expuesto encerado|baldosa,cobre,cortado,expuesto,encerado,waxed
+ITEM|escaleras de cobre cortado expuesto encerado|escaleras,cobre,cortado,expuesto,encerado,waxed
+ITEM|pararrayos expuesto encerado|pararrayos,expuesto,encerado,waxed,exposed,lightning
+ITEM|pararrayos encerado|pararrayos,encerado,waxed,lightning,rod
+ITEM|cobre cincelado oxidado encerado|cobre,cincelado,oxidado,encerado,waxed,oxidized
+ITEM|cobre oxidado encerado|cobre,oxidado,encerado,waxed,oxidized,copper
+ITEM|barrotes de cobre oxidado encerado|barrotes,cobre,oxidado,encerado,waxed,oxidized
+ITEM|lampara de cobre oxidado encerado|lampara,cobre,oxidado,encerado,waxed,oxidized
+ITEM|cadena de cobre oxidado encerado|cadena,cobre,oxidado,encerado,waxed,oxidized
+ITEM|cofre de cobre oxidado encerado|cofre,cobre,oxidado,encerado,waxed,oxidized
+ITEM|puerta de cobre oxidado encerado|puerta,cobre,oxidado,encerado,waxed,oxidized
+ITEM|estatua de golem de cobre oxidado encerado|estatua,golem,cobre,oxidado,encerado,waxed
+ITEM|rejilla de cobre oxidado encerado|rejilla,cobre,oxidado,encerado,waxed,oxidized
+ITEM|farol de cobre oxidado encerado|farol,cobre,oxidado,encerado,waxed,oxidized
+ITEM|escotilla de cobre oxidado encerado|escotilla,cobre,oxidado,encerado,waxed,oxidized
+ITEM|cobre cortado oxidado encerado|cobre,cortado,oxidado,encerado,waxed,oxidized
+ITEM|baldosa de cobre cortado oxidado encerado|baldosa,cobre,cortado,oxidado,encerado,waxed
+ITEM|escaleras de cobre cortado oxidado encerado|escaleras,cobre,cortado,oxidado,encerado,waxed
+ITEM|pararrayos oxidado encerado|pararrayos,oxidado,encerado,waxed,oxidized,lightning
+ITEM|cobre cincelado degradado encerado|cobre,cincelado,degradado,encerado,waxed,weathered
+ITEM|cobre degradado encerado|cobre,degradado,encerado,waxed,weathered,copper
+ITEM|barrotes de cobre degradado encerado|barrotes,cobre,degradado,encerado,waxed,weathered
+ITEM|lampara de cobre degradado encerado|lampara,cobre,degradado,encerado,waxed,weathered
+ITEM|cadena de cobre degradado encerado|cadena,cobre,degradado,encerado,waxed,weathered
+ITEM|cofre de cobre degradado encerado|cofre,cobre,degradado,encerado,waxed,weathered
+ITEM|puerta de cobre degradado encerado|puerta,cobre,degradado,encerado,waxed,weathered
+ITEM|estatua de golem de cobre degradado encerado|estatua,golem,cobre,degradado,encerado,waxed
+ITEM|rejilla de cobre degradado encerado|rejilla,cobre,degradado,encerado,waxed,weathered
+ITEM|farol de cobre degradado encerado|farol,cobre,degradado,encerado,waxed,weathered
+ITEM|escotilla de cobre degradado encerado|escotilla,cobre,degradado,encerado,waxed,weathered
+ITEM|cobre cortado degradado encerado|cobre,cortado,degradado,encerado,waxed,weathered
+ITEM|baldosa de cobre cortado degradado encerado|baldosa,cobre,cortado,degradado,encerado,waxed
+ITEM|escaleras de cobre cortado degradado encerado|escaleras,cobre,cortado,degradado,encerado,waxed
+ITEM|pararrayos degradado encerado|pararrayos,degradado,encerado,waxed,weathered,lightning
+ITEM|cobre cincelado degradado|cobre,cincelado,degradado,weathered,chiseled,copper
+ITEM|cobre degradado|cobre,degradado,weathered,copper
+ITEM|barrotes de cobre degradado|barrotes,cobre,degradado,weathered,copper,bars
+ITEM|lampara de cobre degradado|lampara,cobre,degradado,weathered,copper,bulb
+ITEM|cadena de cobre degradado|cadena,cobre,degradado,weathered,copper,chain
+ITEM|cofre de cobre degradado|cofre,cobre,degradado,weathered,copper,chest
+ITEM|puerta de cobre degradado|puerta,cobre,degradado,weathered,copper
+ITEM|estatua de golem de cobre degradado|estatua,golem,cobre,degradado,weathered,copper
+ITEM|rejilla de cobre degradado|rejilla,cobre,degradado,weathered,copper,grate
+ITEM|farol de cobre degradado|farol,cobre,degradado,weathered,copper,lantern
+ITEM|escotilla de cobre degradado|escotilla,cobre,degradado,weathered,copper
+ITEM|cobre cortado degradado|cobre,cortado,degradado,weathered,cut,copper
+ITEM|baldosa de cobre cortado degradado|baldosa,cobre,cortado,degradado,weathered,cut
+ITEM|escaleras de cobre cortado degradado|escaleras,cobre,cortado,degradado,weathered,cut
+ITEM|pararrayos degradado|pararrayos,degradado,weathered,lightning,rod
+ITEM|enredaderas lloronas|enredaderas,lloronas,weeping,vines
+ITEM|planta de enredaderas lloronas|planta,enredaderas,lloronas,weeping,vines,plant
+ITEM|esponja humeda|esponja,humeda,wet,sponge
+ITEM|cultivo de trigo|cultivo,trigo,wheat
+ITEM|estandarte blanco|estandarte,blanco,white,banner
+ITEM|cama blanca|cama,blanca,white,bed
+ITEM|vela blanca|vela,blanca,white,candle
+ITEM|torta con vela blanca|torta,con,vela,blanca,white,candle
+ITEM|alfombra blanca|alfombra,blanca,white,carpet
+ITEM|concreto blanco|concreto,blanco,white,concrete
+ITEM|cemento blanco|cemento,blanco,white,concrete,powder
+ITEM|baldosa de concreto blanco|baldosa,concreto,blanco,white,concrete
+ITEM|escaleras de concreto blanco|escaleras,concreto,blanco,white,concrete
+ITEM|azulejo blanco|azulejo,blanco,white,glazed,terracotta
+ITEM|caja de shulker blanca|caja,shulker,blanca,white,box
+ITEM|vidrio blanco|vidrio,blanco,white,stained,glass
+ITEM|panel de vidrio blanco|panel,vidrio,blanco,white,stained,glass
+ITEM|terracota blanca|terracota,blanca,white,terracotta
+ITEM|tulipan blanco|tulipan,blanco,white,tulip
+ITEM|lana blanca|lana,blanca,white,wool
+ITEM|baldosa de lana blanca|baldosa,lana,blanca,white,wool
+ITEM|escaleras de lana blanca|escaleras,lana,blanca,white,wool
+ITEM|flores silvestres|flores,silvestres,wildflowers
+ITEM|rosa del wither|rosa,wither,rose
+ITEM|craneo de esqueleto del wither|craneo,esqueleto,wither,skeleton,skull
+ITEM|craneo de esqueleto del wither en pared|craneo,esqueleto,wither,pared,skeleton,skull
+ITEM|estandarte amarillo|estandarte,amarillo,yellow,banner
+ITEM|cama amarilla|cama,amarilla,yellow,bed
+ITEM|vela amarilla|vela,amarilla,yellow,candle
+ITEM|torta con vela amarilla|torta,con,vela,amarilla,yellow,candle
+ITEM|alfombra amarilla|alfombra,amarilla,yellow,carpet
+ITEM|concreto amarillo|concreto,amarillo,yellow,concrete
+ITEM|cemento amarillo|cemento,amarillo,yellow,concrete,powder
+ITEM|baldosa de concreto amarillo|baldosa,concreto,amarillo,yellow,concrete
+ITEM|escaleras de concreto amarillo|escaleras,concreto,amarillo,yellow,concrete
+ITEM|azulejo amarillo|azulejo,amarillo,yellow,glazed,terracotta
+ITEM|hojas de alamo amarillas|hojas,alamo,amarillas,yellow,poplar,leaves
+ITEM|caja de shulker amarilla|caja,shulker,amarilla,yellow,box
+ITEM|vidrio amarillo|vidrio,amarillo,yellow,stained,glass
+ITEM|panel de vidrio amarillo|panel,vidrio,amarillo,yellow,stained,glass
+ITEM|terracota amarilla|terracota,amarilla,yellow,terracotta
+ITEM|lana amarilla|lana,amarilla,yellow,wool
+ITEM|baldosa de lana amarilla|baldosa,lana,amarilla,yellow,wool
+ITEM|escaleras de lana amarilla|escaleras,lana,amarilla,yellow,wool
+ITEM|cabeza de zombi|cabeza,zombi,zombie,head
+ITEM|cabeza de zombi en pared|cabeza,zombi,pared,zombie,head
+STATE|absorcion|absorption
+STATE|mal presagio|mal,presagio,bad,omen
+STATE|ceguera|blindness
+STATE|aliento del nautilo|aliento,nautilo,breath,nautilus
+STATE|poder canalizado|poder,canalizado,conduit,power
+STATE|oscuridad|darkness
+STATE|gracia delfina|gracia,delfina,dolphins,grace
+STATE|resis. al fuego|resis,fuego,fire,resistance
+STATE|luminiscencia|glowing
+STATE|apuro|haste
+STATE|salud mejorada|salud,mejorada,health,boost
+STATE|heroe de la aldea|heroe,aldea,hero,village
+STATE|hambre|hunger
+STATE|infestacion|infested
+STATE|dano instantaneo|dano,instantaneo,instant,damage
+STATE|curacion instantanea|curacion,instantanea,instant,health
+STATE|invisibilidad|invisibility
+STATE|supersalto|jump,boost
+STATE|levitacion|levitation
+STATE|suerte|luck
+STATE|cansancio|mining,fatigue
+STATE|nauseas|nausea
+STATE|vision nocturna|vision,nocturna,night
+STATE|mucosidad|oozing
+STATE|veneno|poison
+STATE|presagio de invasion|presagio,invasion,raid,omen
+STATE|regeneracion|regeneration
+STATE|resistencia|resistance
+STATE|saturacion|saturation
+STATE|caida lenta|caida,lenta,slow,falling
+STATE|lentitud|slowness
+STATE|velocidad|speed
+STATE|fuerza|strength
+STATE|presagio de desafio|presagio,desafio,trial,omen
+STATE|mala suerte|mala,suerte,unluck
+STATE|respiracion|water,breathing
+STATE|debilidad|weakness
+STATE|tejido|weaving
+STATE|cierzo|wind,charged
+STATE|descomposicion|wither
+WORD|afinidad acuatica|afinidad,acuatica,aqua,affinity
+WORD|pesadilla de los artropodos|pesadilla,artropodos,bane,arthropods
+WORD|maldicion de ligamiento|maldicion,ligamiento,binding,curse
+WORD|proteccion contra explosiones|proteccion,contra,explosiones,blast,protection
+WORD|fisura|breach
+WORD|conductividad|channeling
+WORD|densidad|density
+WORD|agilidad acuatica|agilidad,acuatica,depth,strider
+WORD|eficiencia|efficiency
+WORD|caida de pluma|caida,pluma,feather,falling
+WORD|aspecto ardiente|aspecto,ardiente,fire,aspect
+WORD|proteccion contra el fuego|proteccion,contra,fuego,fire,protection
+WORD|fortuna|fortune
+WORD|paso helado|paso,helado,frost,walker
+WORD|empalamiento|impaling
+WORD|infinidad|infinity
+WORD|empuje|knockback
+WORD|saqueo|looting
+WORD|lealtad|loyalty
+WORD|suerte de los mares|suerte,mares,luck,sea
+WORD|embestida|lunge
+WORD|atraccion|lure
+WORD|reparacion|mending
+WORD|multidisparo|multishot
+WORD|perforacion|piercing
+WORD|poder|power
+WORD|proteccion contra proyectiles|proteccion,contra,proyectiles,projectile,protection
+WORD|proteccion|protection
+WORD|retroceso|punch
+WORD|carga rapida|carga,rapida,quick,charge
+WORD|propulsion acuatica|propulsion,acuatica,riptide
+WORD|filo|sharpness
+WORD|toque de seda|toque,seda,silk,touch
+WORD|castigo|smite
+WORD|velocidad de alma|velocidad,alma,soul,speed
+WORD|barrido|sweeping
+WORD|agachado rapido|agachado,rapido,swift,sneak
+WORD|espinas|thorns
+WORD|durabilidad|unbreaking
+WORD|maldicion de desaparicion|maldicion,desaparicion,vanishing,curse
+WORD|aeroimpulso|wind,burst
+MOB|bote de acacia|bote,acacia,boat
+MOB|bote de acacia con cofre|bote,acacia,con,cofre,chest,boat
+MOB|nube de efecto persistente|nube,efecto,persistente,area,effect,cloud
+MOB|quirquincho|armadillo
+MOB|atril para armadura|atril,para,armadura,armor,stand
+MOB|flecha|arrow
+MOB|ajolote|axolotl
+MOB|balsa de bambu con cofre|balsa,bambu,con,cofre,bamboo,chest
+MOB|balsa de bambu|balsa,bambu,bamboo,raft
+MOB|murcielago|bat
+MOB|abeja|bee
+MOB|bote de abedul|bote,abedul,birch,boat
+MOB|bote de abedul con cofre|bote,abedul,con,cofre,birch,chest
+MOB|exhibidor de bloque|exhibidor,bloque,display
+MOB|bote|boat
+MOB|esqueleto pantanoso|esqueleto,pantanoso,bogged
+MOB|carga de viento|carga,viento,breeze,wind,charge
+MOB|camello|camel
+MOB|camello momificado|camello,momificado,camel,husk
+MOB|gato|cat
+MOB|arana de cueva|arana,cueva,cave,spider
+MOB|bote de cerezo|bote,cerezo,cherry,boat
+MOB|bote de cerezo con cofre|bote,cerezo,con,cofre,cherry,chest
+MOB|bote de roble con cofre|bote,roble,con,cofre,chest,boat
+MOB|carrito con cofre|carrito,con,cofre,chest,minecart
+MOB|gallina|chicken
+MOB|bacalao|cod
+MOB|carrito con bloque de comandos|carrito,con,bloque,comandos,command,minecart
+MOB|golem de cobre|golem,cobre,copper
+MOB|vaca|cow
+MOB|crujidor|creaking
+MOB|almohadon|cushion
+MOB|bote de roble oscuro|bote,roble,oscuro,dark,oak,boat
+MOB|bote de roble oscuro con cofre|bote,roble,oscuro,con,cofre,dark
+MOB|delfin|dolphin
+MOB|burro|donkey
+MOB|bola de fuego de dragon|bola,fuego,dragon,fireball
+MOB|ahogado|drowned
+MOB|huevo lanzado|huevo,lanzado,egg
+MOB|guardian mayor|guardian,mayor,elder
+MOB|cristal del end|cristal,end,crystal
+MOB|enderdragon|ender,dragon
+MOB|perla de ender lanzada|perla,ender,lanzada,pearl
+MOB|invocador|evoker
+MOB|colmillos de invocador|colmillos,invocador,evoker,fangs
+MOB|botella de experiencia lanzada|botella,experiencia,lanzada,experience,bottle
+MOB|orbe de experiencia|orbe,experiencia,experience,orb
+MOB|ojo de ender|ojo,ender,eye
+MOB|bloque cayendo|bloque,cayendo,falling
+MOB|bola de fuego|bola,fuego,fireball
+MOB|cohete|firework,rocket
+MOB|carnada (cana de pescar)|carnada,cana,pescar,fishing,bobber
+MOB|zorro|fox
+MOB|sapo|frog
+MOB|carrito con horno|carrito,con,horno,furnace,minecart
+MOB|zombi gigante|zombi,gigante,giant
+MOB|marco luminoso|marco,luminoso,glow,frame
+MOB|calamar luminoso|calamar,luminoso,glow,squid
+MOB|cabra|goat
+MOB|ghast feliz|ghast,feliz,happy
+MOB|carrito con tolva|carrito,con,tolva,hopper,minecart
+MOB|caballo|horse
+MOB|zombi momificado|zombi,momificado,husk
+MOB|ilusionista|illusioner
+MOB|interaccion|interaction
+MOB|golem de hierro|golem,hierro,iron
+MOB|exhibidor de objeto|exhibidor,objeto,display
+MOB|marco|frame
+MOB|bote de jungla|bote,jungla,jungle,boat
+MOB|bote de jungla con cofre|bote,jungla,con,cofre,jungle,chest
+MOB|el conejo asesino|conejo,asesino,killer,bunny
+MOB|nudo de soga|nudo,soga,leash,knot
+MOB|rayo|lightning,bolt
+MOB|pocion persistente|pocion,persistente,lingering,potion
+MOB|escupitajo de llama|escupitajo,llama,spit
+MOB|cubo de magma|cubo,magma,cube
+MOB|bote de mangle|bote,mangle,mangrove,boat
+MOB|bote de mangle con cofre|bote,mangle,con,cofre,mangrove,chest
+MOB|maniqui|mannequin
+MOB|npc|mannequin,label
+MOB|marcador|marker
+MOB|carrito|minecart
+MOB|mula|mule
+MOB|nautilo|nautilus
+MOB|bote de roble|bote,roble,oak,boat
+MOB|ocelote|ocelot
+MOB|generador de objetos siniestro|generador,objetos,siniestro,ominous,spawner
+MOB|cuadro|painting
+MOB|bote de roble blanquecino|bote,roble,blanquecino,pale,oak,boat
+MOB|bote de roble blanquecino con cofre|bote,roble,blanquecino,con,cofre,pale
+MOB|esqueleto momificado|esqueleto,momificado,parched
+MOB|loro|parrot
+MOB|chancho|pig
+MOB|piglin bruto|piglin,bruto,brute
+MOB|saqueador|pillager
+MOB|jugador(a)|jugador,player
+MOB|oso polar|oso,polar,bear
+MOB|bote de alamo|bote,alamo,poplar,boat
+MOB|bote de alamo con cofre|bote,alamo,con,cofre,poplar,chest
+MOB|pocion|potion
+MOB|pez globo|pez,globo,pufferfish
+MOB|conejo|rabbit
+MOB|devastador|ravager
+MOB|oveja|sheep
+MOB|proyectil de shulker|proyectil,shulker,bullet
+MOB|pez de plata|pez,plata,silverfish
+MOB|esqueleto|skeleton
+MOB|caballo esqueleto|caballo,esqueleto,skeleton,horse
+MOB|bola de fuego chica|bola,fuego,chica,small,fireball
+MOB|muneco de nieve|muneco,nieve,snow,golem
+MOB|bola de nieve|bola,nieve,snowball
+MOB|carrito con generador de criaturas|carrito,con,generador,criaturas,spawner,minecart
+MOB|flecha espectral|flecha,espectral,spectral,arrow
+MOB|arana|spider
+MOB|pocion arrojadiza|pocion,arrojadiza,splash,potion
+MOB|calamar|squid
+MOB|esqueleto glacial|esqueleto,glacial,stray
+MOB|cubo de azufre|cubo,azufre,sulfur,cube
+MOB|renacuajo|tadpole
+MOB|exhibidor de texto|exhibidor,texto,text,display
+MOB|tnt activa|tnt,activa
+MOB|carrito con tnt|carrito,con,tnt,minecart
+MOB|llama de comerciante|llama,comerciante,trader
+MOB|tridente|trident
+MOB|pez tropical|pez,tropical,fish
+MOB|anemona|tropical,fish,predefined
+MOB|pez cirujano negro|pez,cirujano,negro,tropical,fish,predefined
+MOB|idolo moro|idolo,moro,tropical,fish,predefined
+MOB|pez mariposa adornado|pez,mariposa,adornado,tropical,fish,predefined
+MOB|pez loro|pez,loro,tropical,fish,predefined
+MOB|pez angel real|pez,angel,real,tropical,fish,predefined
+MOB|ciclido rojo|ciclido,rojo,tropical,fish,predefined
+MOB|ophioblennius atlanticus|ophioblennius,atlanticus,tropical,fish,predefined
+MOB|pargo rojo|pargo,rojo,tropical,fish,predefined
+MOB|barbudo|tropical,fish,predefined
+MOB|pez payaso tomate|pez,payaso,tomate,tropical,fish,predefined
+MOB|pez ballesta|pez,ballesta,tropical,fish,predefined
+MOB|pez cirujano azul|pez,cirujano,azul,tropical,fish,predefined
+MOB|pez loro de aleta amarilla|pez,loro,aleta,amarilla,tropical,fish
+MOB|pez cirujano amarillo|pez,cirujano,amarillo,tropical,fish,predefined
+MOB|pez mariposa|pez,mariposa,tropical,fish,predefined
+MOB|ciclido|tropical,fish,predefined
+MOB|pez payaso|pez,payaso,tropical,fish,predefined
+MOB|luchador de siam rosa|luchador,siam,rosa,tropical,fish,predefined
+MOB|pseudochromidae|tropical,fish,predefined
+MOB|pargo rojo emperador|pargo,rojo,emperador,tropical,fish,predefined
+MOB|salmonete|tropical,fish,predefined
+MOB|pez betta|pez,betta,tropical,fish,type,betty
+MOB|pez bloque|pez,bloque,tropical,fish,type,blockfish
+MOB|de agua salada|agua,salada,tropical,fish,type,brinely
+MOB|pez arcilla|pez,arcilla,tropical,fish,type,clayfish
+MOB|a rayas|rayas,tropical,fish,type,dasher
+MOB|saltarin|tropical,fish,type,flopper
+MOB|brillante|tropical,fish,type,glitter
+MOB|kob|tropical,fish,type
+MOB|de arrecife|arrecife,tropical,fish,type,snooper
+MOB|a puntos|puntos,tropical,fish,type,spotty
+MOB|a tiras|tiras,tropical,fish,type,stripey
+MOB|pez rayo de sol|pez,rayo,sol,tropical,fish,type
+MOB|tortuga|turtle
+MOB|aldeano|villager
+MOB|escudero|villager,armorer
+MOB|carnicero|villager,butcher
+MOB|cartografo|villager,cartographer
+MOB|sacerdote|villager,cleric
+MOB|granjero|villager,farmer
+MOB|pescador|villager,fisherman
+MOB|flechero|villager,fletcher
+MOB|peletero|villager,leatherworker
+MOB|bibliotecario|villager,librarian
+MOB|albanil|villager,mason
+MOB|holgazan|villager,nitwit
+MOB|pastor|villager,shepherd
+MOB|herrero|villager,toolsmith
+MOB|armero|villager,weaponsmith
+MOB|vindicador|vindicator
+MOB|comerciante nomada|comerciante,nomada,wandering,trader
+MOB|bruja|witch
+MOB|esqueleto del wither|esqueleto,wither,skeleton
+MOB|proyectil del wither|proyectil,wither,skull
+MOB|lobo|wolf
+MOB|zombi|zombie
+MOB|caballo zombi|caballo,zombi,zombie,horse
+MOB|nautilo zombi|nautilo,zombi,zombie,nautilus
+MOB|aldeano zombi|aldeano,zombi,zombie,villager
+MOB|piglin zombificado|piglin,zombificado,zombified
+ITEM|mapa de campamento abandonado|mapa,campamento,abandonado,abandoned,camp,map
+ITEM|generar allay|generar,allay,spawn,egg
+ITEM|fragmento de amatista|fragmento,amatista,amethyst,shard
+ITEM|mapa de ciudad antigua|mapa,ciudad,antigua,ancient,city,map
+ITEM|fragmento de ceramica de pescador|fragmento,ceramica,pescador,angler,pottery,shard
+ITEM|manzana|apple
+ITEM|fragmento de ceramica de arquero|fragmento,ceramica,arquero,archer,pottery,shard
+ITEM|escama de quirquincho|escama,quirquincho,armadillo,scute
+ITEM|generar quirquincho|generar,quirquincho,armadillo,spawn,egg
+ITEM|fragmento de ceramica de batalla|fragmento,ceramica,batalla,arms,pottery,shard
+ITEM|balde con ajolote|balde,con,ajolote,axolotl,bucket
+ITEM|generar ajolote|generar,ajolote,axolotl,spawn,egg
+ITEM|papa horneada|papa,horneada,baked,potato
+ITEM|generar murcielago|generar,murcielago,bat,spawn,egg
+ITEM|generar abeja|generar,abeja,bee,spawn,egg
+ITEM|bife crudo|bife,crudo,beef
+ITEM|remolacha|beetroot
+ITEM|semillas de remolacha|semillas,remolacha,beetroot,seeds
+ITEM|guiso de remolacha|guiso,remolacha,beetroot,soup
+ITEM|bolsa negra|bolsa,negra,black,bundle
+ITEM|almohadon negro|almohadon,negro,black,cushion
+ITEM|tinte negro|tinte,negro,black,dye
+ITEM|arnes negro|arnes,negro,black,harness
+ITEM|fragmento de ceramica de espada|fragmento,ceramica,espada,blade,pottery,shard
+ITEM|polvo de blaze|polvo,blaze,powder
+ITEM|vara de blaze|vara,blaze,rod
+ITEM|generar blaze|generar,blaze,spawn,egg
+ITEM|bolsa azul|bolsa,azul,blue,bundle
+ITEM|almohadon azul|almohadon,azul,blue,cushion
+ITEM|tinte azul|tinte,azul,blue,dye
+ITEM|huevo azul|huevo,azul,blue,egg
+ITEM|arnes azul|arnes,azul,blue,harness
+ITEM|generar esqueleto pantanoso|generar,esqueleto,pantanoso,bogged,spawn,egg
+ITEM|plantilla de herreria|plantilla,herreria,bolt,armor,trim,smithing
+ITEM|diseno de armadura de cerrojo|diseno,armadura,cerrojo,bolt,armor,trim
+ITEM|hueso|bone
+ITEM|hueso molido|hueso,molido,bone,meal
+ITEM|libro|book
+ITEM|estampado de bordura dentada|estampado,bordura,dentada,bordure,indented,banner
+ITEM|arco|bow
+ITEM|bol|bowl
+ITEM|pan|bread
+ITEM|vara de breeze|vara,breeze,rod
+ITEM|generar breeze|generar,breeze,spawn,egg
+ITEM|fragmento de ceramica de pocion|fragmento,ceramica,pocion,brewer,pottery,shard
+ITEM|ladrillo|brick
+ITEM|bolsa marron|bolsa,marron,brown,bundle
+ITEM|almohadon marron|almohadon,marron,brown,cushion
+ITEM|tinte marron|tinte,marron,brown,dye
+ITEM|huevo marron|huevo,marron,brown,egg
+ITEM|arnes marron|arnes,marron,brown,harness
+ITEM|cepillo|brush
+ITEM|balde|bucket
+ITEM|bolsa|bundle
+ITEM|vacio|bundle,empty
+ITEM|puede contener un stack mixto de objetos|puede,contener,stack,mixto,objetos,bundle
+ITEM|lleno|bundle,full
+ITEM|mapa de ciudad antigua enterrada|mapa,ciudad,antigua,enterrada,buried,ancient
+ITEM|mapa de mina abandonada enterrada|mapa,mina,abandonada,enterrada,buried,mineshaft
+ITEM|mapa del tesoro|mapa,tesoro,buried,treasure,map
+ITEM|fragmento de ceramica de fuego|fragmento,ceramica,fuego,burn,pottery,shard
+ITEM|generar camello momificado|generar,camello,momificado,camel,husk,spawn
+ITEM|generar camello|generar,camello,camel,spawn,egg
+ITEM|zanahoria|carrot
+ITEM|cana con zanahoria|cana,con,zanahoria,carrot,stick
+ITEM|generar gato|generar,gato,cat,spawn,egg
+ITEM|generar arana de cueva|generar,arana,cueva,cave,spider,spawn
+ITEM|botas de cota de malla|botas,cota,malla,chainmail,boots
+ITEM|pechera de cota de malla|pechera,cota,malla,chainmail,chestplate
+ITEM|casco de cota de malla|casco,cota,malla,chainmail,helmet
+ITEM|pantalones de cota de malla|pantalones,cota,malla,chainmail,leggings
+ITEM|carbon vegetal|carbon,vegetal,charcoal
+ITEM|pollo crudo|pollo,crudo,chicken
+ITEM|generar gallina|generar,gallina,chicken,spawn,egg
+ITEM|fruta de chorus|fruta,chorus,fruit
+ITEM|bola de arcilla|bola,arcilla,clay,ball
+ITEM|reloj|clock
+ITEM|carbon|coal
+ITEM|diseno de armadura costeno|diseno,armadura,costeno,coast,armor,trim
+ITEM|granos de cacao|granos,cacao,cocoa,beans
+ITEM|bacalao crudo|bacalao,crudo,cod
+ITEM|balde con bacalao|balde,con,bacalao,cod,bucket
+ITEM|generar bacalao|generar,bacalao,cod,spawn,egg
+ITEM|brujula|compass
+ITEM|bife|cooked,beef
+ITEM|pollo cocinado|pollo,cocinado,cooked,chicken
+ITEM|bacalao cocinado|bacalao,cocinado,cooked,cod
+ITEM|cordero cocinado|cordero,cocinado,cooked,mutton
+ITEM|chuleta cocinada|chuleta,cocinada,cooked,porkchop
+ITEM|conejo cocinado|conejo,cocinado,cooked,rabbit
+ITEM|salmon cocinado|salmon,cocinado,cooked
+ITEM|galletita|cookie
+ITEM|hacha de cobre|hacha,cobre,copper,axe
+ITEM|botas de cobre|botas,cobre,copper,boots
+ITEM|pechera de cobre|pechera,cobre,copper,chestplate
+ITEM|generar golem de cobre|generar,golem,cobre,copper,spawn,egg
+ITEM|casco de cobre|casco,cobre,copper,helmet
+ITEM|azada de cobre|azada,cobre,copper,hoe
+ITEM|armadura de cobre para caballo|armadura,cobre,para,caballo,copper,horse
+ITEM|lingote de cobre|lingote,cobre,copper,ingot
+ITEM|pantalones de cobre|pantalones,cobre,copper,leggings
+ITEM|armadura de cobre para nautilo|armadura,cobre,para,nautilo,copper,nautilus
+ITEM|pepita de cobre|pepita,cobre,copper,nugget
+ITEM|pico de cobre|pico,cobre,copper,pickaxe
+ITEM|pala de cobre|pala,cobre,copper,shovel
+ITEM|lanza de cobre|lanza,cobre,copper,spear
+ITEM|espada de cobre|espada,cobre,copper,sword
+ITEM|generar vaca|generar,vaca,cow,spawn,egg
+ITEM|generar crujidor|generar,crujidor,creaking,spawn,egg
+ITEM|diseno de estandarte|diseno,estandarte,creeper,banner,pattern
+ITEM|estampado de creeper|estampado,creeper,banner,pattern,new
+ITEM|generar creeper|generar,creeper,spawn,egg
+ITEM|ballesta|crossbow
+ITEM|proyectil:|proyectil,crossbow,projectile
+ITEM|bolsa cian|bolsa,cian,cyan,bundle
+ITEM|almohadon cian|almohadon,cian,cyan,cushion
+ITEM|tinte cian|tinte,cian,cyan,dye
+ITEM|arnes cian|arnes,cian,cyan,harness
+ITEM|fragmento de ceramica de peligro|fragmento,ceramica,peligro,danger,pottery,shard
+ITEM|palo debug|palo,debug,stick
+ITEM|mapa de piramide de desierto|mapa,piramide,desierto,desert,pyramid,map
+ITEM|mapa de aldea de desierto|mapa,aldea,desierto,desert,village,map
+ITEM|diamante|diamond
+ITEM|hacha de diamante|hacha,diamante,diamond,axe
+ITEM|botas de diamante|botas,diamante,diamond,boots
+ITEM|pechera de diamante|pechera,diamante,diamond,chestplate
+ITEM|casco de diamante|casco,diamante,diamond,helmet
+ITEM|azada de diamante|azada,diamante,diamond,hoe
+ITEM|armadura de diamante para caballo|armadura,diamante,para,caballo,diamond,horse
+ITEM|pantalones de diamante|pantalones,diamante,diamond,leggings
+ITEM|armadura de diamante para nautilo|armadura,diamante,para,nautilo,diamond,nautilus
+ITEM|pico de diamante|pico,diamante,diamond,pickaxe
+ITEM|pala de diamante|pala,diamante,diamond,shovel
+ITEM|lanza de diamante|lanza,diamante,diamond,spear
+ITEM|espada de diamante|espada,diamante,diamond,sword
+ITEM|fragmento de disco|fragmento,disco,disc,fragment
+ITEM|disco - 5|disco,disc,fragment,desc
+ITEM|generar delfin|generar,delfin,dolphin,spawn,egg
+ITEM|generar burro|generar,burro,donkey,spawn,egg
+ITEM|aliento de dragon|aliento,dragon,breath
+ITEM|algas secas|algas,secas,dried,kelp
+ITEM|generar ahogado|generar,ahogado,drowned,spawn,egg
+ITEM|diseno de armadura de duna|diseno,armadura,duna,dune,armor,trim
+ITEM|fragmento de eco|fragmento,eco,echo,shard
+ITEM|huevo|egg
+ITEM|generar guardian mayor|generar,guardian,mayor,elder,spawn,egg
+ITEM|esmeralda|emerald
+ITEM|libro encantado|libro,encantado,enchanted,book
+ITEM|manzana dorada encantada|manzana,dorada,encantada,enchanted,golden,apple
+ITEM|generar enderdragon|generar,enderdragon,ender,dragon,spawn,egg
+ITEM|perla de ender|perla,ender,pearl
+ITEM|generar enderman|generar,enderman,spawn,egg
+ITEM|generar endermite|generar,endermite,spawn,egg
+ITEM|generar invocador|generar,invocador,evoker,spawn,egg
+ITEM|botella de experiencia|botella,experiencia,experience,bottle
+ITEM|fragmento de ceramica de explorador|fragmento,ceramica,explorador,explorer,pottery,shard
+ITEM|diseno de armadura de ojo|diseno,armadura,ojo,eye,armor,trim
+ITEM|pluma|feather
+ITEM|ojo de arana fermentado|ojo,arana,fermentado,fermented,spider,eye
+ITEM|estampado de mazonado|estampado,mazonado,field,masoned,banner,pattern
+ITEM|mapa|filled,map
+ITEM|carga de fuego|carga,fuego,fire,charge
+ITEM|duracion de vuelo:|duracion,vuelo,firework,rocket,flight
+ITEM|polvora de cohete|polvora,cohete,firework,star
+ITEM|negra|firework,star,black
+ITEM|azul|firework,star,blue
+ITEM|marron|firework,star,brown
+ITEM|personalizado|firework,star,custom,color
+ITEM|cian|firework,star,cyan
+ITEM|cambia a|cambia,firework,star,fade
+ITEM|con parpadeo.|con,parpadeo,firework,star,flicker
+ITEM|gris|firework,star,gray
+ITEM|verde|firework,star,green
+ITEM|celeste|firework,star,light,blue
+ITEM|gris claro|gris,claro,firework,star,light,gray
+ITEM|verde lima|verde,lima,firework,star,lime
+ITEM|magenta|firework,star
+ITEM|naranja|firework,star,orange
+ITEM|rosa|firework,star,pink
+ITEM|violeta|firework,star,purple
+ITEM|roja|firework,star,red
+ITEM|forma desconocida|forma,desconocida,firework,star,shape
+ITEM|rafaga|firework,star,shape,burst
+ITEM|con forma de creeper|con,forma,creeper,firework,star,shape
+ITEM|bola grande|bola,grande,firework,star,shape,large
+ITEM|bola chica|bola,chica,firework,star,shape,small
+ITEM|con forma de estrella|con,forma,estrella,firework,star,shape
+ITEM|con haz de luz.|con,haz,luz,firework,star,trail
+ITEM|blanca|firework,star,white
+ITEM|amarilla|firework,star,yellow
+ITEM|cana de pescar|cana,pescar,fishing,rod
+ITEM|pedernal|flint
+ITEM|encendedor|flint,steel
+ITEM|diseno de armadura de espiral|diseno,armadura,espiral,flow,armor,trim
+ITEM|espiral|flow,banner,pattern,desc
+ITEM|estampado de espiral|estampado,espiral,flow,banner,pattern,new
+ITEM|fragmento de ceramica de espiral|fragmento,ceramica,espiral,flow,pottery,sherd
+ITEM|flor|flower,banner,pattern,desc
+ITEM|estampado de flor|estampado,flor,flower,banner,pattern,new
+ITEM|generar zorro|generar,zorro,fox,spawn,egg
+ITEM|fragmento de ceramica de amigo|fragmento,ceramica,amigo,friend,pottery,shard
+ITEM|generar sapo|generar,sapo,frog,spawn,egg
+ITEM|generar ghast|generar,ghast,spawn,egg
+ITEM|lagrima de ghast|lagrima,ghast,tear
+ITEM|botella|glass,bottle
+ITEM|rebanada de sandia brillante|rebanada,sandia,brillante,glistering,melon,slice
+ITEM|planeta|globe,banner,pattern,desc
+ITEM|estampado de planeta|estampado,planeta,globe,banner,pattern,new
+ITEM|bayas luminosas|bayas,luminosas,glow,berries
+ITEM|saco de tinta luminosa|saco,tinta,luminosa,glow,ink,sac
+ITEM|generar calamar luminoso|generar,calamar,luminoso,glow,squid,spawn
+ITEM|polvo de piedra luminosa|polvo,piedra,luminosa,glowstone,dust
+ITEM|cuerno de cabra|cuerno,cabra,goat,horn
+ITEM|generar cabra|generar,cabra,goat,spawn,egg
+ITEM|lingote de oro|lingote,oro,gold,ingot
+ITEM|pepita de oro|pepita,oro,gold,nugget
+ITEM|manzana dorada|manzana,dorada,golden,apple
+ITEM|hacha de oro|hacha,oro,golden,axe
+ITEM|botas de oro|botas,oro,golden,boots
+ITEM|zanahoria dorada|zanahoria,dorada,golden,carrot
+ITEM|pechera de oro|pechera,oro,golden,chestplate
+ITEM|casco de oro|casco,oro,golden,helmet
+ITEM|azada de oro|azada,oro,golden,hoe
+ITEM|armadura de oro para caballo|armadura,oro,para,caballo,golden,horse
+ITEM|pantalones de oro|pantalones,oro,golden,leggings
+ITEM|armadura de oro para nautilo|armadura,oro,para,nautilo,golden,nautilus
+ITEM|pico de oro|pico,oro,golden,pickaxe
+ITEM|pala de oro|pala,oro,golden,shovel
+ITEM|lanza de oro|lanza,oro,golden,spear
+ITEM|espada de oro|espada,oro,golden,sword
+ITEM|bolsa gris|bolsa,gris,gray,bundle
+ITEM|almohadon gris|almohadon,gris,gray,cushion
+ITEM|tinte gris|tinte,gris,gray,dye
+ITEM|arnes gris|arnes,gris,gray,harness
+ITEM|bolsa verde|bolsa,verde,green,bundle
+ITEM|almohadon verde|almohadon,verde,green,cushion
+ITEM|tinte verde|tinte,verde,green,dye
+ITEM|arnes verde|arnes,verde,green,harness
+ITEM|generar guardian|generar,guardian,spawn,egg
+ITEM|polvora|gunpowder
+ITEM|estampado de breeze|estampado,breeze,guster,banner,pattern,new
+ITEM|fragmento de ceramica de rafaga|fragmento,ceramica,rafaga,guster,pottery,sherd
+ITEM|generar ghast feliz|generar,ghast,feliz,happy,spawn,egg
+ITEM|arnes|harness
+ITEM|corazon del mar|corazon,mar,heart,sea
+ITEM|fragmento de ceramica de corazon|fragmento,ceramica,corazon,heart,pottery,shard
+ITEM|fragmento de ceramica de corazon roto|fragmento,ceramica,corazon,roto,heartbreak,pottery
+ITEM|generar hoglin|generar,hoglin,spawn,egg
+ITEM|botella de miel|botella,miel,honey,bottle
+ITEM|panal|honeycomb
+ITEM|generar caballo|generar,caballo,horse,spawn,egg
+ITEM|diseno de armadura de anfitrion|diseno,armadura,anfitrion,host,armor,trim
+ITEM|fragmento de ceramica de lobo|fragmento,ceramica,lobo,howl,pottery,shard
+ITEM|generar zombi momificado|generar,zombi,momificado,husk,spawn,egg
+ITEM|saco de tinta|saco,tinta,ink,sac
+ITEM|hacha de hierro|hacha,hierro,iron,axe
+ITEM|botas de hierro|botas,hierro,iron,boots
+ITEM|pechera de hierro|pechera,hierro,iron,chestplate
+ITEM|generar golem de hierro|generar,golem,hierro,iron,spawn,egg
+ITEM|casco de hierro|casco,hierro,iron,helmet
+ITEM|azada de hierro|azada,hierro,iron,hoe
+ITEM|armadura de hierro para caballo|armadura,hierro,para,caballo,iron,horse
+ITEM|lingote de hierro|lingote,hierro,iron,ingot
+ITEM|pantalones de hierro|pantalones,hierro,iron,leggings
+ITEM|armadura de hierro para nautilo|armadura,hierro,para,nautilo,iron,nautilus
+ITEM|pepita de hierro|pepita,hierro,iron,nugget
+ITEM|pico de hierro|pico,hierro,iron,pickaxe
+ITEM|pala de hierro|pala,hierro,iron,shovel
+ITEM|lanza de hierro|lanza,hierro,iron,spear
+ITEM|espada de hierro|espada,hierro,iron,sword
+ITEM|mapa de piramide de jungla|mapa,piramide,jungla,jungle,explorer,map
+ITEM|enciclopedia|knowledge,book
+ITEM|lapislazuli|lapis,lazuli
+ITEM|balde de lava|balde,lava,bucket
+ITEM|soga|lead
+ITEM|cuero|leather
+ITEM|botas de cuero|botas,cuero,leather,boots
+ITEM|tunica de cuero|tunica,cuero,leather,chestplate
+ITEM|gorro de cuero|gorro,cuero,leather,helmet
+ITEM|armadura de cuero para caballo|armadura,cuero,para,caballo,leather,horse
+ITEM|pantalones de cuero|pantalones,cuero,leather,leggings
+ITEM|bolsa celeste|bolsa,celeste,light,blue,bundle
+ITEM|almohadon celeste|almohadon,celeste,light,blue,cushion
+ITEM|tinte celeste|tinte,celeste,light,blue,dye
+ITEM|arnes celeste|arnes,celeste,light,blue,harness
+ITEM|bolsa gris claro|bolsa,gris,claro,light,gray,bundle
+ITEM|almohadon gris claro|almohadon,gris,claro,light,gray,cushion
+ITEM|tinte gris claro|tinte,gris,claro,light,gray,dye
+ITEM|arnes gris claro|arnes,gris,claro,light,gray,harness
+ITEM|bolsa verde lima|bolsa,verde,lima,lime,bundle
+ITEM|almohadon verde lima|almohadon,verde,lima,lime,cushion
+ITEM|tinte verde lima|tinte,verde,lima,lime,dye
+ITEM|arnes verde lima|arnes,verde,lima,lime,harness
+ITEM|pocion persistente extrana|pocion,persistente,extrana,lingering,potion,effect
+ITEM|pocion persistente no fabricable|pocion,persistente,fabricable,lingering,potion,effect
+ITEM|pocion persistente de resistencia al fuego|pocion,persistente,resistencia,fuego,lingering,potion
+ITEM|pocion persistente de dano|pocion,persistente,dano,lingering,potion,effect
+ITEM|pocion persistente de curacion|pocion,persistente,curacion,lingering,potion,effect
+ITEM|pocion persistente de infestacion|pocion,persistente,infestacion,lingering,potion,effect
+ITEM|pocion persistente de invisibilidad|pocion,persistente,invisibilidad,lingering,potion,effect
+ITEM|pocion persistente de salto|pocion,persistente,salto,lingering,potion,effect
+ITEM|pocion persistente de levitacion|pocion,persistente,levitacion,lingering,potion,effect
+ITEM|pocion persistente de suerte|pocion,persistente,suerte,lingering,potion,effect
+ITEM|pocion persistente mundana|pocion,persistente,mundana,lingering,potion,effect
+ITEM|pocion persistente de vision nocturna|pocion,persistente,vision,nocturna,lingering,potion
+ITEM|pocion persistente de mucosidad|pocion,persistente,mucosidad,lingering,potion,effect
+ITEM|pocion persistente de veneno|pocion,persistente,veneno,lingering,potion,effect
+ITEM|pocion persistente de regeneracion|pocion,persistente,regeneracion,lingering,potion,effect
+ITEM|pocion persistente de caida lenta|pocion,persistente,caida,lenta,lingering,potion
+ITEM|pocion persistente de lentitud|pocion,persistente,lentitud,lingering,potion,effect
+ITEM|pocion persistente de fuerza|pocion,persistente,fuerza,lingering,potion,effect
+ITEM|pocion persistente de velocidad|pocion,persistente,velocidad,lingering,potion,effect
+ITEM|pocion persistente densa|pocion,persistente,densa,lingering,potion,effect
+ITEM|pocion persistente del maestro tortuga|pocion,persistente,maestro,tortuga,lingering,potion
+ITEM|botella de agua persistente|botella,agua,persistente,lingering,potion,effect
+ITEM|pocion persistente de respiracion acuatica|pocion,persistente,respiracion,acuatica,lingering,potion
+ITEM|pocion persistente de debilidad|pocion,persistente,debilidad,lingering,potion,effect
+ITEM|pocion persistente de tejido|pocion,persistente,tejido,lingering,potion,effect
+ITEM|pocion persistente de cierzo|pocion,persistente,cierzo,lingering,potion,effect
+ITEM|generar llama|generar,llama,spawn,egg
+ITEM|brujula magnetizada|brujula,magnetizada,lodestone,compass
+ITEM|maza|mace
+ITEM|bolsa magenta|bolsa,magenta,bundle
+ITEM|almohadon magenta|almohadon,magenta,cushion
+ITEM|tinte magenta|tinte,magenta,dye
+ITEM|arnes magenta|arnes,magenta,harness
+ITEM|crema de magma|crema,magma,cream
+ITEM|generar cubo de magma|generar,cubo,magma,cube,spawn,egg
+ITEM|mapa en blanco|mapa,blanco,map
+ITEM|semillas de sandia|semillas,sandia,melon,seeds
+ITEM|rebanada de sandia|rebanada,sandia,melon,slice
+ITEM|balde de leche|balde,leche,milk,bucket
+ITEM|fragmento de ceramica de minero|fragmento,ceramica,minero,miner,pottery,shard
+ITEM|mapa de mina abandonada|mapa,mina,abandonada,mineshaft,map
+ITEM|logotipo|mojang,banner,pattern,desc
+ITEM|estampado de mojang|estampado,mojang,banner,pattern,new
+ITEM|generar mooshroom|generar,mooshroom,spawn,egg
+ITEM|fragmento de ceramica de luto|fragmento,ceramica,luto,mourner,pottery,shard
+ITEM|generar mula|generar,mula,mule,spawn,egg
+ITEM|guiso de hongos|guiso,hongos,mushroom,stew
+ITEM|disco|music,disc
+ITEM|c418 - 11|c418,music,disc,desc
+ITEM|c418 - 13|c418,music,disc,desc
+ITEM|samuel aberg - 5|samuel,aberg,music,disc,desc
+ITEM|c418 - blocks|c418,blocks,music,disc,desc
+ITEM|fingerspit - bounce|fingerspit,bounce,music,disc,desc
+ITEM|c418 - cat|c418,cat,music,disc,desc
+ITEM|c418 - chirp|c418,chirp,music,disc,desc
+ITEM|lena raine - creator|lena,raine,creator,music,disc,desc
+ITEM|lena raine - creator (caja de musica)|lena,raine,creator,caja,musica,music
+ITEM|c418 - far|c418,far,music,disc,desc
+ITEM|hyper potions - lava chicken|hyper,potions,lava,chicken,music,disc
+ITEM|c418 - mall|c418,mall,music,disc,desc
+ITEM|c418 - mellohi|c418,mellohi,music,disc,desc
+ITEM|lena raine - otherside|lena,raine,otherside,music,disc,desc
+ITEM|lena raine - pigstep|lena,raine,pigstep,music,disc,desc
+ITEM|aaron cherof - precipice|aaron,cherof,precipice,music,disc,desc
+ITEM|aaron cherof - relic|aaron,cherof,relic,music,disc,desc
+ITEM|c418 - stal|c418,stal,music,disc,desc
+ITEM|c418 - strad|c418,strad,music,disc,desc
+ITEM|amos roddy - tears|amos,roddy,tears,music,disc,desc
+ITEM|c418 - wait|c418,wait,music,disc,desc
+ITEM|c418 - ward|c418,ward,music,disc,desc
+ITEM|cordero crudo|cordero,crudo,mutton
+ITEM|etiqueta|name,tag
+ITEM|caparazon de nautilo|caparazon,nautilo,nautilus,shell
+ITEM|generar nautilo|generar,nautilo,nautilus,spawn,egg
+ITEM|ladrillo del nether|ladrillo,nether,brick
+ITEM|estrella del nether|estrella,nether,star
+ITEM|hacha de netherita|hacha,netherita,netherite,axe
+ITEM|botas de netherita|botas,netherita,netherite,boots
+ITEM|pechera de netherita|pechera,netherita,netherite,chestplate
+ITEM|casco de netherita|casco,netherita,netherite,helmet
+ITEM|azada de netherita|azada,netherita,netherite,hoe
+ITEM|armadura de netherita para caballo|armadura,netherita,para,caballo,netherite,horse
+ITEM|lingote de netherita|lingote,netherita,netherite,ingot
+ITEM|pantalones de netherita|pantalones,netherita,netherite,leggings
+ITEM|armadura de netherita para nautilo|armadura,netherita,para,nautilo,netherite,nautilus
+ITEM|pico de netherita|pico,netherita,netherite,pickaxe
+ITEM|fragmento de netherita|fragmento,netherita,netherite,scrap
+ITEM|pala de netherita|pala,netherita,netherite,shovel
+ITEM|lanza de netherita|lanza,netherita,netherite,spear
+ITEM|espada de netherita|espada,netherita,netherite,sword
+ITEM|mejora de netherita|mejora,netherita,netherite,upgrade,smithing,template
+ITEM|mapa de monumento oceanico|mapa,monumento,oceanico,ocean,explorer,map
+ITEM|generar ocelote|generar,ocelote,ocelot,spawn,egg
+ITEM|botella siniestra|botella,siniestra,ominous,bottle
+ITEM|llave de desafio siniestra|llave,desafio,siniestra,ominous,trial,key
+ITEM|bolsa naranja|bolsa,naranja,orange,bundle
+ITEM|almohadon naranja|almohadon,naranja,orange,cushion
+ITEM|tinte naranja|tinte,naranja,orange,dye
+ITEM|arnes naranja|arnes,naranja,orange,harness
+ITEM|bote de roble palido|bote,roble,palido,pale,oak,boat
+ITEM|bote de roble palido con cofre|bote,roble,palido,con,cofre,pale
+ITEM|generar panda|generar,panda,spawn,egg
+ITEM|papel|paper
+ITEM|generar esqueleto momificado|generar,esqueleto,momificado,parched,spawn,egg
+ITEM|generar loro|generar,loro,parrot,spawn,egg
+ITEM|membrana de phantom|membrana,phantom,membrane
+ITEM|generar phantom|generar,phantom,spawn,egg
+ITEM|generar chancho|generar,chancho,pig,spawn,egg
+ITEM|hocico|piglin,banner,pattern,desc
+ITEM|estampado de hocico|estampado,hocico,piglin,banner,pattern,new
+ITEM|generar piglin bruto|generar,piglin,bruto,brute,spawn,egg
+ITEM|generar piglin|generar,piglin,spawn,egg
+ITEM|generar saqueador|generar,saqueador,pillager,spawn,egg
+ITEM|bolsa rosa|bolsa,rosa,pink,bundle
+ITEM|almohadon rosa|almohadon,rosa,pink,cushion
+ITEM|tinte rosa|tinte,rosa,pink,dye
+ITEM|arnes rosa|arnes,rosa,pink,harness
+ITEM|vaina de odre|vaina,odre,pitcher,pod
+ITEM|mapa de aldea de llanura|mapa,aldea,llanura,plains,village,map
+ITEM|fragmento de ceramica de abundancia|fragmento,ceramica,abundancia,plenty,pottery,shard
+ITEM|papa venenosa|papa,venenosa,poisonous,potato
+ITEM|generar oso polar|generar,oso,polar,bear,spawn,egg
+ITEM|fruta de chorus horneada|fruta,chorus,horneada,popped,fruit
+ITEM|chuleta cruda|chuleta,cruda,porkchop
+ITEM|papa|potato
+ITEM|pocion extrana|pocion,extrana,potion,effect,awkward
+ITEM|pocion no fabricable|pocion,fabricable,potion,effect,empty
+ITEM|pocion de resistencia al fuego|pocion,resistencia,fuego,potion,effect,fire
+ITEM|pocion de dano|pocion,dano,potion,effect,harming
+ITEM|pocion de curacion|pocion,curacion,potion,effect,healing
+ITEM|pocion de infestacion|pocion,infestacion,potion,effect,infested
+ITEM|pocion de invisibilidad|pocion,invisibilidad,potion,effect,invisibility
+ITEM|pocion de salto|pocion,salto,potion,effect,leaping
+ITEM|pocion de levitacion|pocion,levitacion,potion,effect,levitation
+ITEM|pocion de suerte|pocion,suerte,potion,effect,luck
+ITEM|pocion mundana|pocion,mundana,potion,effect,mundane
+ITEM|pocion de vision nocturna|pocion,vision,nocturna,potion,effect,night
+ITEM|pocion de mucosidad|pocion,mucosidad,potion,effect,oozing
+ITEM|pocion de veneno|pocion,veneno,potion,effect,poison
+ITEM|pocion de regeneracion|pocion,regeneracion,potion,effect,regeneration
+ITEM|pocion de caida lenta|pocion,caida,lenta,potion,effect,slow
+ITEM|pocion de lentitud|pocion,lentitud,potion,effect,slowness
+ITEM|pocion de fuerza|pocion,fuerza,potion,effect,strength
+ITEM|pocion de velocidad|pocion,velocidad,potion,effect,swiftness
+ITEM|pocion densa|pocion,densa,potion,effect,thick
+ITEM|pocion del maestro tortuga|pocion,maestro,tortuga,potion,effect,turtle
+ITEM|botella de agua|botella,agua,potion,effect,water
+ITEM|pocion de respiracion acuatica|pocion,respiracion,acuatica,potion,effect,water
+ITEM|pocion de debilidad|pocion,debilidad,potion,effect,weakness
+ITEM|pocion de tejido|pocion,tejido,potion,effect,weaving
+ITEM|pocion de cierzo|pocion,cierzo,potion,effect,wind,charged
+ITEM|fragmento de ceramica de premio|fragmento,ceramica,premio,pottery,shard,prize
+ITEM|fragmento de ceramica de craneo|fragmento,ceramica,craneo,pottery,shard,skull
+ITEM|balde de nieve polvo|balde,nieve,polvo,powder,snow,bucket
+ITEM|cristales de prismarina|cristales,prismarina,prismarine,crystals
+ITEM|fragmento de prismarina|fragmento,prismarina,prismarine,shard
+ITEM|fragmento de ceramica de tesoro|fragmento,ceramica,tesoro,prize,pottery,sherd
+ITEM|balde con pez globo|balde,con,pez,globo,pufferfish,bucket
+ITEM|generar pez globo|generar,pez,globo,pufferfish,spawn,egg
+ITEM|tarta de zapallo|tarta,zapallo,pumpkin,pie
+ITEM|semillas de zapallo|semillas,zapallo,pumpkin,seeds
+ITEM|bolsa violeta|bolsa,violeta,purple,bundle
+ITEM|almohadon violeta|almohadon,violeta,purple,cushion
+ITEM|tinte violeta|tinte,violeta,purple,dye
+ITEM|arnes violeta|arnes,violeta,purple,harness
+ITEM|cuarzo del nether|cuarzo,nether,quartz
+ITEM|conejo crudo|conejo,crudo,rabbit
+ITEM|pata de conejo|pata,conejo,rabbit,foot
+ITEM|piel de conejo|piel,conejo,rabbit,hide
+ITEM|generar conejo|generar,conejo,rabbit,spawn,egg
+ITEM|guiso de conejo|guiso,conejo,rabbit,stew
+ITEM|diseno de armadura de elevacion|diseno,armadura,elevacion,raiser,armor,trim
+ITEM|generar devastador|generar,devastador,ravager,spawn,egg
+ITEM|cobre crudo|cobre,crudo,raw,copper
+ITEM|oro crudo|oro,crudo,raw,gold
+ITEM|hierro crudo|hierro,crudo,raw,iron
+ITEM|brujula de recuperacion|brujula,recuperacion,recovery,compass
+ITEM|bolsa roja|bolsa,roja,red,bundle
+ITEM|almohadon rojo|almohadon,rojo,red,cushion
+ITEM|tinte rojo|tinte,rojo,red,dye
+ITEM|arnes rojo|arnes,rojo,red,harness
+ITEM|polvo de redstone|polvo,redstone
+ITEM|ladrillo de resina|ladrillo,resina,resin,brick
+ITEM|grumo de resina|grumo,resina,resin,clump
+ITEM|diseno de armadura de costillas|diseno,armadura,costillas,rib,armor,trim
+ITEM|carne podrida|carne,podrida,rotten,flesh
+ITEM|montura|saddle
+ITEM|salmon crudo|salmon,crudo
+ITEM|balde con salmon|balde,con,salmon,bucket
+ITEM|generar salmon|generar,salmon,spawn,egg
+ITEM|mapa de aldea de sabana|mapa,aldea,sabana,savanna,village,map
+ITEM|fragmento de ceramica de hacha|fragmento,ceramica,hacha,scrape,pottery,sherd
+ITEM|escama|scute
+ITEM|diseno de armadura de centinela|diseno,armadura,centinela,sentry,armor,trim
+ITEM|diseno de armadura de modelador|diseno,armadura,modelador,shaper,armor,trim
+ITEM|fragmento de ceramica de trigo|fragmento,ceramica,trigo,sheaf,pottery,shard
+ITEM|tijeras|shears
+ITEM|generar oveja|generar,oveja,sheep,spawn,egg
+ITEM|fragmento de ceramica de refugio|fragmento,ceramica,refugio,shelter,pottery,shard
+ITEM|escudo|shield
+ITEM|escudo negro|escudo,negro,shield,black
+ITEM|escudo azul|escudo,azul,shield,blue
+ITEM|escudo marron|escudo,marron,shield,brown
+ITEM|escudo cian|escudo,cian,shield,cyan
+ITEM|escudo gris|escudo,gris,shield,gray
+ITEM|escudo verde|escudo,verde,shield,green
+ITEM|escudo celeste|escudo,celeste,shield,light,blue
+ITEM|escudo gris claro|escudo,gris,claro,shield,light,gray
+ITEM|escudo verde lima|escudo,verde,lima,shield,lime
+ITEM|escudo magenta|escudo,magenta,shield
+ITEM|escudo naranja|escudo,naranja,shield,orange
+ITEM|escudo rosa|escudo,rosa,shield,pink
+ITEM|escudo violeta|escudo,violeta,shield,purple
+ITEM|escudo rojo|escudo,rojo,shield,red
+ITEM|escudo blanco|escudo,blanco,shield,white
+ITEM|escudo amarillo|escudo,amarillo,shield,yellow
+ITEM|caparazon de shulker|caparazon,shulker,shell
+ITEM|generar shulker|generar,shulker,spawn,egg
+ITEM|cartel|sign
+ITEM|diseno de armadura de silencio|diseno,armadura,silencio,silence,armor,trim
+ITEM|generar pez de plata|generar,pez,plata,silverfish,spawn,egg
+ITEM|generar caballo esqueleto|generar,caballo,esqueleto,skeleton,horse,spawn
+ITEM|generar esqueleto|generar,esqueleto,skeleton,spawn,egg
+ITEM|craneo|skull,banner,pattern,desc
+ITEM|estampado de calavera|estampado,calavera,skull,banner,pattern,new
+ITEM|bola de slime|bola,slime,ball
+ITEM|generar slime|generar,slime,spawn,egg
+ITEM|aplica a:|aplica,smithing,template,applies
+ITEM|agrega un lingote o cristal|agrega,lingote,cristal,smithing,template,armor
+ITEM|armadura|smithing,template,armor,trim,applies
+ITEM|agrega una parte de armadura|agrega,parte,armadura,smithing,template,armor
+ITEM|lingotes y cristales|lingotes,cristales,smithing,template,armor,trim
+ITEM|ingredientes:|ingredientes,smithing,template,ingredients
+ITEM|agrega un lingote de netherita|agrega,lingote,netherita,smithing,template,netherite
+ITEM|equipamiento de diamante|equipamiento,diamante,smithing,template,netherite,upgrade
+ITEM|agrega una armadura, arma o herramienta de diamante|agrega,armadura,arma,herramienta,diamante,smithing
+ITEM|mejora:|mejora,smithing,template,upgrade
+ITEM|generar sniffer|generar,sniffer,spawn,egg
+ITEM|fragmento de ceramica de sniffer|fragmento,ceramica,sniffer,snort,pottery,shard
+ITEM|diseno de armadura de hocico|diseno,armadura,hocico,snout,armor,trim
+ITEM|generar golem de nieve|generar,golem,nieve,snow,spawn,egg
+ITEM|mapa de aldea de llanura nevada|mapa,aldea,llanura,nevada,snowy,village
+ITEM|ojo de arana|ojo,arana,spider,eye
+ITEM|generar arana|generar,arana,spider,spawn,egg
+ITEM|diseno de armadura de agujas|diseno,armadura,agujas,spire,armor,trim
+ITEM|pocion arrojadiza extrana|pocion,arrojadiza,extrana,splash,potion,effect
+ITEM|pocion arrojadiza no fabricable|pocion,arrojadiza,fabricable,splash,potion,effect
+ITEM|pocion arrojadiza de resistencia al fuego|pocion,arrojadiza,resistencia,fuego,splash,potion
+ITEM|pocion arrojadiza de dano|pocion,arrojadiza,dano,splash,potion,effect
+ITEM|pocion arrojadiza de curacion|pocion,arrojadiza,curacion,splash,potion,effect
+ITEM|pocion arrojadiza de infestacion|pocion,arrojadiza,infestacion,splash,potion,effect
+ITEM|pocion arrojadiza de invisibilidad|pocion,arrojadiza,invisibilidad,splash,potion,effect
+ITEM|pocion arrojadiza de salto|pocion,arrojadiza,salto,splash,potion,effect
+ITEM|pocion arrojadiza de levitacion|pocion,arrojadiza,levitacion,splash,potion,effect
+ITEM|pocion arrojadiza de suerte|pocion,arrojadiza,suerte,splash,potion,effect
+ITEM|pocion arrojadiza mundana|pocion,arrojadiza,mundana,splash,potion,effect
+ITEM|pocion arrojadiza de vision nocturna|pocion,arrojadiza,vision,nocturna,splash,potion
+ITEM|pocion arrojadiza de mucosidad|pocion,arrojadiza,mucosidad,splash,potion,effect
+ITEM|pocion arrojadiza de veneno|pocion,arrojadiza,veneno,splash,potion,effect
+ITEM|pocion arrojadiza de regeneracion|pocion,arrojadiza,regeneracion,splash,potion,effect
+ITEM|pocion arrojadiza de caida lenta|pocion,arrojadiza,caida,lenta,splash,potion
+ITEM|pocion arrojadiza de lentitud|pocion,arrojadiza,lentitud,splash,potion,effect
+ITEM|pocion arrojadiza de fuerza|pocion,arrojadiza,fuerza,splash,potion,effect
+ITEM|pocion arrojadiza de velocidad|pocion,arrojadiza,velocidad,splash,potion,effect
+ITEM|pocion arrojadiza densa|pocion,arrojadiza,densa,splash,potion,effect
+ITEM|pocion arrojadiza del maestro tortuga|pocion,arrojadiza,maestro,tortuga,splash,potion
+ITEM|botella de agua arrojadiza|botella,agua,arrojadiza,splash,potion,effect
+ITEM|pocion arrojadiza de respiracion acuatica|pocion,arrojadiza,respiracion,acuatica,splash,potion
+ITEM|pocion arrojadiza de debilidad|pocion,arrojadiza,debilidad,splash,potion,effect
+ITEM|pocion arrojadiza de tejido|pocion,arrojadiza,tejido,splash,potion,effect
+ITEM|pocion arrojadiza de cierzo|pocion,arrojadiza,cierzo,splash,potion,effect
+ITEM|bote de abeto|bote,abeto,spruce,boat
+ITEM|bote de abeto con cofre|bote,abeto,con,cofre,spruce,chest
+ITEM|catalejo|spyglass
+ITEM|generar calamar|generar,calamar,squid,spawn,egg
+ITEM|palo|stick
+ITEM|hacha de piedra|hacha,piedra,stone,axe
+ITEM|azada de piedra|azada,piedra,stone,hoe
+ITEM|pico de piedra|pico,piedra,stone,pickaxe
+ITEM|pala de piedra|pala,piedra,stone,shovel
+ITEM|lanza de piedra|lanza,piedra,stone,spear
+ITEM|espada de piedra|espada,piedra,stone,sword
+ITEM|generar esqueleto glacial (stray)|generar,esqueleto,glacial,stray,spawn,egg
+ITEM|generar strider|generar,strider,spawn,egg
+ITEM|hilo|string
+ITEM|azucar|sugar
+ITEM|balde con cubo de azufre|balde,con,cubo,azufre,sulfur,cube
+ITEM|generar cubo de azufre|generar,cubo,azufre,sulfur,cube,spawn
+ITEM|guiso sospechoso|guiso,sospechoso,suspicious,stew
+ITEM|mapa de cabana de pantano|mapa,cabana,pantano,swamp,explorer,map
+ITEM|bayas dulces|bayas,dulces,sweet,berries
+ITEM|balde con renacuajo|balde,con,renacuajo,tadpole,bucket
+ITEM|generar renacuajo|generar,renacuajo,tadpole,spawn,egg
+ITEM|mapa de aldea de taiga|mapa,aldea,taiga,village,map
+ITEM|diseno de armadura de marea|diseno,armadura,marea,tide,armor,trim
+ITEM|flecha con efecto|flecha,con,efecto,tipped,arrow
+ITEM|flecha con efecto no fabricable|flecha,con,efecto,fabricable,tipped,arrow
+ITEM|flecha de resistencia al fuego|flecha,resistencia,fuego,tipped,arrow,effect
+ITEM|flecha de dano|flecha,dano,tipped,arrow,effect,harming
+ITEM|flecha de curacion|flecha,curacion,tipped,arrow,effect,healing
+ITEM|flecha de infestacion|flecha,infestacion,tipped,arrow,effect,infested
+ITEM|flecha de invisibilidad|flecha,invisibilidad,tipped,arrow,effect,invisibility
+ITEM|flecha de salto|flecha,salto,tipped,arrow,effect,leaping
+ITEM|flecha de levitacion|flecha,levitacion,tipped,arrow,effect,levitation
+ITEM|flecha de suerte|flecha,suerte,tipped,arrow,effect,luck
+ITEM|flecha de vision nocturna|flecha,vision,nocturna,tipped,arrow,effect
+ITEM|flecha de mucosidad|flecha,mucosidad,tipped,arrow,effect,oozing
+ITEM|flecha de veneno|flecha,veneno,tipped,arrow,effect,poison
+ITEM|flecha de regeneracion|flecha,regeneracion,tipped,arrow,effect,regeneration
+ITEM|flecha de caida lenta|flecha,caida,lenta,tipped,arrow,effect
+ITEM|flecha de lentitud|flecha,lentitud,tipped,arrow,effect,slowness
+ITEM|flecha de fuerza|flecha,fuerza,tipped,arrow,effect,strength
+ITEM|flecha de velocidad|flecha,velocidad,tipped,arrow,effect,swiftness
+ITEM|flecha del maestro tortuga|flecha,maestro,tortuga,tipped,arrow,effect
+ITEM|flecha de agua|flecha,agua,tipped,arrow,effect,water
+ITEM|flecha de respiracion acuatica|flecha,respiracion,acuatica,tipped,arrow,effect
+ITEM|flecha de debilidad|flecha,debilidad,tipped,arrow,effect,weakness
+ITEM|flecha de tejido|flecha,tejido,tipped,arrow,effect,weaving
+ITEM|flecha de cierzo|flecha,cierzo,tipped,arrow,effect,wind
+ITEM|semillas de anflorcha|semillas,anflorcha,torchflower,seeds
+ITEM|totem de inmortalidad|totem,inmortalidad,undying
+ITEM|generar llama de comerciante|generar,llama,comerciante,trader,spawn,egg
+ITEM|mapa de camara de desafio|mapa,camara,desafio,trial,explorer,map
+ITEM|llave de desafio|llave,desafio,trial,key
+ITEM|balde con pez tropical|balde,con,pez,tropical,fish,bucket
+ITEM|generar pez tropical|generar,pez,tropical,fish,spawn,egg
+ITEM|caparazon de tortuga|caparazon,tortuga,turtle,helmet
+ITEM|escama de tortuga|escama,tortuga,turtle,scute
+ITEM|generar tortuga|generar,tortuga,turtle,spawn,egg
+ITEM|diseno de armadura de vex|diseno,armadura,vex,armor,trim,smithing
+ITEM|generar vex|generar,vex,spawn,egg
+ITEM|generar aldeano|generar,aldeano,villager,spawn,egg
+ITEM|generar vindicador|generar,vindicador,vindicator,spawn,egg
+ITEM|generar comerciante nomada|generar,comerciante,nomada,wandering,trader,spawn
+ITEM|diseno de armadura de warden|diseno,armadura,warden,ward,armor,trim
+ITEM|generar warden|generar,warden,spawn,egg
+ITEM|mapa de ruinas de oceano calido|mapa,ruinas,oceano,calido,warm,ocean
+ITEM|cana con hongo distorsionado|cana,con,hongo,distorsionado,warped,fungus
+ITEM|balde de agua|balde,agua,water,bucket
+ITEM|diseno de armadura de buscacaminos|diseno,armadura,buscacaminos,wayfinder,armor,trim
+ITEM|trigo|wheat
+ITEM|semillas de trigo|semillas,trigo,wheat,seeds
+ITEM|bolsa blanca|bolsa,blanca,white,bundle
+ITEM|almohadon blanco|almohadon,blanco,white,cushion
+ITEM|tinte blanco|tinte,blanco,white,dye
+ITEM|arnes blanco|arnes,blanco,white,harness
+ITEM|diseno de armadura salvaje|diseno,armadura,salvaje,wild,armor,trim
+ITEM|generar bruja|generar,bruja,witch,spawn,egg
+ITEM|generar esqueleto del wither|generar,esqueleto,wither,skeleton,spawn,egg
+ITEM|generar wither|generar,wither,spawn,egg
+ITEM|armadura para lobo|armadura,para,lobo,wolf,armor
+ITEM|generar lobo|generar,lobo,wolf,spawn,egg
+ITEM|hacha de madera|hacha,madera,wooden,axe
+ITEM|azada de madera|azada,madera,wooden,hoe
+ITEM|pico de madera|pico,madera,wooden,pickaxe
+ITEM|pala de madera|pala,madera,wooden,shovel
+ITEM|lanza de madera|lanza,madera,wooden,spear
+ITEM|espada de madera|espada,madera,wooden,sword
+ITEM|mapa de mansion del bosque|mapa,mansion,bosque,woodland,explorer,map
+ITEM|libro y pluma|libro,pluma,writable,book
+ITEM|libro escrito|libro,escrito,written,book
+ITEM|bolsa amarilla|bolsa,amarilla,yellow,bundle
+ITEM|almohadon amarillo|almohadon,amarillo,yellow,cushion
+ITEM|tinte amarillo|tinte,amarillo,yellow,dye
+ITEM|arnes amarillo|arnes,amarillo,yellow,harness
+ITEM|generar zoglin|generar,zoglin,spawn,egg
+ITEM|generar caballo zombi|generar,caballo,zombi,zombie,horse,spawn
+ITEM|generar nautilo zombi|generar,nautilo,zombi,zombie,nautilus,spawn
+ITEM|generar zombi|generar,zombi,zombie,spawn,egg
+ITEM|generar aldeano zombi|generar,aldeano,zombi,zombie,villager,spawn
+ITEM|generar piglin zombificado|generar,piglin,zombificado,zombified,spawn,egg

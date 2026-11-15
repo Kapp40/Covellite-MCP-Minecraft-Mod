@@ -86,6 +86,10 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         // new words can be taught without recompiling the mod.
         System.setProperty("covemcp.lexiconExtra",
                 dataDir.resolve("lexicon-extra.txt").toString());
+        // Words learned during conversation are appended here and reloaded on
+        // the next boot, so teaching Cove survives a restart.
+        System.setProperty("covemcp.lexiconLearned",
+                dataDir.resolve("lexicon-learned.txt").toString());
         this.configDir = configDir;
     }
 

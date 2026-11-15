@@ -102,7 +102,7 @@ Las expresiones de varias palabras viven en la categoría `PHRASE` y llevan tono
 `no cazo una` (duda), `todo bien` (saludo), `la puta madre` (insulto). El parser
 las busca como frase completa antes de clasificar la oración.
 
-Tamaño actual: **~10 KB**, 250 líneas, ~40 frases y más de 2500 formas verbales
+Tamaño actual: **~29 KB**, 380 líneas, ~40 frases y más de 2500 formas verbales
 indexadas (el número exacto lo imprime la autoprueba).
 
 ## 4. Comprensión
@@ -241,7 +241,7 @@ reflejos. El cerebro externo por MCP sigue disponible, pero es opcional.
 
 | Elemento | Tamaño |
 | --- | --- |
-| Léxico (texto) | ~10 KB |
+| Léxico (texto) | ~29 KB curado + ~160 KB de Minecraft |
 | Clases del cerebro (7 clases) | ~70 KB de bytecode |
 | JAR completo del mod | ~512 KB |
 
@@ -311,11 +311,11 @@ Errores encontrados al revisar el motor y cómo quedaron:
 - No recuerda hechos nuevos por sí sola salvo los que el runtime guarda (memoria,
   estado social, identidad).
 - Nada de esto está verificado todavía dentro de una partida: está compilado y
-  cubierto por 189 checks unitarios, no por juego real.
+  cubierto por 207 checks unitarios, no por juego real.
 
 ## 12. Cómo probar y extender
 
-- Pruebas: `./gradlew :covellite-agent:agentTest` (189 checks).
+- Pruebas: `./gradlew :covellite-agent:agentTest` (207 checks).
 - En juego: `/cove mind` muestra proveedor, autoridad, último motivo, pregunta
   pendiente, ánimo y rasgos.
 - Extender el vocabulario: editar `covemcp/lexicon-extra.txt` en la instancia (sin recompilar).
@@ -324,3 +324,65 @@ Errores encontrados al revisar el motor y cómo quedaron:
   toma sin cambios.
 - Extender la decisión: nuevas reglas en `OfflineBrain.decide`, siempre detrás de
   `SocialPolicy`.
+
+---
+
+## Actualización: aprendizaje en caliente, diccionario y minería real
+
+### Aprendizaje en caliente (`Learning`)
+
+Cove ya no depende de editar un archivo y reiniciar. Aprende durante la partida:
+
+- `"el wapiti es un animal"` → guarda `wapiti` como `MOB`.
+- `"una granja es un lugar"` → `PLACE`; `"el cuarzo rosa es un bloque"` → `ITEM`.
+- `"wapiti significa ciervo"` → lo registra como sinónimo de una palabra conocida.
+- `"¿qué es un snorlax?"` → si no la sabe, pregunta; con `"es un bicho"` la aprende.
+
+Se aplica al instante (`Lexicon.addLearned`) y se guarda en
+`covemcp/lexicon-learned.txt`, con el mismo formato que el léxico base, que se
+carga al arrancar. Nada se pierde al cerrar el juego.
+
+### Motor de lenguaje más grande
+
+- **Diccionario generado del propio Minecraft**: `cove/minecraft-terms.txt`
+  (2.961 entradas, ~160 KB) sale de los archivos de idioma del juego
+  (`tools/gen_minecraft_terms.py`). Cada item, bloque, mob, bioma, efecto y
+  encantamiento queda con su nombre en español y alias en inglés: `iron`,
+  `deepslate`, `pickaxe`, `warden` (si el idioma local lo tiene).
+- **Tolerancia a errores de tipeo**: distancia de edición (Damerau) con caché;
+  una edición para palabras de 5-7 letras, dos para las de 8 o más. Las palabras
+  cortas no se corrigen (`"cazo"` no se convierte en `"capo"`).
+- **Normalización de chat**: abreviaturas (`q`→`que`, `xq`→`porque`, `tmb`→
+  `tambien`, `pa`→`para`), leet (`h0la`→`hola`), letras estiradas
+  (`holaaa`→`hola`) y puntuación/acentos.
+- **Léxico curado ampliado**: 252 → 380 líneas, con 1.21 (pizarra, toba, cobre,
+  amatista, netherita, warden, allay, sniffer, breeze...), biomas y jerga nueva.
+- **Nuevas respuestas**: aprender, pedir definición, más variedad por acto.
+
+### Minería por rampa: los cinco ajustes
+
+1. **`tunnel` es opt-in** (default `false`). Solo se activa si el mensaje pide
+   cavar (`túnel`, `rampa`, `bajo tierra`, `galería`, `profundo`, `excavar`).
+   `"conseguime hierro"` ya no dispara una excavación de 400 bloques.
+2. **Nada se destruye en silencio**. `dumpSpoil` ya no borra ítems: tira la
+   basura al piso (recuperable) salvo `void_spoil=true`. Si no hay lugar, falla
+   con `inventory_full` en vez de seguir cavando.
+3. **Timeout proporcional al descenso**: `TunnelPlan.timeoutFor` suma ticks por
+   bloque de bajada (mínimo 9000, máximo 12000) y la tarea se autoextiende si la
+   galería arranca sin presupuesto.
+4. **Los peligros se perdonan con progreso**: el contador se resetea al completar
+   un paso; antes doce giros menores mataban una excavación productiva.
+5. **Antorchas y regreso**: coloca antorchas cada 6 bloques de galería si está
+   oscuro y tiene antorchas; al terminar, camina de vuelta al punto de partida
+   (`return_home=true` por defecto) con `GotoTask`.
+
+La política pura vive en `covellite-core/TunnelPlan` y se testea sin Minecraft.
+
+### Verificación
+
+- `agentTest`: **207/207** checks (antes 189), con cobertura de: diccionario
+  generado, typos, abreviaturas, leet, intención de túnel, tabla de
+  profundidades, presupuesto, política de basura y aprendizaje en caliente.
+- `:covellite-mod:build` correcto.
+- JAR: **591 KB** (antes 528 KB), principalmente por el diccionario de Minecraft.
+- Sigue sin validarse en partida.

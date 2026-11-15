@@ -33,6 +33,39 @@ public final class Spanish {
     private static final Map<String, String> FUTURE_STEM = new HashMap<>();
     private static final Map<String, String[]> IMPERFECT_IRREGULAR = new HashMap<>();
 
+    /**
+     * Chat abbreviations a player actually types. They are expanded before any
+     * lookup, so "q haces" reaches the same phrase as "que haces" and "xq"
+     * carries the meaning of "porque".
+     */
+    private static final Map<String, String> ABBREVIATIONS = Map.ofEntries(
+            Map.entry("q", "que"),
+            Map.entry("k", "que"),
+            Map.entry("xq", "porque"),
+            Map.entry("pq", "porque"),
+            Map.entry("xk", "porque"),
+            Map.entry("qe", "que"),
+            Map.entry("qn", "quien"),
+            Map.entry("dnd", "donde"),
+            Map.entry("adnd", "adonde"),
+            Map.entry("tmb", "tambien"),
+            Map.entry("tmbn", "tambien"),
+            Map.entry("xfa", "por favor"),
+            Map.entry("porfa", "por favor"),
+            Map.entry("pf", "por favor"),
+            Map.entry("nse", "no se"),
+            Map.entry("nose", "no se"),
+            Map.entry("pa", "para"),
+            Map.entry("pal", "para el"),
+            Map.entry("dsp", "despues"),
+            Map.entry("dept", "despues"),
+            Map.entry("ahre", "ah re"),
+            Map.entry("salu2", "saludos"));
+
+    /** Letters typed as numbers ("h0la", "m1na"). Digits alone are counts. */
+    private static final Map<Character, Character> LEET = Map.of(
+            '0', 'o', '1', 'i', '3', 'e', '4', 'a', '5', 's', '7', 't');
+
     static {
         PRESENT_IRREGULAR.put("ir", new String[]{"voy", "vas", "va", "vamos", "van"});
         PRESENT_IRREGULAR.put("estar", new String[]{"estoy", "estas", "esta", "estamos", "estan"});
@@ -179,17 +212,82 @@ public final class Spanish {
     private Spanish() {
     }
 
-    /** Lowercase, accents and punctuation removed, whitespace collapsed. */
+    /**
+     * Lowercase, accents and punctuation removed, chat spellings repaired:
+     * abbreviations expanded ("q" -> "que", "xq" -> "porque"), leet digits
+     * turned into letters in mixed tokens, and stretched letters collapsed
+     * ("holaaa" -> "hola", "nooo" -> "no"). Without this, half of what players
+     * type in a hurry never matches the lexicon.
+     */
     public static String normalize(String text) {
         if (text == null) {
             return "";
         }
-        String decomposed = Normalizer.normalize(text, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}+", "");
-        return decomposed.toLowerCase(Locale.ROOT)
-                .replaceAll("[¿?¡!.,;:()\"']", " ")
+        String decomposed = stripNonAscii(Normalizer.normalize(text, Normalizer.Form.NFD));
+        String cleaned = decomposed.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9 ]", " ")
                 .trim()
-                .replaceAll("\\s+", " ");
+                .replaceAll(" +", " ");
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder(cleaned.length() + 8);
+        for (String token : cleaned.split(" ")) {
+            if (token.isEmpty()) {
+                continue;
+            }
+            String fixed = repair(token);
+            String expanded = ABBREVIATIONS.get(fixed);
+            if (out.length() > 0) {
+                out.append(' ');
+            }
+            out.append(expanded != null ? expanded : fixed);
+        }
+        return out.toString();
+    }
+
+    /** Drops the combining marks left by NFD, keeping every plain ASCII letter. */
+    private static String stripNonAscii(String text) {
+        StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c < 128) {
+                out.append(c);
+            }
+        }
+        return out.toString();
+    }
+
+    /** Leet digits and stretched letters, applied to one token. */
+    private static String repair(String token) {
+        StringBuilder builder = new StringBuilder(token.length());
+        boolean hasLetter = token.chars().anyMatch(Character::isLetter);
+        for (int i = 0; i < token.length(); i++) {
+            char c = token.charAt(i);
+            Character mapped = hasLetter ? LEET.get(c) : null;
+            builder.append(mapped == null ? c : mapped);
+        }
+        // "holaaa" -> "hola", "nooo" -> "no"; two equal letters ("perro",
+        // "calle") are legitimate and stay.
+        return collapse(builder.toString());
+    }
+
+    /** Shrinks a run of three or more equal letters to one. */
+    private static String collapse(String token) {
+        StringBuilder out = new StringBuilder(token.length());
+        for (int i = 0; i < token.length(); i++) {
+            char c = token.charAt(i);
+            int run = 1;
+            while (i + run < token.length() && token.charAt(i + run) == c) {
+                run++;
+            }
+            out.append(c);
+            if (run == 2) {
+                out.append(c);
+            }
+            i += run - 1;
+        }
+        return out.toString();
     }
 
     /** Accents removed but original casing kept, for printing clean text. */

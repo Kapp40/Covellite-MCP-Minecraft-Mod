@@ -215,6 +215,17 @@ public final class Realizer {
                 "no pude, algo falló",
                 "me trabé, probá de nuevo",
                 "salió mal, ni idea por qué"));
+        this.plans.put("learned", List.of(
+                "listo, me guardo {palabra}",
+                "anotado: {palabra}. Ya la tengo",
+                "buenísimo, ahora sé qué es {palabra}",
+                "dale, {palabra} aprendida",
+                "joya, no me lo olvido más"));
+        this.plans.put("ask_meaning", List.of(
+                "esa no la tengo. ¿Qué es {palabra}?",
+                "no me suena {palabra}. ¿Qué es?",
+                "no la conozco. ¿{palabra} es un item, un lugar o un bicho?",
+                "ni idea de qué es {palabra}. Explícame y la aprendo"));
     }
 
     public void remember(String line) {
@@ -331,6 +342,16 @@ public final class Realizer {
     /** Reports a tool that failed instead of pretending it worked. */
     public String failed() {
         return store(fill(pick("failed"), Map.of()));
+    }
+
+    /** Confirms a definition it just learned. */
+    public String learnedLearning(String word) {
+        return store(fill(pick("learned"), Map.of("palabra", word)));
+    }
+
+    /** Asks what an unknown word means instead of pretending to understand it. */
+    public String askMeaning(String word) {
+        return store(fill(pick("ask_meaning"), Map.of("palabra", word)));
     }
 
     // ------------------------------------------------------------------

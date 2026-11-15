@@ -198,7 +198,7 @@ Comandos útiles: `/cove mind`, `/cove why`, `/cove ai status`, `/cove ai ask`,
 
 ## 9. Verificación actual
 
-- `agentTest`: **189/189** checks (léxico, conjugación, actos, jerga, bromas,
+- `agentTest`: **207/207** checks (léxico, conjugación, actos, jerga, bromas,
   planificación de tools, decisión, proveedor embebido).
 - `:covellite-mod:build` correcto (con `-Xmx4g`; el compilador de NeoForge necesita
   heap en esta máquina).

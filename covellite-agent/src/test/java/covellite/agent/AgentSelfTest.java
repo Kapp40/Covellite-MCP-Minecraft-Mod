@@ -26,6 +26,7 @@ import covellite.agent.lang.Realizer;
 import covellite.agent.lang.Spanish;
 import covellite.agent.lang.WorldFacts;
 import covellite.agent.reflex.ReflexEngine;
+import covellite.core.TunnelPlan;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
 
@@ -933,6 +934,62 @@ public final class AgentSelfTest {
         String synonymAck = provider.complete(synonymTool).text().toLowerCase();
         check("provider: confirmation names the understood action",
                 synonymAck.contains("cort") || synonymAck.contains("tal"));
+
+        // ---- bigger language engine ----------------------------------
+        check("lexicon: loads the generated Minecraft dictionary",
+                lexicon.size() >= 2500);
+        check("lexicon: understands an English block name",
+                lexicon.lookup("deepslate") != null);
+        check("lexicon: understands an English tool name",
+                lexicon.lookup("pickaxe") != null);
+        check("lexicon: fixes a typo one edit away",
+                lexicon.lookup("diamnte") != null
+                        && "diamante".equals(lexicon.lookup("diamnte").canonical()));
+        check("morphology: expands chat abbreviations",
+                "que haces".equals(Spanish.normalize("q haces")));
+        check("morphology: repairs leet and stretched letters",
+                "hola".equals(Spanish.normalize("h0laaa")));
+        check("morphology: keeps numbers that are counts",
+                "mina 64".equals(Spanish.normalize("mina 64")));
+        check("parser: abbreviations still reach a phrase",
+                parser.parse("che q tal", world, null).act() == Parser.Act.SALUDO);
+
+        // ---- ramp/gallery policy -------------------------------------
+        check("tunnel: ore depth table",
+                Integer.valueOf(16).equals(TunnelPlan.targetY("hierro"))
+                        && Integer.valueOf(-58).equals(TunnelPlan.targetY("diamante"))
+                        && TunnelPlan.targetY("piedra") == null);
+        check("tunnel: budget follows the descent",
+                TunnelPlan.timeoutFor(64, -58, 6000) >= 9000
+                        && TunnelPlan.timeoutFor(64, -58, 6000) <= 12000);
+        check("tunnel: spoil is not destroyed unless asked",
+                !TunnelPlan.shouldVoidSpoil(false, 1) && TunnelPlan.shouldVoidSpoil(true, 1));
+        List<AgentProvider.ToolCall> noTunnel = brain.toolsFor("conseguime hierro", world,
+                "Lorex", List.of("gather"));
+        check("brain: ore gathering does not tunnel by default",
+                noTunnel.size() == 1
+                        && Boolean.FALSE.equals(noTunnel.get(0).arguments().get("tunnel")));
+        List<AgentProvider.ToolCall> tunnel = brain.toolsFor("cavá un túnel y buscá hierro",
+                world, "Lorex", List.of("mine", "gather"));
+        check("brain: asking to dig down enables tunnelling",
+                tunnel.size() == 1
+                        && Boolean.TRUE.equals(tunnel.get(0).arguments().get("tunnel")));
+
+        // ---- learning mid-game ---------------------------------------
+        check("learning: takes a definition", brain.learn("el wapiti es un animal").isPresent());
+        // The extra-file test above reloaded the lexicon, so always read the
+        // current singleton instead of a reference captured earlier.
+        check("learning: the new word is understood right away",
+                Lexicon.shared().lookup("wapiti") != null
+                        && Lexicon.shared().lookup("wapiti").category() == Lexicon.Category.MOB);
+        check("learning: asks back about an unknown word",
+                brain.learn("¿qué es un snorlax?").isPresent()
+                        && brain.learning().hasPending());
+        check("learning: learns from the answer",
+                brain.learn("es un bicho").isPresent()
+                        && Lexicon.shared().lookup("snorlax") != null);
+        check("learning: a learned word reaches the parser",
+                new Parser().parse("atacá al wapiti", world, null).mobs().contains("wapiti"));
     }
 
     private static void check(String label, boolean condition) {

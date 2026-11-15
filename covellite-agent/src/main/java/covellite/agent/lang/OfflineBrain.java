@@ -23,6 +23,25 @@ public final class OfflineBrain {
 
     private final Parser parser = new Parser();
     private final Realizer realizer = new Realizer();
+    private final Learning learning = new Learning();
+
+    /** Vocabulary learned while playing, for the panel and the tests. */
+    public Learning learning() {
+        return this.learning;
+    }
+
+    /**
+     * Takes a definition or a question about a word. Returns the line to say,
+     * or empty when the message was not about vocabulary at all.
+     */
+    public java.util.Optional<String> learn(String text) {
+        Learning.Result result = this.learning.consume(text);
+        return switch (result.kind()) {
+            case LEARNED -> java.util.Optional.of(this.realizer.learnedLearning(result.word()));
+            case ASKED -> java.util.Optional.of(this.realizer.askMeaning(result.word()));
+            default -> java.util.Optional.empty();
+        };
+    }
 
     public Realizer realizer() {
         return this.realizer;
@@ -142,7 +161,11 @@ public final class OfflineBrain {
                 args.put("count", reading.number() == null ? 32
                         : Math.max(1, Math.min(128, reading.number())));
                 args.put("radius", 32);
-                args.put("timeout_ticks", 6000);
+                // Tunnelling is opt-in: only when the player actually asks to
+                // dig down, never as a silent side effect of "conseguime hierro".
+                boolean tunnel = Lexicon.shared().tunnelIntent(Spanish.normalize(reading.text()));
+                args.put("tunnel", tunnel);
+                args.put("timeout_ticks", tunnel ? 12000 : 6000);
             }
             case "chop_tree" -> {
                 args.put("max_logs", reading.number() == null ? 64
@@ -174,38 +197,58 @@ public final class OfflineBrain {
         return args;
     }
 
+    /**
+     * Maps an understood material to the name the mod's tool expects. Names are
+     * matched by containment because the learned dictionary carries longer forms
+     * ("mena de hierro", "mineral de diamante", "bloque de piedra").
+     */
     private static String material(Parser.Reading reading, String tool) {
+        String fallback = "gather".equals(tool) ? "wood" : "stone";
         if (reading.items().isEmpty()) {
-            return "gather".equals(tool) ? "wood" : "stone";
+            return fallback;
         }
-        if (reading.items().contains("hierro")) {
+        String all = String.join(" ", reading.items());
+        if (all.contains("hierro") || all.contains("iron")) {
             return "iron";
         }
-        if (reading.items().contains("diamante")) {
+        if (all.contains("diamante") || all.contains("diamond")) {
             return "diamond";
         }
-        if (reading.items().contains("carbon")) {
+        if (all.contains("carbon") || all.contains("coal")) {
             return "coal";
         }
-        if (reading.items().contains("oro")) {
+        if (all.contains("oro") || all.contains("gold")) {
             return "gold";
         }
-        if (reading.items().contains("madera") || reading.items().contains("arbol")) {
-            return "wood";
-        }
-        if (reading.items().contains("tierra")) {
-            return "dirt";
-        }
-        if (reading.items().contains("arena")) {
-            return "sand";
-        }
-        if (reading.items().contains("esmeralda")) {
-            return "emerald";
-        }
-        if (reading.items().contains("redstone")) {
+        if (all.contains("redstone")) {
             return "redstone";
         }
-        return "gather".equals(tool) ? "wood" : "stone";
+        if (all.contains("lapis") || all.contains("lapiz")) {
+            return "lapis";
+        }
+        if (all.contains("cobre") || all.contains("copper")) {
+            return "copper";
+        }
+        if (all.contains("esmeralda") || all.contains("emerald")) {
+            return "emerald";
+        }
+        if (all.contains("madera") || all.contains("tronco") || all.contains("arbol")
+                || all.contains("wood") || all.contains("log")) {
+            return "wood";
+        }
+        if (all.contains("tierra") || all.contains("dirt")) {
+            return "dirt";
+        }
+        if (all.contains("arena") || all.contains("sand")) {
+            return "sand";
+        }
+        if (all.contains("grava") || all.contains("gravel")) {
+            return "gravel";
+        }
+        if (all.contains("piedra") || all.contains("stone")) {
+            return "stone";
+        }
+        return fallback;
     }
 
     private static String craftable(Parser.Reading reading) {
