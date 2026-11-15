@@ -903,7 +903,7 @@ El traspaso respeta este orden estricto:
 
 ### La mente propia de Cove (cerebro `local`)
 
-Cove no es "un cliente MCP conectado": es un agente que vive dentro del mod. Cuando el cerebro activo es `local`, el JAR contiene la mente completa: léxico, comprensión, generación, estado conversacional, identidad, memoria y ciclo autónomo. **No hay proveedor externo, ni servidor de modelos, ni API key, ni red**: el cerebro por defecto es `cove`, Java puro embebido en el JAR. Los proveedores HTTP siguen existiendo como opción, pero no son necesarios para que Cove hable ni decida. El detalle técnico está en [`docs/COVE-MENTE.md`](docs/COVE-MENTE.md).
+Cove no es "un cliente MCP conectado": es un agente que vive dentro del mod. Cuando el cerebro activo es `local`, el JAR contiene la mente completa: léxico, comprensión, generación, estado conversacional, identidad, memoria y ciclo autónomo. **No hay proveedor externo, ni servidor de modelos, ni API key, ni red**: el cerebro por defecto es `cove`, Java puro embebido en el JAR. Los proveedores HTTP siguen existiendo como opción, pero no son necesarios para que Cove hable ni decida. El detalle técnico está en [`docs/COVE-MENTE.md`](docs/COVE-MENTE.md) y el panorama completo de arquitectura y pendientes en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
 
 Componentes nuevos (`covellite-agent/src/main/java/covellite/agent/social/`):
 
