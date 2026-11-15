@@ -82,6 +82,10 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
     public AgentBridge(CovelliteConfig config, Path dataDir, Path configDir) {
         this.config = config;
         this.dataDir = dataDir;
+        // The embedded brain loads the player-editable vocabulary from here, so
+        // new words can be taught without recompiling the mod.
+        System.setProperty("covemcp.lexiconExtra",
+                dataDir.resolve("lexicon-extra.txt").toString());
         this.configDir = configDir;
     }
 

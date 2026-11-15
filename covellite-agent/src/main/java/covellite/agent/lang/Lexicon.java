@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,16 +17,28 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Cove's knowledge base: what words mean and which mod action a verb maps to.
+ * Cove's knowledge base: what words mean, which mod action a verb maps to, and
+ * which casual phrases carry a tone.
  *
- * <p>The data lives in {@code /cove/lexicon.txt} as plain text, so it can be
- * reviewed, translated or extended without touching Java. Loading is lazy and
- * happens once; the whole thing is a few kilobytes of RAM.</p>
+ * <p>Data lives in plain text so it can be reviewed, extended and even trained
+ * without touching Java:</p>
+ *
+ * <ul>
+ *   <li>{@code /cove/lexicon.txt} — the curated base shipped in the jar.</li>
+ *   <li>{@code /cove/lexicon-extra.txt} — optional additions packaged with it.</li>
+ *   <li>{@code <gamedir>/covemcp/lexicon-extra.txt} — the file a player can edit
+ *       at runtime; the mod points to it through the
+ *       {@code covemcp.lexiconExtra} system property. Same format.</li>
+ * </ul>
+ *
+ * <p>Every verb is indexed in all its tenses and in the conjugations of its
+ * synonym infinitives, plus multiword phrases, so casual speech resolves without
+ * a language model. Loading happens once and costs a few kilobytes.</p>
  */
 public final class Lexicon {
 
     public enum Category {
-        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD
+        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE
     }
 
     /** One word with its synonyms and, for verbs, the action it refers to. */
@@ -38,7 +53,10 @@ public final class Lexicon {
     private static volatile Lexicon shared;
 
     private final Map<String, Entry> byWord = new LinkedHashMap<>();
-    private final Set<String> unknownProperNouns = new LinkedHashSet<>();
+    private final Map<String, Entry> verbForms = new LinkedHashMap<>();
+    private final Map<String, Entry> phrases = new LinkedHashMap<>();
+    private final Set<String> imperativeForms = new LinkedHashSet<>();
+    private List<Map.Entry<String, Entry>> phrasesByLength = List.of();
 
     private Lexicon() {
     }
@@ -57,12 +75,37 @@ public final class Lexicon {
         return current;
     }
 
+    /** Forgets the cached lexicon so an edited extra file can be picked up. */
+    public static void reload() {
+        synchronized (Lexicon.class) {
+            shared = null;
+        }
+    }
+
     private static Lexicon load() {
         Lexicon lexicon = new Lexicon();
-        InputStream stream = Lexicon.class.getResourceAsStream("/cove/lexicon.txt");
+        lexicon.loadStream(Lexicon.class.getResourceAsStream("/cove/lexicon.txt"));
+        lexicon.loadStream(Lexicon.class.getResourceAsStream("/cove/lexicon-extra.txt"));
+        String extraPath = System.getProperty("covemcp.lexiconExtra");
+        if (extraPath != null && !extraPath.isBlank()) {
+            Path path = Path.of(extraPath);
+            if (Files.isReadable(path)) {
+                try (InputStream stream = Files.newInputStream(path)) {
+                    lexicon.loadStream(stream);
+                } catch (IOException e) {
+                    System.err.println("[cove] no se pudo leer " + path + ": " + e.getMessage());
+                }
+            }
+        }
+        lexicon.phrasesByLength = new ArrayList<>(lexicon.phrases.entrySet());
+        lexicon.phrasesByLength.sort(Comparator.comparingInt(
+                (Map.Entry<String, Entry> entry) -> entry.getKey().length()).reversed());
+        return lexicon;
+    }
+
+    private void loadStream(InputStream stream) {
         if (stream == null) {
-            System.err.println("[cove] lexicon resource missing");
-            return lexicon;
+            return;
         }
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(stream, StandardCharsets.UTF_8))) {
@@ -76,7 +119,7 @@ public final class Lexicon {
                 }
                 String[] parts = trimmed.split("\\|", -1);
                 if (parts.length < 3) {
-                    System.err.println("[cove] lexicon line " + lineNumber + " ignored");
+                    System.err.println("[cove] linea de lexico ignorada: " + lineNumber);
                     continue;
                 }
                 Category category;
@@ -99,21 +142,76 @@ public final class Lexicon {
                 String action = parts.length > 3 ? parts[3].trim() : "";
                 String hint = parts.length > 4 ? parts[4].trim() : "";
                 Entry entry = new Entry(canonical, category, List.copyOf(synonyms), action, hint);
-                lexicon.index(Spanish.normalize(canonical), entry);
+                if (category == Category.PHRASE) {
+                    this.phrases.putIfAbsent(Spanish.normalize(canonical), entry);
+                    for (String synonym : synonyms) {
+                        this.phrases.putIfAbsent(Spanish.normalize(synonym), entry);
+                    }
+                    continue;
+                }
+                index(Spanish.normalize(canonical), entry);
                 for (String synonym : synonyms) {
-                    lexicon.index(Spanish.normalize(synonym), entry);
+                    index(Spanish.normalize(synonym), entry);
+                }
+                if (category == Category.VERB) {
+                    indexVerbForms(entry);
                 }
             }
         } catch (IOException e) {
-            System.err.println("[cove] cannot read lexicon: " + e.getMessage());
+            System.err.println("[cove] no se pudo leer el lexico: " + e.getMessage());
         }
-        return lexicon;
     }
 
     private void index(String key, Entry entry) {
         if (!key.isEmpty() && !this.byWord.containsKey(key)) {
             this.byWord.put(key, entry);
         }
+    }
+
+    /**
+     * Indexes every conjugated form of a verb, including the infinitives hidden
+     * in its synonyms: "talar" is a synonym of "cortar", so "tala", "talás" and
+     * "talaríamos" must resolve to the same action. Casual speech also needs the
+     * tenses, not only the present.
+     */
+    private void indexVerbForms(Entry entry) {
+        List<String> infinitives = new ArrayList<>();
+        infinitives.add(Spanish.normalize(entry.canonical()));
+        for (String synonym : entry.synonyms()) {
+            String clean = Spanish.normalize(synonym);
+            if (clean.matches("[a-z]{2,}(ar|er|ir)")) {
+                infinitives.add(clean);
+            }
+        }
+        for (String infinitive : infinitives) {
+            putForm(infinitive, entry);
+            for (Spanish.Person person : Spanish.Person.values()) {
+                for (Spanish.Tense tense : List.of(Spanish.Tense.PRESENTE,
+                        Spanish.Tense.PRETERITO, Spanish.Tense.IMPERFECTO,
+                        Spanish.Tense.FUTURO, Spanish.Tense.CONDICIONAL,
+                        Spanish.Tense.SUBJUNTIVO)) {
+                    putForm(Spanish.conjugate(infinitive, tense, person), entry);
+                }
+            }
+            String tu = Spanish.conjugate(infinitive, Spanish.Tense.IMPERATIVO,
+                    Spanish.Person.TU);
+            String nosotros = Spanish.conjugate(infinitive, Spanish.Tense.IMPERATIVO,
+                    Spanish.Person.NOSOTROS);
+            putForm(tu, entry);
+            putForm(nosotros, entry);
+            this.imperativeForms.add(Spanish.normalize(tu));
+            this.imperativeForms.add(Spanish.normalize(nosotros));
+            putForm(Spanish.conjugate(infinitive, Spanish.Tense.GERUNDIO, Spanish.Person.EL), entry);
+            putForm(Spanish.conjugate(infinitive, Spanish.Tense.PARTICIPIO, Spanish.Person.EL), entry);
+        }
+    }
+
+    private void putForm(String form, Entry entry) {
+        String clean = Spanish.normalize(form);
+        if (clean.isBlank() || clean.length() < 3) {
+            return;
+        }
+        this.verbForms.putIfAbsent(clean, entry);
     }
 
     /** Exact or singular/plural tolerant lookup. */
@@ -131,7 +229,6 @@ public final class Lexicon {
         if (entry != null) {
             return entry;
         }
-        // Verb inflections (corta, cortando, corto) resolve to the infinitive.
         for (Map.Entry<String, Entry> candidate : this.byWord.entrySet()) {
             if (!candidate.getValue().verb()) {
                 continue;
@@ -147,49 +244,53 @@ public final class Lexicon {
         return null;
     }
 
+    /** True when the token is an imperative form of any known verb. */
+    public boolean isImperative(String token) {
+        return this.imperativeForms.contains(stripReflexive(Spanish.normalize(token)));
+    }
+
     /**
      * Finds the verb a token actually inflects, including voseo imperatives
-     * ("anda", "mina", "segui") and reflexive suffixes ("seguime").
-     * Checked before nouns so "mina" is a verb when the sentence is an order.
+     * ("andá", "miná", "seguí"), reflexive suffixes ("seguime") and any tense.
      */
     public Entry verbIn(List<String> tokens) {
-        for (Entry entry : all(Category.VERB)) {
-            String infinitive = entry.canonical();
-            String imperative = Spanish.conjugate(infinitive, Spanish.Tense.IMPERATIVO,
-                    Spanish.Person.TU);
-            String nosotros = Spanish.conjugate(infinitive, Spanish.Tense.IMPERATIVO,
-                    Spanish.Person.NOSOTROS);
-            String tu = Spanish.conjugate(infinitive, Spanish.Tense.PRESENTE, Spanish.Person.TU);
-            String el = Spanish.conjugate(infinitive, Spanish.Tense.PRESENTE, Spanish.Person.EL);
-            String gerund = Spanish.conjugate(infinitive, Spanish.Tense.GERUNDIO,
-                    Spanish.Person.EL);
-            for (String token : tokens) {
-                String bare = stripReflexive(token);
-                if (bare.equals(imperative) || bare.equals(nosotros) || bare.equals(infinitive)
-                        || bare.equals(gerund) || bare.equals(tu) || bare.equals(el)) {
-                    return entry;
+        for (String token : tokens) {
+            Entry entry = this.verbForms.get(stripReflexive(token));
+            if (entry != null) {
+                return entry;
+            }
+        }
+        for (String token : tokens) {
+            String bare = stripReflexive(token);
+            if (bare.length() < 4) {
+                continue;
+            }
+            for (Map.Entry<String, Entry> form : this.verbForms.entrySet()) {
+                if (bare.startsWith(form.getKey())
+                        && bare.length() - form.getKey().length() <= 3) {
+                    return form.getValue();
                 }
             }
         }
         return null;
     }
 
-    private static String stripReflexive(String token) {
-        for (String suffix : List.of("me", "te", "se", "lo", "la", "le", "nos")) {
-            if (token.length() > suffix.length() + 2 && token.endsWith(suffix)) {
-                return token.substring(0, token.length() - suffix.length());
+    /** Longest multiword expression contained in the normalized sentence. */
+    public Entry phraseIn(String normalizedText) {
+        if (normalizedText == null || normalizedText.isBlank()) {
+            return null;
+        }
+        String padded = " " + normalizedText + " ";
+        for (Map.Entry<String, Entry> phrase : this.phrasesByLength) {
+            if (padded.contains(" " + phrase.getKey() + " ")) {
+                return phrase.getValue();
             }
         }
-        return token;
-    }
-
-    public Entry verb(String infinitiveOrInflection) {
-        Entry entry = lookup(infinitiveOrInflection);
-        return entry != null && entry.verb() ? entry : null;
+        return null;
     }
 
     public boolean known(String token) {
-        return lookup(token) != null;
+        return lookup(token) != null || verbIn(List.of(Spanish.normalize(token))) != null;
     }
 
     public List<Entry> all(Category category) {
@@ -203,16 +304,25 @@ public final class Lexicon {
         return result;
     }
 
+    /** Indexed words, verb forms and phrases. Useful as a sanity number. */
     public int size() {
-        return this.byWord.size();
+        return this.byWord.size() + this.verbForms.size() + this.phrases.size();
     }
 
-    /** Words that look like a proper noun Cove has never heard of. */
-    public void noteUnknown(String word) {
-        this.unknownProperNouns.add(Spanish.normalize(word));
+    public int verbFormCount() {
+        return this.verbForms.size();
     }
 
-    public Set<String> unknownWords() {
-        return Set.copyOf(this.unknownProperNouns);
+    public int phraseCount() {
+        return this.phrases.size();
+    }
+
+    private static String stripReflexive(String token) {
+        for (String suffix : List.of("me", "te", "se", "lo", "la", "le", "nos")) {
+            if (token.length() > suffix.length() + 2 && token.endsWith(suffix)) {
+                return token.substring(0, token.length() - suffix.length());
+            }
+        }
+        return token;
     }
 }

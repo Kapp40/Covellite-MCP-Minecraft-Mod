@@ -636,6 +636,8 @@ public final class AgentSelfTest {
     private static void languageTest(Path dir) {
         Lexicon lexicon = Lexicon.shared();
         check("lexicon: loads the text knowledge base", lexicon.size() >= 80);
+        check("lexicon: indexes every tense of every verb", lexicon.verbFormCount() >= 1500);
+        check("lexicon: carries Argentine phrases", lexicon.phraseCount() >= 40);
         check("lexicon: resolves a plural synonym",
                 lexicon.lookup("troncos") != null
                         && "madera".equals(lexicon.lookup("troncos").canonical()));
@@ -766,6 +768,45 @@ public final class AgentSelfTest {
         check("parser: 'no se' answers without being a no",
                 unsure.act() == Parser.Act.RESPUESTA_DATO && unsure.answersPending());
 
+        Parser.Reading synonymOrder = parser.parse("Tala estos arboles", world, null);
+        check("parser: an order phrased with a verb synonym is understood",
+                synonymOrder.order() && "chop_tree".equals(synonymOrder.action())
+                        && synonymOrder.items().contains("arbol"));
+
+        Parser.Reading otherVerb = parser.parse("Rompe el arbol", world, null);
+        check("parser: 'rompe' resolves to the tree action",
+                otherVerb.order() && "chop_tree".equals(otherVerb.action()));
+
+        Parser.Reading aboutTree = parser.parse("arbol?", world, null);
+        check("parser: a bare object question goes to Cove",
+                aboutTree.act() == Parser.Act.PREGUNTA_A_COVE);
+        check("realizer: an object question never prints a placeholder",
+                !realizer.respond(aboutTree, world, null).toLowerCase().contains("en lugar"));
+
+        Parser.Reading gibberish = parser.parse("asdf qwer zxcv", world, null);
+        check("parser: unrecognised text is not mistaken for chatter",
+                gibberish.act() == Parser.Act.DUDOSA);
+
+        Parser.Reading conditional = parser.parse("talaríamos ese árbol", world, null);
+        check("parser: a conditional verb is still understood",
+                "chop_tree".equals(conditional.action()) && !conditional.order());
+        Parser.Reading pastTense = parser.parse("rompieron el árbol", world, null);
+        check("parser: a past tense verb resolves to its action",
+                "chop_tree".equals(pastTense.action()));
+
+        check("parser: 'de una' is a yes",
+                parser.parse("de una", world, pending).act() == Parser.Act.RESPUESTA_SI);
+        check("parser: 'ni en pedo' is a no",
+                parser.parse("ni en pedo", world, pending).act() == Parser.Act.RESPUESTA_NO);
+        check("parser: 'no cazo una' answers without data",
+                parser.parse("no cazo una", world, pending).act() == Parser.Act.RESPUESTA_DATO);
+        check("parser: 'me copa' is a preference",
+                parser.parse("me copa el bosque", world, null).act() == Parser.Act.PREFERENCIA);
+        check("parser: 'sos un capo' is praise",
+                parser.parse("sos un capo", world, null).act() == Parser.Act.ELOGIO);
+        check("parser: 'todo bien' is a greeting",
+                parser.parse("todo bien", world, null).act() == Parser.Act.SALUDO);
+
         check("world: reads the snapshot after its heading, not the first braces",
                 Math.round(promptFacts.health()) == 7 && "desert".equals(promptFacts.biome()));
 
@@ -838,9 +879,38 @@ public final class AgentSelfTest {
                                 new AgentProvider.ToolCall("c1", "chop_tree", Map.of()))),
                         AgentProvider.Message.tool("c1", "chop_tree", "{\"error\":\"sin arboles\"}")),
                 List.of(), 300, 0.4D);
+        java.nio.file.Path extra = dir.resolve("lexicon-extra.txt");
+        boolean wrote = true;
+        try {
+            java.nio.file.Files.createDirectories(dir);
+            java.nio.file.Files.writeString(extra,
+                    "ITEM|testpalabra|testpalabras\nPHRASE|greet|hola que tal che\n",
+                    java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException e) {
+            wrote = false;
+        }
+        System.setProperty("covemcp.lexiconExtra", extra.toString());
+        Lexicon.reload();
+        check("lexicon: learns words from the editable extra file",
+                wrote && Lexicon.shared().known("testpalabra"));
+        System.clearProperty("covemcp.lexiconExtra");
+        Lexicon.reload();
+        check("lexicon: the extra file is optional", !Lexicon.shared().known("testpalabra"));
+
         String failureLine = provider.complete(failedTool).text();
         check("provider: reports a failed tool instead of faking success",
                 !failureLine.isBlank() && !failureLine.toLowerCase().contains("ya voy"));
+
+        AgentProvider.Request synonymTool = new AgentProvider.Request("cove", "",
+                List.of(
+                        AgentProvider.Message.user("[Jugador] Lorex: Tala estos arboles"),
+                        AgentProvider.Message.assistant("", List.of(
+                                new AgentProvider.ToolCall("c1", "chop_tree", Map.of()))),
+                        AgentProvider.Message.tool("c1", "chop_tree", "{\"ok\":true}")),
+                List.of(new AgentProvider.ToolSpec("chop_tree", "tala", Map.of())), 300, 0.4D);
+        String synonymAck = provider.complete(synonymTool).text().toLowerCase();
+        check("provider: confirmation names the understood action",
+                synonymAck.contains("cort") || synonymAck.contains("tal"));
     }
 
     private static void check(String label, boolean condition) {

@@ -1,58 +1,100 @@
-# Base de conocimiento de Cove. Texto plano, editable, sin dependencias.
+# Base de conocimiento de Cove. Texto plano, editable y sin dependencias.
 # Formato: CATEGORIA|canonico|sinonimos separados por coma|accion (solo VERB)|pista (solo VERB)
-# CATEGORIA: ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD
-# Un archivo mas de ~200 lineas ya cubre el vocabulario util de una partida.
+# CATEGORIA: ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD, PHRASE
+# Los VERB apuntan a una tool que ya existe en el mod. Las PHRASE son expresiones
+# de varias palabras (jerga); su canonico indica el tono: greet, insulto, elogio,
+# preferencia, plan, yes, no, duda, jaja.
+#
+# Orden importante: la primera coincidencia gana. Lo especifico va antes que lo
+# generico, y los sinonimos de una palabra no deben repetirse en otra.
 
-# --- Materiales e items -------------------------------------------------
-ITEM|madera|tronco,troncos,lena,tabla,tablas,madero
-ITEM|piedra|roca,rocas,adoquin,adoquines,piedras
-ITEM|hierro|mineral de hierro,hierros
-ITEM|diamante|diamantes
-ITEM|carbon|carboncillo
-ITEM|oro|mineral de oro
-ITEM|comida|comer,alimento,viveres
-ITEM|pan|panes
+# ======================= MATERIALES E ITEMS =============================
+ITEM|madera|tronco,troncos,lena,tabla,tablas,madero,tronquito
+ITEM|piedra|roca,rocas,adoquin,adoquines,piedras,guijarro
+ITEM|hierro|mineral de hierro,hierros,lingote de hierro
+ITEM|diamante|diamantes,piedrita brillante
+ITEM|carbon|carboncillo,carbonilla
+ITEM|oro|mineral de oro,lingote de oro
+ITEM|esmeralda|esmeraldas
+ITEM|redstone|red stone,polvo rojo
+ITEM|cuarzo|cuarzos
+ITEM|obsidiana|obsidianas
+ITEM|comida|alimento,viveres,vianda,morfeta
+ITEM|pan|panes,panificado
 ITEM|manzana|manzanas
-ITEM|carne|filete
+ITEM|carne|filete,bife,churrasco
+ITEM|pescado|pescados,pescadito
 ITEM|trigo|trigos
+ITEM|semilla|semillas,semillita
 ITEM|zanahoria|zanahorias
-ITEM|papa|papas
+ITEM|papa|papas,patata
+ITEM|remolacha|remolachas
 ITEM|huevo|huevos
-ITEM|antorcha|antorchas
-ITEM|pico|picota
-ITEM|espada|filos
-ITEM|hacha|hachas
-ITEM|pala|palas
+ITEM|leche|balde de leche
+ITEM|sopa|sopas,guiso
+ITEM|pastel|torta,pastelito
+ITEM|antorcha|antorchas,tea
+ITEM|pico|picota,pico de piedra
+ITEM|espada|filos,mandoble
+ITEM|hacha|hachas,hachita
+ITEM|pala|palas,palita
 ITEM|arco|arcos
 ITEM|flecha|flechas
-ITEM|cofre|cofres,baul,baules
-ITEM|mesa|mesa de trabajo,mesita
-ITEM|vidrio|cristal
-ITEM|arena|sand
-ITEM|tierra|barro
-ITEM|cama|camas
-ITEM|pocion|pociones
-ITEM|lana|hilo
-ITEM|palo|palos
-ITEM|bloque|bloques
+ITEM|escudo|escudos
+ITEM|cofre|cofres,baul,baules,cajon
+ITEM|mesa|mesa de trabajo,mesita,bancode trabajo
+ITEM|horno|hornos,horno de fundicion
+ITEM|yunque|yunques
+ITEM|vidrio|cristal,cristales
+ITEM|arena|sand,arenilla
+ITEM|tierra|barro,tierra firme
+ITEM|grava|ripio,cascajo
+ITEM|arcilla|barro cocido,terracota
+ITEM|agua|balde de agua,aguita
+ITEM|lava|lava caliente
+ITEM|cama|camas,catrecito
+ITEM|pocion|pociones,potion
+ITEM|lana|hilo,lana de oveja
+ITEM|cuero|gamuza
+ITEM|cuerda|soga,cordel
+ITEM|libro|libros,librito
+ITEM|papel|papeles
+ITEM|mapa|mapas,cartografia
+ITEM|brujula|compass
+ITEM|bloque|bloques,bloquecito
+ITEM|arbol|arboles,arbolito
+ITEM|rama|ramas,ramita
+ITEM|hoja|hojas,hojitas
+ITEM|fuego|hoguera,fogata
+ITEM|camino|sendero,sendita
+ITEM|puerta|puertas,porton
+ITEM|perla|perlas,ender pearl
+ITEM|blaze|polvo de blaze,varita de blaze
 
-# --- Lugares ------------------------------------------------------------
-PLACE|base|casa,refugio,campamento,rancho,hogar
-PLACE|cueva|caverna,grieta,socavon,cuevas
+# ============================== LUGARES =================================
+PLACE|base|casa,refugio,campamento,rancho,hogar,guarida,nido
+PLACE|cueva|caverna,grieta,socavon,cuevas,covacha
 PLACE|montaña|montana,cerro,sierra,monte
-PLACE|aldea|pueblo,villa,caserio
-PLACE|rio|arroyo,riachuelo
-PLACE|lago|laguna
-PLACE|bosque|selva,arboleda,monte bajo
-PLACE|desierto|dunas
-PLACE|mina|cantera,excavacion
-PLACE|playa|costa
-PLACE|granja|cultivo,huerta
+PLACE|aldea|pueblo,villa,caserio,pueblito
+PLACE|rio|arroyo,riachuelo,arroyito
+PLACE|lago|laguna,lagunita
+PLACE|mar|oceano,playa grande
+PLACE|bosque|selva,arboleda,monte bajo,monte espeso
+PLACE|jungla|selva tropical,jungla cerrada
+PLACE|desierto|dunas,arena caliente
+PLACE|playa|costa,orilla
+PLACE|granja|cultivo,huerta,chacra
+PLACE|mina|cantera,excavacion,socavon profundo
 PLACE|torre|torreon
-PLACE|templo|ruinas
-PLACE|spawn|inicio,punto de inicio,aparicion
+PLACE|templo|ruinas,altar
+PLACE|nether|inframundo,el nether
+PLACE|end|el end,dimension del end
+PLACE|spawn|inicio,punto de inicio,aparicion,punto de aparicion
+PLACE|nieve|tundra,taiga,zona nevada
+PLACE|puente|pasarela
+PLACE|portal|portales
 
-# --- Direcciones --------------------------------------------------------
+# ============================ DIRECCIONES ===============================
 DIR|norte|
 DIR|sur|
 DIR|este|
@@ -62,39 +104,73 @@ DIR|abajo|bajo
 DIR|cerca|cercano
 DIR|lejos|lejano
 
-# --- Criaturas ----------------------------------------------------------
-MOB|zombi|zombie,zombis
-MOB|esqueleto|esqueletos,arquero
+# ============================= CRIATURAS ================================
+MOB|zombi|zombie,zombis,muerto vivo
+MOB|esqueleto|esqueletos,arquero,esqueleto con arco
 MOB|creeper|creepers
-MOB|araña|arana,aranas
+MOB|araña|arana,aranas,arania
 MOB|enderman|endermans
 MOB|vaca|vacas
-MOB|cerdo|cerdos,chancho
+MOB|cerdo|cerdos,chancho,chanchos
 MOB|oveja|ovejas
 MOB|pollo|pollos,gallina
-MOB|aldeano|aldeanos,villano
-MOB|lobo|perro,lobos
-MOB|gato|gatos
+MOB|conejo|conejos
+MOB|zorro|zorros
+MOB|aldeano|aldeanos,villano,villanos
+MOB|lobo|perro,lobos,perros
+MOB|gato|gatos,michi
 MOB|caballo|caballos
-MOB|monstruo|bicho,criatura,enemigo
+MOB|monstruo|bicho,criatura,enemigo,engendro
+MOB|bruja|brujas
+MOB|slime|slimes
+MOB|fantasma|ghast,espectro
+MOB|blaze|blazes
+MOB|ahogado|ahogados,drowned
+MOB|saqueador|pillager,saqueadores
+MOB|golem|golems,golem de hierro
+MOB|dragon|dragones,dragon del end
+MOB|wither|withers
+MOB|piglin|piglins
+MOB|axolote|axolotes
 
-# --- Estados ------------------------------------------------------------
-STATE|hambre|hambriento,comida baja,sin comida
-STATE|sueño|sueno,cansancio,somnolencia
-STATE|peligro|riesgo,amenaza
-STATE|noche|oscuridad
+# ====================== ESTADOS Y SENTIMIENTOS ==========================
+STATE|hambre|hambreado,sin comida,comida baja,estomago vacio
+STATE|sueño|sueno,somnolencia,somnoliento
+STATE|peligro|riesgo,amenaza,quilombo
+STATE|noche|oscuridad,de noche
 STATE|dia|dia claro,amanecer
-STATE|salud|vida,hp
-STATE|inventario|mochila,equipaje
+STATE|salud|vida,hp,vida util
+STATE|inventario|mochila,equipaje,bolsillo
 
-# --- Saludos y muletillas ----------------------------------------------
-GREET|hola|buenas,buen dia,epa,hey,que onda,que tal,hola hola
-GREET|chau|adios,nos vemos,hasta luego
-WORD|che|chabon,flaco,pibe
-WORD|gracias|te agradezco,genial
-WORD|si|sisi,dale,claro,obvio,ok,oka,perfecto,bueno,joya,sip
+FEELING|contento|feliz,alegre,contenta,de buen humor
+FEELING|cansado|agotado,fatigado,fundido,cansada,hecho mierda
+FEELING|aburrido|aburrida,embolado,embolada,al pedo
+FEELING|asustado|asustada,cagado,cagada,con miedo,acobardado
+FEELING|triste|bajon,depre,tristeza
+FEELING|harto|harta,podrido,podrida,hasta las manos
+FEELING|enojado|enojada,caliente,calentado,con bronca
+
+# ============================ ADJETIVOS =================================
+ADJ|bueno|buena,buenisimo,buenisima,groso,grosa
+ADJ|malo|mala,malisimo,malisima
+ADJ|rapido|rapida,ligero,ligera
+ADJ|lento|lenta,lenteja
+ADJ|grande|enorme,gigante
+ADJ|chico|chica,pequeno,pequena
+ADJ|peligroso|peligrosa,bravo,brava
+ADJ|tranquilo|tranquila,tranqui,calmo,calma
+ADJ|raro|rara,extrano,extrana
+ADJ|lindo|linda,hermoso,hermosa
+ADJ|feo|fea,horrible
+
+# ========================= SALUDOS Y MUESTRAS ===========================
+GREET|hola|buenas,buen dia,epa,hey,que onda,que tal,hola hola,buenas tardes,buenas noches
+GREET|chau|adios,nos vemos,hasta luego,chau chau
+WORD|che|chabon,flaco,pibe,loco,amigo,maestro,tano
+WORD|gracias|te agradezco,genial,mil gracias
+WORD|si|sisi,dale,claro,obvio,ok,oka,perfecto,bueno,joya,sip,de una
 WORD|no|nop,nope,nah,nel,para nada,ni ahi
-WORD|jaja|jeje,jajaja,jsjs,lol
+WORD|jaja|jeje,jajaja,jsjs,lol,je
 WORD|porque|por que,porqué
 WORD|donde|en donde,adonde,a donde
 WORD|cuando|a que hora
@@ -102,53 +178,75 @@ WORD|como|de que manera
 WORD|quien|quienes
 WORD|cual|cuales
 WORD|cuanto|cuanta,cuantos,cuantas
+WORD|preferencia|gusta,gustan,encanta,encantan,prefiero,prefiere,odio,odia,amo,copa
+WORD|elogio|genio,crack,capo,idolo,maquina,fiera,fiera
+WORD|insulto|boludo,pelotudo,tonto,idiota,inutil,forro,imbecil,gil,tarado,boluda
+WORD|plan|vamos,vayamos,deberiamos,tenemos,planeemos,podriamos
 
-# --- Conversacion: preferencias, tono y estados de animo ---------------
-WORD|preferencia|gusta,gustan,encanta,encantan,prefiero,prefiere,odio,odia,amo
-WORD|elogio|genio,crack,capo,idolo,maquina,groso
-WORD|insulto|boludo,pelotudo,tonto,idiota,inutil,forro,imbecil
-WORD|plan|vamos,vayamos,deberiamos,tenemos,planeemos
-FEELING|contento|feliz,alegre,contenta
-FEELING|cansado|agotado,fatigado,fundido,cansada
-FEELING|aburrido|aburrida,embolado
-FEELING|asustado|asustada,cagado
-FEELING|triste|bajon,depre
-FEELING|harto|harta,podrido
-
-# --- Cosas que no existen en este mundo: evidencia de broma ------------
+# ======================= COSAS QUE NO EXISTEN ===========================
 ABSURD|marte|
 ABSURD|luna|
 ABSURD|narnia|
 ABSURD|mordor|
 ABSURD|wifi|internet
+ABSURD|miami|nueva york
 
-# --- Verbos utiles (accion del mod que los implementa) ------------------
-VERB|cortar|talar,derribar,hachear|chop_tree|madera
-VERB|minar|picar,excavar,cavar|mine|piedra
-VERB|ir|andar,caminar,dirigirse,ir a|return_home|base
-VERB|venir|acercarse,acercate,veni|follow|
-VERB|seguir|acompanar,seguime,sígueme|follow|
-VERB|quedarse|quedate,esperar,esperame,quedate ahi|stay|
-VERB|parar|detenerse,parate,frenar|stop|
-VERB|cuidar|proteger,vigilar,custodiar|guard_position|
-VERB|comer|alimentarse,come,manducar|eat|comida
-VERB|dormir|descansar,dormi,acostarse|sleep|
-VERB|atacar|matar,pelear,golpear,ataca|attack|monstruo
-VERB|pescar|pesca,pescame|fish|
-VERB|plantar|sembrar,sembra|plant|trigo
-VERB|explorar|investigar,reconocer,explora|explore_scan|
-VERB|volver|regresar,volve,volvamos|return_home|base
-VERB|fabricar|craftear,craftea,hacer|craft_item|mesa
-VERB|traer|buscar,conseguir,juntar|gather|madera
-VERB|mirar|observar,fijate,mira|scan|
-VERB|ayudar|asistir,ayudame|follow|
+# ============================== VERBOS ==================================
+# accion = tool existente; pista = objeto tipico
+VERB|cortar|talar,derribar,hachear,hachazo|chop_tree|madera
+VERB|minar|picar,excavar,cavar,mineria|mine|piedra
+VERB|ir|andar,caminar,dirigirse,ir a,largarse|return_home|base
+VERB|venir|acercarse,acercate,veni,ven|follow|
+VERB|seguir|acompanar,seguime,sígueme,seguime el paso|follow|
+VERB|quedarse|quedate,esperar,esperame,quedate ahi,frenar|stay|
+VERB|parar|detenerse,parate,frenar,alto|stop|
+VERB|cuidar|proteger,vigilar,custodiar,cubrir|guard_position|
+VERB|comer|alimentarse,come,manducar,morfar,morfá|eat|comida
+VERB|dormir|descansar,dormi,acostarse,echarse un sueño|sleep|
+VERB|atacar|matar,pelear,golpear,ataca,pegarle,cagar a palos|attack|monstruo
+VERB|pescar|pesca,pescame,pesquemos|fish|
+VERB|plantar|sembrar,sembra,plantá|plant|trigo
+VERB|explorar|investigar,reconocer,explora,chusmear|explore_scan|
+VERB|volver|regresar,volve,volvamos,pegar la vuelta|return_home|base
+VERB|fabricar|craftear,craftea,hacer,armar|craft_item|mesa
+VERB|traer|buscar,conseguir,juntar,traeme|gather|madera
+VERB|mirar|observar,fijate,mira,chequear|scan|
+VERB|ayudar|asistir,ayudame,dar una mano|follow|
 VERB|saber|conocer,tenes idea|scan|
 VERB|estar|quedar,ubicarse|scan|
 VERB|ver|encontrar,divisar|scan|
-VERB|esperar|aguantar,espera,esperame|stay|
+VERB|romper|rompe,partir,destrozar,quebrar,rompé|chop_tree|arbol
+VERB|talar|tala,derriba,talá|chop_tree|arbol
+VERB|golpear|pega,golpea,pegarle|attack|monstruo
+VERB|correr|corre,correte,rajarse|follow|
+VERB|esperar|aguantar,espera,esperame,banco|stay|
 VERB|abrir|abri,abrime|container_list|cofre
-VERB|guardar|depositar,guarda|deposit_items|
-PLACE|nieve|tundra,taiga
-PLACE|jungla|selva tropical
-MOB|slime|slimes
-MOB|fantasma|ghast,espectro
+VERB|guardar|depositar,guarda,guardame|deposit_items|
+VERB|saltar|salta,saltá|move|
+VERB|subir|subi,trepar,trepa|move|
+VERB|bajar|baja,bajá|move|
+VERB|entrar|entra,metete|move|
+VERB|salir|sali,rajarse|move|
+VERB|agarrar|tomar,agarra,toma,levantar|gather|
+VERB|soltar|largar,suelta|stop|
+VERB|usar|utilizar,usa|use_item|
+VERB|equipar|equipate,equipa|equip_best_weapon|
+VERB|hablar|conversar,charlar,decir,contar|scan|
+VERB|preguntar|consultar,preguntale|scan|
+VERB|escuchar|oir,escucha|scan|
+VERB|jugar|jugar un rato|scan|
+VERB|trabajar|laburar,labura|scan|
+VERB|curar|curarse,sanar|eat|
+VERB|beber|tomar agua,tomá|eat|
+
+# ============================== JERGA ===================================
+# Expresiones de varias palabras. El canonico marca el tono.
+PHRASE|greet|que haces,que haces che,que onda,todo bien,todo piola,todo tranqui,como va,como andas,que tal,como estas,que contas
+PHRASE|insulto|la concha de la lora,la puta madre,andate a la mierda,no me rompas las pelotas,cerra el orto,sos un pelotudo,sos un gil,que pelotudo
+PHRASE|elogio|sos un capo,la rompiste,esta buenisimo,esta genial,muy bien ahi,sos un fenomeno
+PHRASE|preferencia|me gusta,me encanta,me copa,no me gusta,me da igual,me chupa un huevo,prefiero esto
+PHRASE|plan|vamos a,vamos por,tenemos que,hay que,deberiamos,podriamos ir,que hacemos
+PHRASE|yes|de una,obvio que si,dale que si,esta bien,joya,perfecto,sin dudas,obvio
+PHRASE|no|ni en pedo,ni ahi,para nada,olvidate,ni lo suenes,que va
+PHRASE|duda|no se,ni idea,no tengo idea,no me acuerdo,no cazo una,nose
+PHRASE|jaja|me cague de risa,que haces jaja,estoy cagado de risa

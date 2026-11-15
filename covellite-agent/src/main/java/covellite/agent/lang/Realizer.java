@@ -186,7 +186,25 @@ public final class Realizer {
                 "por acá, en {bioma}",
                 "no tengo mapa, pero esto es {bioma}",
                 "ni idea exacta. Hay {item} cerca",
-                "andamos por {bioma}, más o menos"));
+                "andamos por {bioma}, más o menos",
+                "no tengo mapa, andamos por acá",
+                "ni idea exacta, la verdad",
+                "no sé decirte dónde, pero no estamos lejos"));
+        this.plans.put("answer_item", List.of(
+                "no lo veo, pero debe andar cerca",
+                "creo que hay {item} por acá",
+                "no lo tengo encima, mirá vos",
+                "eso lo dejé en la base, creo"));
+        this.plans.put("confused", List.of(
+                "no te entendí, ¿qué querés que haga?",
+                "no te seguí. Decime más simple",
+                "esa no me la sé. ¿Me la explicás?",
+                "no sé de qué me hablás"));
+        this.plans.put("order_tool", List.of(
+                "dale, voy a {accion}",
+                "ok, me pongo a {accion}",
+                "listo, {accion}",
+                "ya arranco a {accion}"));
         this.plans.put("decline", List.of(
                 "ok, lo dejo",
                 "dale, no lo hago",
@@ -214,7 +232,8 @@ public final class Realizer {
     }
 
     public String greet(String player) {
-        return store(fill(pick("greet"), Map.of("jugador", player.isEmpty() ? "che" : player)));
+        Map<String, String> slots = Map.of("jugador", player.isEmpty() ? "che" : player);
+        return store(fill(pick("greet", slots.keySet()), slots));
     }
 
     public String respond(Parser.Reading reading, WorldFacts world, Identity identity) {
@@ -230,7 +249,7 @@ public final class Realizer {
                 : (world.inventory().isEmpty() ? "piedra" : world.inventory().get(0)));
         slots.put("tema", topic(reading, world));
         slots.put("jugador", world.playerName().isEmpty() ? "che" : world.playerName());
-        return store(fill(pick(key), slots));
+        return store(fill(pick(key, slots.keySet()), slots));
     }
 
     private String keyFor(Parser.Reading reading, Identity identity) {
@@ -250,7 +269,9 @@ public final class Realizer {
                     ? "feeling_" + reading.feeling() : "charla";
             case RESPUESTA_DATO -> !reading.direction().isEmpty() ? "direction"
                     : !reading.places().isEmpty() ? "place" : "data";
-            case PREGUNTA_A_COVE -> "answer_world";
+            case PREGUNTA_A_COVE -> !reading.items().isEmpty() || !reading.mobs().isEmpty()
+                    ? "answer_item" : "answer_world";
+            case DUDOSA -> "confused";
             default -> identity != null && identity.trait("humor") > 0.75D ? "joke" : "charla";
         };
     }
@@ -293,6 +314,15 @@ public final class Realizer {
         return store(fill(pick("order"), Map.of()));
     }
 
+    /** Confirms an order naming the action it actually understood. */
+    public String orderAck(String verb) {
+        if (verb == null || verb.isBlank()) {
+            return orderAck();
+        }
+        Map<String, String> slots = Map.of("accion", verb);
+        return store(fill(pick("order_tool", slots.keySet()), slots));
+    }
+
     /** Acknowledges a negated order without executing it. */
     public String decline() {
         return store(fill(pick("decline"), Map.of()));
@@ -308,7 +338,24 @@ public final class Realizer {
     // ------------------------------------------------------------------
 
     private String pick(String key) {
-        List<String> options = this.plans.getOrDefault(key, this.plans.get("data"));
+        return pick(key, Set.of());
+    }
+
+    /**
+     * Chooses a plan whose slots can all be filled. Without this, a plan like
+     * "por acá, en {bioma}" produced "por acá, en lugar" when the biome was
+     * unknown.
+     */
+    private String pick(String key, Set<String> filled) {
+        List<String> options = new ArrayList<>();
+        for (String plan : this.plans.getOrDefault(key, this.plans.get("data"))) {
+            if (fits(plan, filled)) {
+                options.add(plan);
+            }
+        }
+        if (options.isEmpty()) {
+            options = this.plans.getOrDefault(key, this.plans.get("data"));
+        }
         int cursor = this.rotation.getOrDefault(key, 0);
         String chosen = null;
         for (int attempt = 0; attempt < options.size(); attempt++) {
@@ -325,6 +372,17 @@ public final class Realizer {
         }
         this.rotation.put(key, cursor);
         return chosen;
+    }
+
+    private static boolean fits(String plan, Set<String> filled) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("\\{([^}]+)}").matcher(plan);
+        while (matcher.find()) {
+            if (!filled.contains(matcher.group(1))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean alreadySaid(String plan) {

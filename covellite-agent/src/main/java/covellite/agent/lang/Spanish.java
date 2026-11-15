@@ -8,25 +8,30 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Minimal Spanish morphology for a self-contained generator.
+ * Spanish morphology for a self-contained generator.
  *
- * <p>Only what Cove needs to speak in rioplatense and to recognise the common
- * inflections of the verbs in the lexicon: normalize, tokenize, conjugate
- * (present, preterite, voseo imperative), pluralize and agree. No dictionaries
- * beyond the ones written here, so the whole module stays tiny.</p>
+ * <p>Conjugates every tense a player actually uses when talking casually:
+ * present, preterite, imperfect, future, conditional, present subjunctive,
+ * voseo imperative, gerund and participle. The point is recall on input: if
+ * someone says "talaríamos" or "rompieron", Cove still knows which action they
+ * mean, without a model and without a dictionary download.</p>
  */
 public final class Spanish {
 
-    public enum Tense { PRESENTE, PRETERITO, IMPERATIVO, GERUNDIO, PARTICIPIO }
+    public enum Tense {
+        PRESENTE, PRETERITO, IMPERFECTO, FUTURO, CONDICIONAL, SUBJUNTIVO,
+        IMPERATIVO, GERUNDIO, PARTICIPIO, INFINITIVO
+    }
 
     /** YO, TU is voseo ("vos"), EL is third person singular. */
     public enum Person { YO, TU, EL, NOSOTROS, ELLOS }
 
-    /** Irregular present forms: yo, vos, el, nosotros, ellos. */
     private static final Map<String, String[]> PRESENT_IRREGULAR = new HashMap<>();
-
-    /** Irregular voseo imperatives. */
     private static final Map<String, String> IMPERATIVE_IRREGULAR = new HashMap<>();
+    private static final Map<String, String[]> PRETERITE_IRREGULAR = new HashMap<>();
+    private static final Map<String, String> SUBJUNCTIVE_STEM = new HashMap<>();
+    private static final Map<String, String> FUTURE_STEM = new HashMap<>();
+    private static final Map<String, String[]> IMPERFECT_IRREGULAR = new HashMap<>();
 
     static {
         PRESENT_IRREGULAR.put("ir", new String[]{"voy", "vas", "va", "vamos", "van"});
@@ -41,6 +46,11 @@ public final class Spanish {
         PRESENT_IRREGULAR.put("decir", new String[]{"digo", "decis", "dice", "decimos", "dicen"});
         PRESENT_IRREGULAR.put("ver", new String[]{"veo", "ves", "ve", "vemos", "ven"});
         PRESENT_IRREGULAR.put("dar", new String[]{"doy", "das", "da", "damos", "dan"});
+        PRESENT_IRREGULAR.put("haber", new String[]{"he", "has", "ha", "hemos", "han"});
+        PRESENT_IRREGULAR.put("poner", new String[]{"pongo", "pones", "pone", "ponemos", "ponen"});
+        PRESENT_IRREGULAR.put("traer", new String[]{"traigo", "traes", "trae", "traemos", "traen"});
+        PRESENT_IRREGULAR.put("salir", new String[]{"salgo", "salís", "sale", "salimos", "salen"});
+        PRESENT_IRREGULAR.put("conocer", new String[]{"conozco", "conoces", "conoce", "conocemos", "conocen"});
         PRESENT_IRREGULAR.put("dormir", new String[]{"duermo", "dormis", "duerme", "dormimos", "duermen"});
         PRESENT_IRREGULAR.put("seguir", new String[]{"sigo", "seguis", "sigue", "seguimos", "siguen"});
         PRESENT_IRREGULAR.put("pedir", new String[]{"pido", "pedis", "pide", "pedimos", "piden"});
@@ -59,6 +69,9 @@ public final class Spanish {
         PRESENT_IRREGULAR.put("repetir", new String[]{"repito", "repetis", "repite", "repetimos", "repiten"});
         PRESENT_IRREGULAR.put("entender", new String[]{"entiendo", "entendes", "entiende", "entendemos", "entienden"});
         PRESENT_IRREGULAR.put("empezar", new String[]{"empiezo", "empezas", "empieza", "empezamos", "empiezan"});
+        PRESENT_IRREGULAR.put("oír", new String[]{"oigo", "ois", "oye", "oimos", "oyen"});
+        PRESENT_IRREGULAR.put("oir", new String[]{"oigo", "ois", "oye", "oimos", "oyen"});
+        PRESENT_IRREGULAR.put("huir", new String[]{"huyo", "huis", "huye", "huimos", "huyen"});
 
         IMPERATIVE_IRREGULAR.put("ir", "anda");
         IMPERATIVE_IRREGULAR.put("venir", "veni");
@@ -89,12 +102,84 @@ public final class Spanish {
         IMPERATIVE_IRREGULAR.put("entender", "entende");
         IMPERATIVE_IRREGULAR.put("empezar", "empeza");
         IMPERATIVE_IRREGULAR.put("morir", "mori");
+        IMPERATIVE_IRREGULAR.put("salir", "sali");
+        IMPERATIVE_IRREGULAR.put("conocer", "conoce");
+
+        PRETERITE_IRREGULAR.put("ser", new String[]{"fui", "fuiste", "fue", "fuimos", "fueron"});
+        PRETERITE_IRREGULAR.put("ir", new String[]{"fui", "fuiste", "fue", "fuimos", "fueron"});
+        PRETERITE_IRREGULAR.put("haber", new String[]{"hube", "hubiste", "hubo", "hubimos", "hubieron"});
+        PRETERITE_IRREGULAR.put("tener", new String[]{"tuve", "tuviste", "tuvo", "tuvimos", "tuvieron"});
+        PRETERITE_IRREGULAR.put("estar", new String[]{"estuve", "estuviste", "estuvo", "estuvimos", "estuvieron"});
+        PRETERITE_IRREGULAR.put("poder", new String[]{"pude", "pudiste", "pudo", "pudimos", "pudieron"});
+        PRETERITE_IRREGULAR.put("poner", new String[]{"puse", "pusiste", "puso", "pusimos", "pusieron"});
+        PRETERITE_IRREGULAR.put("saber", new String[]{"supe", "supiste", "supo", "supimos", "supieron"});
+        PRETERITE_IRREGULAR.put("hacer", new String[]{"hice", "hiciste", "hizo", "hicimos", "hicieron"});
+        PRETERITE_IRREGULAR.put("querer", new String[]{"quise", "quisiste", "quiso", "quisimos", "quisieron"});
+        PRETERITE_IRREGULAR.put("venir", new String[]{"vine", "viniste", "vino", "vinimos", "vinieron"});
+        PRETERITE_IRREGULAR.put("decir", new String[]{"dije", "dijiste", "dijo", "dijimos", "dijeron"});
+        PRETERITE_IRREGULAR.put("traer", new String[]{"traje", "trajiste", "trajo", "trajimos", "trajeron"});
+        PRETERITE_IRREGULAR.put("dar", new String[]{"di", "diste", "dio", "dimos", "dieron"});
+        PRETERITE_IRREGULAR.put("ver", new String[]{"vi", "viste", "vio", "vimos", "vieron"});
+        PRETERITE_IRREGULAR.put("andar", new String[]{"anduve", "anduviste", "anduvo", "anduvimos", "anduvieron"});
+
+        SUBJUNCTIVE_STEM.put("saber", "sep");
+        SUBJUNCTIVE_STEM.put("haber", "hay");
+        SUBJUNCTIVE_STEM.put("ir", "vay");
+        SUBJUNCTIVE_STEM.put("ser", "se");
+        SUBJUNCTIVE_STEM.put("estar", "est");
+        SUBJUNCTIVE_STEM.put("dar", "d");
+        SUBJUNCTIVE_STEM.put("ver", "ve");
+        SUBJUNCTIVE_STEM.put("oír", "oig");
+        SUBJUNCTIVE_STEM.put("oir", "oig");
+        SUBJUNCTIVE_STEM.put("huir", "huy");
+        SUBJUNCTIVE_STEM.put("tener", "teng");
+        SUBJUNCTIVE_STEM.put("hacer", "hag");
+        SUBJUNCTIVE_STEM.put("poder", "pued");
+        SUBJUNCTIVE_STEM.put("querer", "quier");
+        SUBJUNCTIVE_STEM.put("decir", "dig");
+        SUBJUNCTIVE_STEM.put("venir", "veng");
+        SUBJUNCTIVE_STEM.put("poner", "pong");
+        SUBJUNCTIVE_STEM.put("traer", "traig");
+        SUBJUNCTIVE_STEM.put("salir", "salg");
+        SUBJUNCTIVE_STEM.put("conocer", "conozc");
+        SUBJUNCTIVE_STEM.put("construir", "construy");
+        SUBJUNCTIVE_STEM.put("jugar", "jueg");
+        SUBJUNCTIVE_STEM.put("llegar", "lleg");
+        SUBJUNCTIVE_STEM.put("empezar", "empiec");
+        SUBJUNCTIVE_STEM.put("pensar", "piens");
+        SUBJUNCTIVE_STEM.put("volver", "vuelv");
+        SUBJUNCTIVE_STEM.put("dormir", "duerm");
+        SUBJUNCTIVE_STEM.put("pedir", "pid");
+        SUBJUNCTIVE_STEM.put("sentir", "sient");
+        SUBJUNCTIVE_STEM.put("seguir", "sig");
+        SUBJUNCTIVE_STEM.put("conseguir", "consig");
+        SUBJUNCTIVE_STEM.put("preferir", "prefier");
+        SUBJUNCTIVE_STEM.put("morir", "muer");
+        SUBJUNCTIVE_STEM.put("perder", "pierd");
+        SUBJUNCTIVE_STEM.put("entender", "entiend");
+
+        FUTURE_STEM.put("tener", "tendr");
+        FUTURE_STEM.put("poder", "podr");
+        FUTURE_STEM.put("querer", "querr");
+        FUTURE_STEM.put("saber", "sabr");
+        FUTURE_STEM.put("hacer", "har");
+        FUTURE_STEM.put("decir", "dir");
+        FUTURE_STEM.put("venir", "vendr");
+        FUTURE_STEM.put("salir", "saldr");
+        FUTURE_STEM.put("poner", "pondr");
+        FUTURE_STEM.put("haber", "habr");
+        FUTURE_STEM.put("caber", "cabr");
+        FUTURE_STEM.put("valer", "valdr");
+
+        IMPERFECT_IRREGULAR.put("ser", new String[]{"era", "eras", "era", "eramos", "eran"});
+        IMPERFECT_IRREGULAR.put("ir", new String[]{"iba", "ibas", "iba", "ibamos", "iban"});
+        IMPERFECT_IRREGULAR.put("ver", new String[]{"veia", "veias", "veia", "veiamos", "veian"});
     }
 
     private Spanish() {
     }
 
-    /** Lowercase, accents removed, whitespace collapsed. */
+    /** Lowercase, accents and punctuation removed, whitespace collapsed. */
     public static String normalize(String text) {
         if (text == null) {
             return "";
@@ -158,7 +243,6 @@ public final class Spanish {
     public static String conjugate(String infinitive, Tense tense, Person person) {
         String verb = normalize(infinitive);
         if (verb.endsWith("se")) {
-            // Reflective verbs: conjugate without the pronoun and add "te" for voseo.
             verb = verb.substring(0, verb.length() - 2);
         }
         String stem = verb.length() > 2 ? verb.substring(0, verb.length() - 2) : verb;
@@ -170,48 +254,82 @@ public final class Spanish {
             case NOSOTROS -> 3;
             case ELLOS -> 4;
         };
-        if (tense == Tense.GERUNDIO) {
-            if (ending.equals("ar")) {
-                return stem + "ando";
+        switch (tense) {
+            case INFINITIVO:
+                return verb;
+            case GERUNDIO:
+                return switch (verb) {
+                    case "ir" -> "yendo";
+                    case "leer" -> "leyendo";
+                    case "oir", "oír" -> "oyendo";
+                    default -> ending.equals("ar") ? stem + "ando"
+                            : stem + (verb.equals("dormir") || verb.equals("morir") ? "iendo" : "iendo");
+                };
+            case PARTICIPIO:
+                return ending.equals("ar") ? stem + "ado" : stem + "ido";
+            case IMPERATIVO: {
+                String irregular = IMPERATIVE_IRREGULAR.get(verb);
+                if (irregular != null) {
+                    return person == Person.NOSOTROS ? stem + imperativeEnding(ending, true) : irregular;
+                }
+                return stem + imperativeEnding(ending, person == Person.NOSOTROS);
             }
-            String irregular = switch (verb) {
-                case "ir" -> "yendo";
-                case "leer" -> "leyendo";
-                case "oír", "oir" -> "oyendo";
-                default -> stem + "iendo";
-            };
-            return irregular;
-        }
-        if (tense == Tense.PARTICIPIO) {
-            return ending.equals("ar") ? stem + "ado" : stem + "ido";
-        }
-        if (tense == Tense.IMPERATIVO) {
-            String irregular = IMPERATIVE_IRREGULAR.get(verb);
-            if (irregular != null) {
-                return person == Person.NOSOTROS ? stem + endingImperative(ending, true) : irregular;
+            case PRESENTE: {
+                String[] irregular = PRESENT_IRREGULAR.get(verb);
+                if (irregular != null) {
+                    return irregular[index];
+                }
+                return stem + switch (ending) {
+                    case "ar" -> new String[]{"o", "as", "a", "amos", "an"}[index];
+                    case "er" -> new String[]{"o", "es", "e", "emos", "en"}[index];
+                    default -> new String[]{"o", "es", "e", "imos", "en"}[index];
+                };
             }
-            return stem + endingImperative(ending, person == Person.NOSOTROS);
-        }
-        if (tense == Tense.PRESENTE) {
-            String[] irregular = PRESENT_IRREGULAR.get(verb);
-            if (irregular != null) {
-                return irregular[index];
+            case PRETERITO: {
+                String[] irregular = PRETERITE_IRREGULAR.get(verb);
+                if (irregular != null) {
+                    return irregular[index];
+                }
+                return stem + switch (ending) {
+                    case "ar" -> new String[]{"e", "aste", "o", "amos", "aron"}[index];
+                    case "er", "ir" -> new String[]{"i", "iste", "io", "imos", "ieron"}[index];
+                    default -> "";
+                };
             }
-            return stem + switch (ending) {
-                case "ar" -> new String[]{"o", "as", "a", "amos", "an"}[index];
-                case "er" -> new String[]{"o", "es", "e", "emos", "en"}[index];
-                default -> new String[]{"o", "es", "e", "imos", "en"}[index];
-            };
+            case IMPERFECTO: {
+                String[] irregular = IMPERFECT_IRREGULAR.get(verb);
+                if (irregular != null) {
+                    return irregular[index];
+                }
+                return ending.equals("ar")
+                        ? stem + new String[]{"aba", "abas", "aba", "abamos", "aban"}[index]
+                        : stem + new String[]{"ia", "ias", "ia", "iamos", "ian"}[index];
+            }
+            case FUTURO: {
+                String base = FUTURE_STEM.getOrDefault(verb, verb);
+                return base + new String[]{"e", "as", "a", "emos", "an"}[index];
+            }
+            case CONDICIONAL: {
+                String base = FUTURE_STEM.getOrDefault(verb, verb);
+                return base + new String[]{"ia", "ias", "ia", "iamos", "ian"}[index];
+            }
+            case SUBJUNTIVO: {
+                String subjunctive = SUBJUNCTIVE_STEM.get(verb);
+                if (subjunctive == null) {
+                    String yo = PRESENT_IRREGULAR.containsKey(verb)
+                            ? PRESENT_IRREGULAR.get(verb)[0] : stem + "o";
+                    subjunctive = yo.endsWith("o") ? yo.substring(0, yo.length() - 1) : yo;
+                }
+                return ending.equals("ar")
+                        ? subjunctive + new String[]{"e", "es", "e", "emos", "en"}[index]
+                        : subjunctive + new String[]{"a", "as", "a", "amos", "an"}[index];
+            }
+            default:
+                return verb;
         }
-        // Preterite, regular forms; enough for narration.
-        return stem + switch (ending) {
-            case "ar" -> new String[]{"e", "aste", "o", "amos", "aron"}[index];
-            case "er", "ir" -> new String[]{"i", "iste", "io", "imos", "ieron"}[index];
-            default -> "";
-        };
     }
 
-    private static String endingImperative(String ending, boolean plural) {
+    private static String imperativeEnding(String ending, boolean plural) {
         if (plural) {
             return ending.equals("ar") ? "emos" : "amos";
         }
@@ -222,25 +340,10 @@ public final class Spanish {
         };
     }
 
-    /** a/an by initial sound and gender, for the few nouns Cove prints. */
-    public static String article(String word, boolean feminine, boolean plural) {
-        String base;
-        if (feminine) {
-            base = plural ? "las" : "la";
-        } else {
-            base = plural ? "los" : "el";
-        }
-        return base;
-    }
-
     public static String capitalize(String text) {
         if (text == null || text.isEmpty()) {
             return "";
         }
         return Character.toUpperCase(text.charAt(0)) + text.substring(1);
-    }
-
-    public static String join(List<String> parts, String separator) {
-        return String.join(separator, parts);
     }
 }

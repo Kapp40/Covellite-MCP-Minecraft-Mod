@@ -29,7 +29,7 @@ public final class Parser {
     public enum Act {
         ORDEN, PREGUNTA_A_COVE, PREGUNTA_SOBRE_COVE, RESPUESTA_SI, RESPUESTA_NO,
         RESPUESTA_DATO, BROMA, CORRECCION, SALUDO, PREFERENCIA, SENTIMIENTO, ELOGIO,
-        INSULTO, PLAN, CHARLA, AMBIGUA
+        INSULTO, PLAN, CHARLA, DUDOSA, AMBIGUA
     }
 
     /** One analysed message. */
@@ -164,9 +164,31 @@ public final class Parser {
         boolean aboutCove = ABOUT_COVE.stream().anyMatch(normalized::contains);
         boolean plan = PLAN_MARKERS.stream().anyMatch(normalized::contains);
 
+        // Multiword expressions carry tone that single tokens cannot: "ni en
+        // pedo" is a no, "de una" is a yes, "me copa" is a preference.
+        boolean yesPhrase = false;
+        boolean unsure = false;
+        Lexicon.Entry phrase = this.lexicon.phraseIn(normalized);
+        if (phrase != null) {
+            switch (phrase.canonical()) {
+                case "greet" -> greeting = true;
+                case "insulto" -> insult = true;
+                case "elogio" -> praise = true;
+                case "preferencia" -> preference = true;
+                case "plan" -> plan = true;
+                case "yes" -> yesPhrase = true;
+                case "no" -> negation = true;
+                case "jaja" -> laughter = true;
+                case "duda" -> unsure = true;
+                default -> {
+                }
+            }
+        }
+
         String action = verb == null ? "" : verb.action();
         String hint = verb == null ? "" : verb.hint();
         boolean imperative = verb != null && looksImperative(tokens, verb.canonical())
+                || tokens.stream().anyMatch(this.lexicon::isImperative)
                 || normalized.contains("tenes que") || normalized.contains("podes ")
                 || normalized.contains("quiero que") || normalized.contains("ayudame");
 
@@ -211,11 +233,14 @@ public final class Parser {
             act = Act.ORDEN;
         } else if (question) {
             act = Act.PREGUNTA_A_COVE;
+        } else if (unclear(tokens, verb, items, places, mobs, question, greeting, phrase != null)) {
+            // Nothing recognised: say so instead of nodding along.
+            act = Act.DUDOSA;
         } else if (pending != null) {
-            if (tokens.stream().anyMatch(YES_WORDS::contains)) {
+            if (tokens.stream().anyMatch(YES_WORDS::contains) || yesPhrase) {
                 act = Act.RESPUESTA_SI;
                 answers = true;
-            } else if (normalized.contains("no se") || normalized.contains("ni idea")
+            } else if (unsure || normalized.contains("no se") || normalized.contains("ni idea")
                     || normalized.contains("no tengo idea")) {
                 // "no se" is not a no: it answers without giving data.
                 act = Act.RESPUESTA_DATO;
@@ -279,6 +304,25 @@ public final class Parser {
             }
         }
         return false;
+    }
+
+    private static boolean unclear(List<String> tokens, Lexicon.Entry verb, Set<String> items,
+                                   Set<String> places, Set<String> mobs, boolean question,
+                                   boolean greeting, boolean phrase) {
+        if (verb != null || question || greeting || phrase || !items.isEmpty()
+                || !places.isEmpty() || !mobs.isEmpty()) {
+            return false;
+        }
+        int unknown = 0;
+        for (String token : tokens) {
+            if (token.length() >= 4 && !Lexicon.shared().known(token)
+                    && !Set.of("para", "pero", "este", "esto", "esa", "ese", "porque",
+                    "cuando", "donde", "todo", "muy", "mas", "menos", "algo", "nada",
+                    "cosa", "ahora", "despues", "entonces").contains(token)) {
+                unknown++;
+            }
+        }
+        return unknown >= 2;
     }
 
     private static boolean containsForm(List<String> tokens, String form) {

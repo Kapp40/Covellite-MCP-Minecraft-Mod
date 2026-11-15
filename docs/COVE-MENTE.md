@@ -65,7 +65,45 @@ VERB|ir|andar,caminar,dirigirse,ir a|return_home|base
 Para agregar vocabulario se edita ese archivo: no hace falta tocar Java. Para
 agregar un verbo nuevo que use una tool existente, alcanza con una línea.
 
-Tamaño actual: **4 KB**, ~110 entradas y ~300 formas indexadas.
+Hay tres fuentes, en este orden:
+
+1. `/cove/lexicon.txt` — la base curada que viaja en el jar.
+2. `/cove/lexicon-extra.txt` — adicionales empaquetados (opcional).
+3. `<partida>/covemcp/lexicon-extra.txt` — **el archivo que el jugador puede editar**
+   (el mod lo apunta con la propiedad `covemcp.lexiconExtra`).
+
+### Entrenarlo sin recompilar
+
+Para enseñarle vocabulario nuevo alcanza con agregar líneas al archivo editable y
+reabrir el juego. Ejemplos:
+
+```
+ITEM|mate|mates
+VERB|matear|mateando,tomar mate|eat|comida
+MOB|carpincho|carpinchos
+PHRASE|greet|que hacés vos,como te va la vida
+PHRASE|elogio|sos un fenómeno,qué grande
+```
+
+No hay pesos ni reentrenamiento: es recall léxico. La ventaja es que es inmediato,
+predecible y pesa kilobytes.
+
+### Conjugación completa
+
+Cada verbo se indexa en **todos los tiempos** (presente, pretérito, imperfecto,
+futuro, condicional, subjuntivo, imperativo voseo, gerundio, participio) y también
+en las conjugaciones de los infinitivos escondidos en sus sinónimos. Por eso
+`talaríamos`, `rompieron`, `picá` o `seguime` resuelven a la acción correcta.
+
+### Jerga argentina
+
+Las expresiones de varias palabras viven en la categoría `PHRASE` y llevan tono:
+`de una` (sí), `ni en pedo` (no), `me copa` (preferencia), `sos un capo` (elogio),
+`no cazo una` (duda), `todo bien` (saludo), `la puta madre` (insulto). El parser
+las busca como frase completa antes de clasificar la oración.
+
+Tamaño actual: **~10 KB**, 250 líneas, ~40 frases y más de 2500 formas verbales
+indexadas (el número exacto lo imprime la autoprueba).
 
 ## 4. Comprensión
 
@@ -85,7 +123,16 @@ Tamaño actual: **4 KB**, ~110 entradas y ~300 formas indexadas.
 
 Actos posibles: `ORDEN`, `PREGUNTA_A_COVE`, `PREGUNTA_SOBRE_COVE`, `RESPUESTA_SI`,
 `RESPUESTA_NO`, `RESPUESTA_DATO`, `BROMA`, `CORRECCION`, `SALUDO`, `PREFERENCIA`,
-`SENTIMIENTO`, `ELOGIO`, `INSULTO`, `PLAN`, `CHARLA`, `AMBIGUA`.
+`SENTIMIENTO`, `ELOGIO`, `INSULTO`, `PLAN`, `CHARLA`, `DUDOSA`, `AMBIGUA`.
+
+El léxico no solo guarda el verbo canónico: al cargar, conjuga **también los
+infinitivos escondidos en los sinónimos**. Por eso `talar` (sinónimo de `cortar`)
+reconoce `tala`, `talás`, `talando`; y `romper` reconoce `rompe`. Sin eso, una
+orden real como "Tala estos árboles" se clasificaba como charla.
+
+Las palabras que no se reconocen no se fingen entender: si la frase tiene dos o
+más términos desconocidos y ninguna entidad ni verbo, el acto es `DUDOSA` y Cove
+pide que se lo expliquen, en vez de contestar "tiene sentido".
 
 La clasificación es composicional, no por palabra suelta:
 
@@ -176,7 +223,7 @@ reflejos. El cerebro externo por MCP sigue disponible, pero es opcional.
 
 | Elemento | Tamaño |
 | --- | --- |
-| Léxico (texto) | 4 KB |
+| Léxico (texto) | ~10 KB |
 | Clases del cerebro (7 clases) | ~70 KB de bytecode |
 | JAR completo del mod | ~512 KB |
 
@@ -212,6 +259,15 @@ Errores encontrados al revisar el motor y cómo quedaron:
 10. **Las negaciones ejecutaban la acción.** `no cortes el árbol` ya no llama a `chop_tree`.
 11. **Un comentario después de preguntar** se tomaba como respuesta solo por ser corto; ahora la
     regla quedó explícita y cubierta por tests.
+12. **Los verbos sinónimos no se conjugaban.** Solo se flexionaba el infinitivo canónico, así que
+    `tala`, `rompe` o `picá` no se reconocían como órdenes. Ahora el léxico indexa todas las formas
+    de todos los infinitivos de cada entrada.
+13. **Faltaba vocabulario básico de la partida** (`árbol`, `rama`, `hoja`, `agua`, `fuego`, `camino`,
+    `puerta`, `romper`, `talar`, `golpear`, `correr`). Sin `árbol`, "Rompe el árbol" era ruido.
+14. **Planes con ranuras vacías imprimían basura**: "Por acá, en lugar". Ahora solo se eligen
+    planes cuyas ranuras se pueden completar; si falta el bioma, hay variantes sin bioma.
+15. **La confirmación no demostraba comprensión.** Ahora nombra la acción entendida: "dale, voy a
+    talar", en vez de solo "ya voy".
 
 ## 11. Límites honestos
 
@@ -225,14 +281,14 @@ Errores encontrados al revisar el motor y cómo quedaron:
 - No recuerda hechos nuevos por sí sola salvo los que el runtime guarda (memoria,
   estado social, identidad).
 - Nada de esto está verificado todavía dentro de una partida: está compilado y
-  cubierto por 167 checks unitarios, no por juego real.
+  cubierto por 185 checks unitarios, no por juego real.
 
 ## 12. Cómo probar y extender
 
-- Pruebas: `./gradlew :covellite-agent:agentTest` (167 checks).
+- Pruebas: `./gradlew :covellite-agent:agentTest` (185 checks).
 - En juego: `/cove mind` muestra proveedor, autoridad, último motivo, pregunta
   pendiente, ánimo y rasgos.
-- Extender el vocabulario: editar `cove/lexicon.txt`.
+- Extender el vocabulario: editar `covemcp/lexicon-extra.txt` en la instancia (sin recompilar).
 - Extender el habla: agregar planes en `Realizer`.
 - Extender la comprensión: nuevas categorías o verbos en el léxico; el parser las
   toma sin cambios.

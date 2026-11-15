@@ -124,10 +124,15 @@ public final class CoveProvider implements AgentProvider {
         // anywhere in the window must NOT hijack later conversation.
         if (isRightAfterTool(request)) {
             String payload = lastToolPayload(request);
-            String line = payload.contains("\"error\"")
-                    ? this.brain.realizer().failed()
-                    : this.brain.realizer().orderAck();
-            return new Response(line, List.of(), "stop");
+            if (payload.contains("\"error\"")) {
+                return new Response(this.brain.realizer().failed(), List.of(), "stop");
+            }
+            // An initiative was already announced before calling the tool.
+            if (last.startsWith("[Propia iniciativa]")) {
+                return new Response("", List.of(), "stop");
+            }
+            Parser.Reading done = this.brain.read(saidFrom(last), this.world, pending);
+            return new Response(this.brain.realizer().orderAck(done.verb()), List.of(), "stop");
         }
         if (last.startsWith("[Jugador]")) {
             String player = playerFrom(last);
