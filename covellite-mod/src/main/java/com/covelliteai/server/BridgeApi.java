@@ -251,6 +251,9 @@ public final class BridgeApi {
 
     // Personality (hito 6)
     private boolean lively = true;
+    // While the local brain reads chat, the scripted keyword reflexes stay quiet
+    // so Cove does not answer twice (once by rule, once by understanding).
+    private volatile boolean chatReflexSuppressed;
     private int greetTicks;
     private boolean sneakHeld;
     private String pendingGiveItem;
@@ -4655,6 +4658,19 @@ public final class BridgeApi {
         return out;
     }
 
+    /** True while an async action owns the body (Cove should not start another). */
+    public boolean busyTask() {
+        return this.activeTask != null || this.pendingGiveItem != null;
+    }
+
+    /**
+     * Hands chat interpretation to the local mind: while it is active the
+     * keyword reflexes are skipped, and they resume with the backlog drained.
+     */
+    public void setChatReflexSuppressed(boolean suppressed) {
+        this.chatReflexSuppressed = suppressed;
+    }
+
     public Map<String, Object> autopilotState() {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("chat_reflexes", this.reflexChat);
@@ -5394,6 +5410,12 @@ public final class BridgeApi {
     }
 
     private void readChatReflexes(CompanionPlayer player) {
+        if (this.chatReflexSuppressed) {
+            // Skip the backlog without reacting: when the AI hands control back,
+            // old orders must not fire as if they had just been said.
+            this.lastChatSequence = Math.max(this.lastChatSequence, this.chatLog.latestSequence());
+            return;
+        }
         List<ChatLog.Entry> messages = this.chatLog.since(this.lastChatSequence, 16);
         if (messages.isEmpty()) {
             return;

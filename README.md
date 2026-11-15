@@ -879,7 +879,7 @@ Cove tiene **una sola identidad** (memoria, mapa, experiencias, estado del mundo
 | `local` | runtime integrado (`covellite-agent`) con proveedores propios: Ollama, LM Studio, llama.cpp, OpenAI, Anthropic, Gemini y compatibles |
 | `mcp` | inteligencia externa (DeepSeek, OpenCode, Freebuff, cualquier cliente MCP) que usa el cuerpo de Cove a través de las tools |
 
-**Cambio en caliente y atómico:** `/cove brain local` / `/cove brain mcp` (o `brain=local|mcp` en `covemcp.properties`; si la clave falta, se deduce de `agentEnabled`).
+**Cambio en caliente y atómico:** `/cove brain local` / `/cove brain mcp` (o `brain=local|mcp` en `covemcp.properties`; si la clave falta, el cerebro por defecto es `local`: la IA vive en el mod y el MCP es un invitado opcional).
 
 El traspaso respeta este orden estricto:
 
@@ -899,6 +899,42 @@ El traspaso respeta este orden estricto:
 **Aislamiento del cerebro inactivo:** no recibe chat, no planifica, no ejecuta tools ni modifica el mundo. `ChatRelay` sólo retransmite cuando `mcp` está activo, y el runtime local no escucha mensajes cuando manda `mcp`. Los comandos de administración (`/cove why`, `/cove panel`, `/cove brain`, configuración) funcionan siempre, con cualquier cerebro.
 
 `/cove brain` sin argumentos muestra cerebro, época, estado de pausa, tareas y el log de cambios.
+
+### La mente propia de Cove (cerebro `local`)
+
+Cove no es "un cliente MCP conectado": es un agente que vive dentro del mod. Cuando el cerebro activo es `local`, el JAR contiene la mente completa: estado conversacional, identidad, memoria y ciclo autónomo. El modelo de lenguaje es su facultad de hablar, no su cerebro entero, y puede ser cualquier proveedor configurado (`ollama`, `lmstudio`, `llamacpp`, OpenAI, Anthropic, Gemini).
+
+Componentes nuevos (`covellite-agent/src/main/java/covellite/agent/social/`):
+
+| Pieza | Qué resuelve |
+| --- | --- |
+| `SocialState` | Conversación persistente: cola de intercambios, contadores y **la pregunta pendiente** con tema, motivo, contexto, id de conversación y antigüedad. Se guarda en `config/covemcp/agent/<mundo>/social/state.json`. |
+| `SocialInterpreter` | Lee el mensaje del jugador **con el modelo** y devuelve `intencion` (`ORDEN`, `RESPUESTA`, `BROMA`, `CHARLA`, `CORRECCION`, `PREGUNTA_A_COVE`, `AMBIGUA`), si responde a la pregunta pendiente y qué dato aportó. No hay tablas de palabras clave. |
+| `SocialPolicy` | Decide si vale la pena gastar una llamada al modelo: sin jugadores, ocupado, esperando respuesta, cooldown entre líneas, tope de iniciativas cada 10 minutos. |
+| `Mind` | Deliberación propia: una llamada al modelo que devuelve `silencio`, `hablar` o `iniciativa` con mensaje, motivo, actividad concreta, aprendizaje y ánimo. |
+| `Identity` | Rasgos que cambian con la experiencia (`curiosidad`, `humor`, `cautela`, `iniciativa`, `apego`, `confianza`), opiniones propias y estado interno con vencimiento. No se afirma que sean emociones: es estado + historia, y así se le pide al modelo que lo exprese. |
+| `SocialPrompt` | Bloques de prompt que inyectan identidad, pregunta pendiente e intercambios recientes en **cada** turno, incluso después de que la ventana de conversación los descarte. |
+
+Flujo de un mensaje: `chat` → interpretación por modelo → se resuelve o se conserva la pregunta pendiente → turno normal con esa lectura en el prompt → se guarda lo que Cove dijo y, si preguntó, la nueva pregunta pendiente.
+
+Flujo de la iniciativa: cada segundo el mod entrega una lectura del mundo (`SocialSignals`: jugadores, distancia, vida, comida, noche, distancia al spawn, ocupación). `SocialPolicy` filtra; si hay motivo concreto (`hambre`, `lejos_de_casa`, `separado_del_jugador`, `tarea_terminada`, `silencio_prolongado`, `pregunta_sin_responder`...), `Mind` decide. `silencio` es la respuesta normal.
+
+Mientras el cerebro `local` tiene proveedor listo, los reflejos del chat por palabra clave quedan **suprimidos** (`setChatReflexSuppressed`) y con el backlog drenado, para que Cove no conteste dos veces. Los reflejos de capa 0 y el autopilot siguen activos.
+
+Ajustes en `covemcp.properties` (todos opcionales):
+
+| Clave | Defecto | Para qué |
+| --- | --- | --- |
+| `agentSocialEnabled` | `true` | Apaga la iniciativa propia sin apagar el cerebro. |
+| `agentSocialMinGapMs` | `45000` | Silencio mínimo entre dos líneas espontáneas. |
+| `agentSocialThinkMs` | `40000` | Cada cuánto puede volver a deliberar. |
+| `agentSocialMaxInitiations` | `6` | Tope de conversaciones iniciadas cada 10 minutos. |
+| `agentSocialQuestionTtlMs` | `600000` | Cuánto espera una respuesta antes de insistir una vez. |
+| `agentSocialInitiative` | `true` | Permite pasar de hablar a actuar por cuenta propia. |
+
+Observabilidad: `/cove mind` (proveedor, autoridad, último motivo, pregunta pendiente con antigüedad, ánimo, rasgos, última opinión, conversaciones y ciclos), `/cove why` y `/cove panel` (el estado del runtime incluye el bloque `social`).
+
+Límites conocidos: sin proveedor configurado no hay lenguaje ni interpretación (el resto sigue funcionando); la memoria sigue siendo recuperación por palabras clave; no hay visión; la política evita el spam pero no juzga relevancia (eso lo hace el modelo); nada de esto reemplaza la verificación en partida.
 
 ### Sin voz: sólo texto y acciones
 

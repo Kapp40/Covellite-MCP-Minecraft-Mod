@@ -194,6 +194,14 @@ public final class CompanionCommands {
                                     }
                                     return 1;
                                 }))
+                        .then(Commands.literal("mind")
+                                .executes(ctx -> {
+                                    for (String line : agent.mindReport()) {
+                                        ctx.getSource().sendSuccess(
+                                                () -> Component.literal("[CoveMCP] " + line), false);
+                                    }
+                                    return 1;
+                                }))
                         .then(Commands.literal("reflexes")
                                 .executes(ctx -> {
                                     if (api == null) {

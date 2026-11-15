@@ -16,6 +16,7 @@ public final class AgentContext {
     private final AgentMemory memory;
     private volatile String snapshot = "{}";
     private volatile String extra = "";
+    private volatile String social = "";
 
     public AgentContext(AgentMemory memory) {
         this.memory = memory;
@@ -30,6 +31,14 @@ public final class AgentContext {
     /** Free-form context injected by extensions (e.g. active extension list). */
     public void setExtraContext(String text) {
         this.extra = text == null ? "" : text;
+    }
+
+    /**
+     * Identity, pending question and recent exchanges. Set on every turn so the
+     * model never forgets what it asked, even after the window trimmed it.
+     */
+    public void setSocialContext(String text) {
+        this.social = text == null ? "" : text;
     }
 
     public String snapshot() {
@@ -61,7 +70,11 @@ public final class AgentContext {
         String snapshotWithExtra = this.extra.isBlank()
                 ? this.snapshot
                 : this.snapshot + "\n" + this.extra;
-        return personality.systemPrompt(settings.language(), snapshotWithExtra, recall.toString());
+        String prompt = personality.systemPrompt(settings.language(), snapshotWithExtra, recall.toString());
+        if (!this.social.isBlank()) {
+            return prompt + "\n" + this.social;
+        }
+        return prompt;
     }
 
     private static String lastUserText(List<AgentProvider.Message> history) {

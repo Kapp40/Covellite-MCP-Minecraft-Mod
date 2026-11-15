@@ -15,11 +15,13 @@ import com.covelliteai.server.AgentBridge;
 import com.covelliteai.server.BridgeApi;
 import com.covelliteai.server.ChatLog;
 import com.covelliteai.server.CompanionManager;
+import com.covelliteai.server.CompanionPlayer;
 import com.covelliteai.server.CompanionCommands;
 import com.covelliteai.server.PrototypeScenario;
 
 import covellite.core.action.ActionQueue;
 import covellite.agent.brain.BrainArbiter;
+import covellite.agent.social.SocialSignals;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.event.Event;
 import covellite.core.event.EventLog;
@@ -28,6 +30,7 @@ import covellite.core.net.BridgeServer;
 import covellite.core.net.Handshake;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
@@ -165,15 +168,14 @@ public final class CovelliteAI {
         }
     }
 
-    /** Reads {@code brain} from the config, defaulting to the agent setting. */
+    /**
+     * Reads {@code brain} from the config. Cove's own mind is the default: the
+     * MCP brain is an optional external guest, not the way the AI exists.
+     */
     private static BrainArbiter.Brain initialBrain(CovelliteConfig config) {
         BrainArbiter.Brain configured = BrainArbiter.Brain.parse(
                 config.properties.getOrDefault("brain", ""));
-        if (configured != null) {
-            return configured;
-        }
-        String enabled = config.properties.getOrDefault("agentEnabled", "false");
-        return Boolean.parseBoolean(enabled) ? BrainArbiter.Brain.LOCAL : BrainArbiter.Brain.MCP;
+        return configured != null ? configured : BrainArbiter.Brain.LOCAL;
     }
 
     private void onServerTick(ServerTickEvent.Post event) {
@@ -188,6 +190,11 @@ public final class CovelliteAI {
         if (this.serverTicks % 10L == 0L) {
             BridgeServer currentBridge = this.bridge;
             this.bridgeApi.onMcpLink(currentBridge != null && currentBridge.isAuthenticated());
+        }
+        if (this.serverTicks % 20L == 0L) {
+            // One second between readings: enough for a mind, too slow to spam.
+            this.bridgeApi.setChatReflexSuppressed(this.agentBridge.mindActive());
+            this.agentBridge.socialTick(socialSignals(current));
         }
         processInbound();
         this.agentBridge.tick(current);
@@ -335,6 +342,38 @@ public final class CovelliteAI {
         map.put("recent_events", recent);
         map.put("chat_messages", this.chatLog.size());
         return map;
+    }
+
+    /**
+     * World reading for Cove's own deliberation. Built on the server thread and
+     * handed over as plain data, so the model never touches level state.
+     */
+    private SocialSignals socialSignals(MinecraftServer current) {
+        long now = System.currentTimeMillis();
+        CompanionPlayer companion = this.companion.player();
+        if (companion == null || !companion.isAlive()) {
+            return SocialSignals.quiet(now);
+        }
+        int humans = 0;
+        double nearest = -1.0D;
+        for (ServerPlayer other : current.getPlayerList().getPlayers()) {
+            if (other instanceof CompanionPlayer || other == companion) {
+                continue;
+            }
+            humans++;
+            double distance = Math.sqrt(other.distanceToSqr(companion));
+            if (nearest < 0 || distance < nearest) {
+                nearest = distance;
+            }
+        }
+        ServerLevel level = companion.serverLevel();
+        double spawnDistance = Math.sqrt(companion.blockPosition().distSqr(level.getSharedSpawnPos()));
+        String biome = level.getBiome(companion.blockPosition()).unwrapKey()
+                .map(key -> key.location().getPath()).orElse("");
+        String activity = this.bridgeApi.busyTask() ? "ocupado con una tarea" : "disponible";
+        return new SocialSignals(now, humans, nearest, companion.getHealth(),
+                companion.getFoodData().getFoodLevel(), this.bridgeApi.busyTask(),
+                level.isNight(), false, spawnDistance, biome, activity, 0L, 0L);
     }
 
     private static String loadOrCreateToken() throws IOException {

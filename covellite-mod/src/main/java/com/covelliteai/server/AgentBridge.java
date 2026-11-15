@@ -25,6 +25,8 @@ import covellite.agent.AgentToolRegistry;
 import covellite.agent.brain.BrainArbiter;
 import covellite.agent.AgentTools;
 import covellite.agent.ProviderException;
+import covellite.agent.social.SocialSettings;
+import covellite.agent.social.SocialSignals;
 import covellite.agent.ProviderFactory;
 import covellite.core.dispatch.Dispatcher;
 import covellite.core.json.Json;
@@ -152,6 +154,9 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
 
             AgentRuntime created = new AgentRuntime(settings, provider, tools, memory, goals);
             created.setChatSink(this::speak);
+            // Cove's own mind must respect the same authority as its tools.
+            created.setAuthority(this::localAuthority);
+            created.configureSocial(SocialSettings.from(this.config.properties));
             created.start();
             this.runtime = created;
             this.state = "idle";
@@ -330,6 +335,75 @@ public final class AgentBridge implements AgentToolRegistry.ToolExecutor, AutoCl
         } catch (RuntimeException e) {
             CovelliteAI.LOGGER.warn("Could not serialize the world snapshot: {}", e.getMessage());
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Own initiative
+    // ------------------------------------------------------------------
+
+    /**
+     * Feeds the world reading and lets Cove consider speaking or acting on its
+     * own. Called from the server tick at a low frequency; the runtime decides
+     * internally whether it is worth a model call.
+     */
+    public void socialTick(SocialSignals signals) {
+        AgentRuntime current = this.runtime;
+        if (current == null || !localAuthority()) {
+            return;
+        }
+        current.updateSignals(signals);
+        current.tickSocial();
+    }
+
+    /** True when the local brain is the one reading and answering chat. */
+    public boolean mindActive() {
+        AgentRuntime current = this.runtime;
+        return current != null && localAuthority() && current.providerReady();
+    }
+
+    public Map<String, Object> socialStatus() {
+        AgentRuntime current = this.runtime;
+        if (current == null) {
+            Map<String, Object> off = new LinkedHashMap<>();
+            off.put("enabled", false);
+            off.put("reason", this.state);
+            return off;
+        }
+        return current.socialStatus();
+    }
+
+    /** Human-readable view of Cove's own mind, for {@code /cove mind}. */
+    public List<String> mindReport() {
+        Map<String, Object> social = socialStatus();
+        List<String> lines = new ArrayList<>();
+        lines.add("Cerebro local: " + (this.runtime == null ? this.state : "activo")
+                + " - proveedor " + (Boolean.TRUE.equals(social.get("provider_ready"))
+                ? "listo" : "no configurado")
+                + " - autoridad " + (Boolean.TRUE.equals(social.get("authority")) ? "si" : "no"));
+        lines.add("Ultimo motivo: " + social.getOrDefault("last_reason", "-"));
+        Object pending = social.get("pending_question");
+        if (pending instanceof Map<?, ?> question) {
+            long age = question.get("age_ms") instanceof Number n ? n.longValue() / 1000L : 0L;
+            lines.add("Esperando respuesta: \"" + question.get("text") + "\" hace " + age + " s"
+                    + (question.get("topic") == null || String.valueOf(question.get("topic")).isBlank()
+                    ? "" : " (tema: " + question.get("topic") + ")"));
+        } else {
+            lines.add("Esperando respuesta: nada");
+        }
+        Object identity = social.get("identity");
+        if (identity instanceof Map<?, ?> id) {
+            lines.add("Animo: " + id.get("current_mood") + " - rasgos " + id.get("traits"));
+            if (id.get("opinions") instanceof List<?> opinions && !opinions.isEmpty()) {
+                lines.add("Opinion propia: " + opinions.get(opinions.size() - 1));
+            }
+        }
+        lines.add("Conversaciones: " + social.getOrDefault("conversations", 0)
+                + " - ciclos pensados: " + social.getOrDefault("cycles", 0));
+        Object last = social.get("last_message");
+        if (last != null && !String.valueOf(last).isBlank()) {
+            lines.add("Ultimo dicho: " + last);
+        }
+        return lines;
     }
 
     // ------------------------------------------------------------------

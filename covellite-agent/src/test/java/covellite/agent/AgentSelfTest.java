@@ -9,6 +9,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import covellite.agent.brain.BrainArbiter;
+import covellite.agent.social.Identity;
+import covellite.agent.social.Interpretation;
+import covellite.agent.social.MindDecision;
+import covellite.agent.social.SocialInterpreter;
+import covellite.agent.social.SocialPolicy;
+import covellite.agent.social.SocialPrompt;
+import covellite.agent.social.SocialSettings;
+import covellite.agent.social.SocialSignals;
+import covellite.agent.social.SocialState;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
@@ -39,6 +48,7 @@ public final class AgentSelfTest {
         conversationTest();
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
+        socialTest(dir.resolve("social"));
 
         System.out.println("== agent self-test: " + passed + " passed, " + failed + " failed ==");
         if (failed > 0) {
@@ -466,6 +476,148 @@ public final class AgentSelfTest {
                 }
             }
             return new Response("listo, tengo 20 de vida", List.of(), "stop");
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Social layer: pending question, interpretation, policy, identity
+    // ------------------------------------------------------------------
+
+    private static void socialTest(Path dir) {
+        // Large enough to clear the policy's 5 s floor between spontaneous lines.
+        long t0 = 60_000L;
+        SocialState state = new SocialState(dir.resolve("state.json"));
+        state.ask("¿Donde queda la base?", "base", "perdi la referencia", "explorando montañas", t0);
+        for (int i = 0; i < 3; i++) {
+            state.recordHuman("mensaje " + i, SocialState.Intent.CHARLA, t0 + 1_000L + i);
+        }
+        SocialState reloaded = new SocialState(dir.resolve("state.json"));
+        check("social: pending question survives a restart",
+                reloaded.pending() != null && reloaded.pending().text().contains("base"));
+        check("social: pending question keeps its conversation id",
+                reloaded.pending() != null && reloaded.pending().conversationId() == 1L);
+        check("social: pending question is present in the prompt",
+                reloaded.promptBlock(t0 + 5_000L).contains("Pregunta pendiente"));
+
+        reloaded.answered(t0 + 6_000L);
+        check("social: an answer clears the question", reloaded.pending() == null);
+
+        for (int i = 0; i < 40; i++) {
+            reloaded.recordHuman("ruido " + i, SocialState.Intent.CHARLA, t0 + 7_000L + i);
+        }
+        check("social: exchange window stays bounded", reloaded.exchanges().size() <= 24);
+
+        Interpretation joke = Interpretation.parse(
+                "{\"intencion\":\"BROMA\",\"responde_pendiente\":true,\"dirigido_a_cove\":true,"
+                        + "\"tema\":\"base\",\"entendido\":\"bromea con estar perdidos\"}", "x");
+        check("interpretation: a joke is read as a joke", joke.joke());
+        check("interpretation: a joke can answer the pending question", joke.answersPending());
+        check("interpretation: a correction is an order",
+                Interpretation.parse("{\"intencion\":\"CORRECCION\"}", "x").correction());
+        check("interpretation: garbage never becomes an order",
+                Interpretation.parse("no entendi nada", "fallback").intent()
+                        == SocialState.Intent.DESCONOCIDA);
+        check("interpretation: unknown never answers for the player",
+                !Interpretation.parse("{}", "x").answersPending());
+        check("interpretation: json is found inside prose",
+                Interpretation.parse("claro: {\"intencion\":\"RESPUESTA\",\"responde_pendiente\":true} listo", "x")
+                        .intent() == SocialState.Intent.RESPUESTA);
+
+        // The interpreter asks the model: the interpretation is not a keyword table.
+        Identity identity = new Identity(dir.resolve("identity.json"));
+        SocialState asked = new SocialState(dir.resolve("asked.json"));
+        asked.ask("¿Que hacemos ahora?", "plan", "estamos sin rumbo", "atardecer", t0);
+        InterpreterStub stub = new InterpreterStub();
+        SocialInterpreter interpreter = new SocialInterpreter(AgentSettings.off(dir), stub);
+        Interpretation reading = interpreter.interpret("AIPlayer65", "nos perdimos, boludo", asked, identity);
+        check("interpreter: the model decides the reading",
+                reading.intent() == SocialState.Intent.BROMA && reading.answersPending());
+        check("interpreter: the pending question reaches the model",
+                stub.lastSystem.contains("¿Que hacemos ahora?"));
+
+        SocialSettings cfg = new SocialSettings(true, 1_000, 1_000, 2, 60_000, true);
+        SocialPolicy policy = new SocialPolicy(cfg);
+        SocialState fresh = new SocialState(dir.resolve("fresh.json"));
+        SocialSignals calm = new SocialSignals(t0, 1, 6.0D, 20.0F, 20, false, false, false, 0.0D,
+                "plains", "disponible", 120_000L, 0L);
+        check("policy: silence with nobody online",
+                !policy.evaluate(SocialSignals.quiet(t0), fresh, identity, 0.6D, 0L).think());
+        check("policy: silence while a task owns the body",
+                !policy.evaluate(new SocialSignals(t0, 1, 6.0D, 20.0F, 20, true, false, false, 0.0D,
+                        "", "", 0L, 0L), fresh, identity, 0.6D, 0L).think());
+        check("policy: a prolonged silence is a reason to think",
+                policy.evaluate(calm, fresh, identity, 0.6D, 0L).think());
+
+        fresh.ask("¿Vamos al norte?", "rumbo", "estamos lejos", "llanura", t0);
+        check("policy: it waits for the answer instead of talking over it",
+                !policy.evaluate(calm.withNow(t0 + 30_000L), fresh, identity, 0.6D, 0L).think());
+        check("policy: an unanswered question wakes the mind once",
+                policy.evaluate(calm.withNow(t0 + 61_000L), fresh, identity, 0.6D, 0L).think());
+        fresh.reminder();
+        check("policy: it does not nag twice in a row",
+                !policy.evaluate(calm.withNow(t0 + 62_000L), fresh, identity, 0.6D, 0L).think());
+        fresh.expire(t0 + 63_000L);
+
+        SocialSignals hungry = new SocialSignals(t0, 1, 6.0D, 20.0F, 4, false, false, false, 0.0D,
+                "", "disponible", 0L, 0L);
+        check("policy: hunger is a concrete reason",
+                policy.evaluate(hungry, fresh, identity, 0.6D, 0L).think());
+        check("policy: respects the cooldown between thoughts",
+                !policy.evaluate(hungry.withNow(t0 + 2_000L), fresh, identity, 0.6D, t0 + 2_000L).think());
+
+        SocialState capped = new SocialState(dir.resolve("capped.json"));
+        capped.recordCove("che", SocialState.Intent.CHARLA, true, t0);
+        capped.recordCove("mira", SocialState.Intent.CHARLA, true, t0);
+        check("policy: initiative cap per window",
+                !policy.evaluate(hungry.withNow(t0 + 5_000L), capped, identity, 0.6D, 0L).think());
+
+        double before = identity.trait("cautela");
+        identity.observe(Identity.Outcome.FALLO, "me empujo un creeper", t0);
+        check("identity: failure makes it more cautious", identity.trait("cautela") > before);
+        identity.observe(Identity.Outcome.DESCUBRIMIENTO, "una cueva con amatistas", t0);
+        check("identity: discovery raises curiosity and mood",
+                identity.mood(t0 + 1_000L).equals("curioso"));
+        identity.opinion("Prefiero construir en las montañas");
+        identity.opinion("Prefiero construir en las montañas");
+        check("identity: opinions are deduplicated",
+                identity.toMap().get("opinions") instanceof List<?> list && list.size() == 1);
+        Identity reloadedIdentity = new Identity(dir.resolve("identity.json"));
+        check("identity: traits survive a restart",
+                Math.abs(reloadedIdentity.trait("cautela") - identity.trait("cautela")) < 0.0001D);
+
+        check("mind: garbage is silence",
+                MindDecision.parse("no se").action() == MindDecision.Action.SILENCIO);
+        MindDecision talk = MindDecision.parse("{\"accion\":\"hablar\",\"mensaje\":\"che, mira esa cueva\","
+                + "\"motivo\":\"curiosidad\",\"pregunta\":true}");
+        check("mind: a spoken line can carry a question",
+                talk.action() == MindDecision.Action.HABLAR && talk.asksQuestion());
+        check("mind: an initiative needs an activity",
+                MindDecision.parse("{\"accion\":\"iniciativa\",\"actividad\":\"conseguir comida\"}")
+                        .action() == MindDecision.Action.INICIATIVA);
+        check("mind: an empty message downgrades to silence",
+                MindDecision.parse("{\"accion\":\"hablar\",\"mensaje\":\"\"}")
+                        .action() == MindDecision.Action.SILENCIO);
+
+        check("prompt: social block includes identity and pending question",
+                SocialPrompt.block(asked, identity, t0).contains("Identidad")
+                        && SocialPrompt.block(asked, identity, t0).contains("Que hacemos ahora"));
+    }
+
+    /** Returns a fixed interpretation while recording the prompt it received. */
+    private static final class InterpreterStub implements AgentProvider {
+        private String lastSystem = "";
+
+        @Override
+        public String id() {
+            return "stub";
+        }
+
+        @Override
+        public Response complete(Request request) {
+            this.lastSystem = request.system();
+            return new Response("{\"intencion\":\"BROMA\",\"responde_pendiente\":true,"
+                    + "\"dirigido_a_cove\":true,\"tema\":\"perdidos\","
+                    + "\"entendido\":\"se rie de estar perdidos\"}", List.of(), "stop");
         }
     }
 

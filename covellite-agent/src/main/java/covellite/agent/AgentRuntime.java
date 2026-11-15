@@ -1,5 +1,17 @@
 package covellite.agent;
 
+import covellite.agent.social.Identity;
+import covellite.agent.social.Interpretation;
+import covellite.agent.social.Mind;
+import covellite.agent.social.MindDecision;
+import covellite.agent.social.SocialInterpreter;
+import covellite.agent.social.SocialPolicy;
+import covellite.agent.social.SocialPrompt;
+import covellite.agent.social.SocialSettings;
+import covellite.agent.social.SocialSignals;
+import covellite.agent.social.SocialState;
+
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,6 +23,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Owns the AI runtime lifecycle.
@@ -19,6 +32,11 @@ import java.util.function.Consumer;
  * thread. The Minecraft server thread only ever hands text in and reads status
  * out, so a slow or unreachable provider can never stall a tick. Turns are
  * serialized on purpose: one companion cannot act on two plans at once.</p>
+ *
+ * <p>Since the social layer exists, the runtime also owns Cove's own mind: the
+ * conversation state (including the question it is waiting on), the evolving
+ * identity and the periodic deliberation that lets it speak or act without
+ * being addressed.</p>
  */
 public final class AgentRuntime implements AutoCloseable {
 
@@ -32,6 +50,20 @@ public final class AgentRuntime implements AutoCloseable {
     private final AgentLoop loop;
     private final AgentPlanner planner;
     private final ExecutorService worker;
+
+    private final SocialState social;
+    private final Identity identity;
+    private final SocialInterpreter interpreter;
+    private final Mind mind;
+    private final AtomicBoolean socialQueued = new AtomicBoolean();
+    private volatile SocialSettings socialSettings = SocialSettings.defaults();
+    private volatile SocialPolicy policy = new SocialPolicy(SocialSettings.defaults());
+    private volatile SocialSignals signals = SocialSignals.quiet(System.currentTimeMillis());
+    private volatile Supplier<Boolean> authority = () -> true;
+    private volatile long lastThinkAt;
+    private volatile String lastSocialReason = "";
+    private volatile String lastSocialMessage = "";
+    private volatile int socialCycles;
 
     private final AtomicBoolean busy = new AtomicBoolean();
     private final AtomicBoolean cancelled = new AtomicBoolean();
@@ -60,6 +92,13 @@ public final class AgentRuntime implements AutoCloseable {
         this.conversation = new ConversationManager(settings.historyLimit());
         this.loop = new AgentLoop(settings, provider, tools, this.context, memory);
         this.planner = new AgentPlanner(settings, provider, memory);
+
+        Path socialDir = settings.dataDir().resolve("social");
+        this.social = new SocialState(socialDir.resolve("state.json"));
+        this.identity = new Identity(socialDir.resolve("identity.json"));
+        this.interpreter = new SocialInterpreter(settings, provider);
+        this.mind = new Mind(settings, provider);
+
         this.worker = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "CoveMCP-agent");
             thread.setDaemon(true);
@@ -75,6 +114,17 @@ public final class AgentRuntime implements AutoCloseable {
     public void setChatSink(Consumer<String> sink) {
         this.chatSink = sink == null ? text -> {
         } : sink;
+    }
+
+    /** The authority gate: the body's active brain must be LOCAL. */
+    public void setAuthority(Supplier<Boolean> gate) {
+        this.authority = gate == null ? () -> true : gate;
+    }
+
+    /** Applies the social tunables from the mod configuration. */
+    public void configureSocial(SocialSettings socialSettings) {
+        this.socialSettings = socialSettings == null ? SocialSettings.defaults() : socialSettings;
+        this.policy = new SocialPolicy(this.socialSettings);
     }
 
     public void setWorldSnapshot(String json) {
@@ -104,7 +154,111 @@ public final class AgentRuntime implements AutoCloseable {
             this.state = "no_provider";
             return;
         }
-        ask("[Minecraft] " + sender + ": " + clean, "chat");
+        try {
+            this.worker.execute(() -> handleHumanChat(sender, clean));
+        } catch (RejectedExecutionException ignored) {
+            this.state = "closed";
+        }
+    }
+
+    /**
+     * Reads the message with the model, resolves (or keeps) the pending
+     * question, and only then runs the normal turn with that reading in the
+     * prompt. Runs on the agent worker.
+     */
+    private void handleHumanChat(String sender, String clean) {
+        if (isClosed()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long started = now;
+        this.busy.set(true);
+        this.state = "listening";
+        try {
+            Interpretation reading = this.interpreter.interpret(sender, clean, this.social, this.identity);
+            this.social.recordHuman(clean, reading.intent(), now);
+
+            String pendingNote = "";
+            SocialState.PendingQuestion pending = this.social.pending();
+            if (pending != null) {
+                long ageSeconds = Math.max(0L, now - pending.askedAt()) / 1000L;
+                if (reading.answersPending()) {
+                    this.social.answered(now);
+                    pendingNote = "El jugador responde a tu pregunta pendiente: \""
+                            + shorten(pending.text(), 140) + "\". Tema: "
+                            + (pending.topic().isBlank() ? "sin tema" : pending.topic())
+                            + ". Lectura: " + (reading.understood().isBlank()
+                            ? "te contesto" : reading.understood())
+                            + ". Continua desde ahi y no repitas la pregunta.";
+                    this.identity.observe(reading.joke()
+                            ? Identity.Outcome.BROMA : Identity.Outcome.CHARLA, clean, now);
+                    this.memory.remember(AgentMemory.Kind.SEMANTIC,
+                            "respuesta del jugador sobre \"" + shorten(pending.text(), 100) + "\": " + clean,
+                            List.of("respuesta", sender));
+                    if (!reading.newInfo().isBlank()) {
+                        this.memory.remember(AgentMemory.Kind.SEMANTIC, reading.newInfo(),
+                                List.of("dato", sender));
+                    }
+                } else {
+                    pendingNote = "Seguis esperando respuesta a \"" + shorten(pending.text(), 140)
+                            + "\" (hace " + ageSeconds + " s). Este mensaje no la responde; "
+                            + "no la inventes ni la des por contestada.";
+                }
+            }
+            if (reading.correction()) {
+                this.identity.observe(Identity.Outcome.CORRECCION, clean, now);
+                this.identity.opinion("El jugador me corrigio: " + shorten(clean, 120));
+            }
+
+            String turn = turnText(sender, clean, reading, pendingNote);
+            this.state = "thinking";
+            AgentLoop.Result result = runLoop(turn, "chat");
+            this.turns.incrementAndGet();
+            if (result.ok()) {
+                this.lastAnswer = result.text();
+                this.lastError = "";
+                afterTurn(result.text(), "chat", now);
+            } else {
+                this.lastError = result.error() == null ? "unknown error" : result.error();
+                this.state = "error";
+            }
+        } catch (RuntimeException | Error e) {
+            this.lastError = String.valueOf(e);
+            this.state = "error";
+        } finally {
+            this.lastTurnMs = System.currentTimeMillis() - started;
+            this.busy.set(false);
+            if (!"error".equals(this.state)) {
+                this.state = "idle";
+            }
+        }
+    }
+
+    private static String turnText(String sender, String clean, Interpretation reading,
+                                   String pendingNote) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[Jugador] ").append(sender).append(": ").append(clean).append('\n');
+        builder.append("[Lo que entendiste] intencion=").append(reading.intent().name());
+        if (!reading.topic().isBlank()) {
+            builder.append("; tema=").append(reading.topic());
+        }
+        if (reading.joke()) {
+            builder.append("; es una broma: no la tomes como dato literal");
+        }
+        if (reading.intent().isOrder()) {
+            builder.append("; es una orden o correccion: actua");
+        }
+        if (reading.addressedToCove()) {
+            builder.append("; te esta hablando a vos");
+        }
+        builder.append('\n');
+        if (!reading.understood().isBlank()) {
+            builder.append("[Lectura] ").append(reading.understood()).append('\n');
+        }
+        if (!pendingNote.isBlank()) {
+            builder.append("[Conversacion] ").append(pendingNote).append('\n');
+        }
+        return builder.toString().trim();
     }
 
     /** Automatic wake-up when a player joins the world. */
@@ -140,23 +294,14 @@ public final class AgentRuntime implements AutoCloseable {
         this.busy.set(true);
         this.cancelled.set(false);
         this.state = "thinking";
-        // Goals travel with every turn: the model must see what is still pending
-        // even after the conversation window dropped the original request.
-        this.context.setExtraContext(this.goals.summary());
         try {
-            this.conversation.add(AgentProvider.Message.user(text));
-            AgentLoop.Result result = this.loop.run(this.conversation, this.chatSink,
-                    this.cancelled::get);
+            AgentLoop.Result result = runLoop(text, source);
             this.turns.incrementAndGet();
             if (result.ok()) {
                 this.lastAnswer = result.text();
                 this.lastError = "";
                 this.state = "idle";
-                if (!result.text().isBlank()) {
-                    this.memory.remember(AgentMemory.Kind.EPISODIC,
-                            "turno (" + source + "): " + shorten(result.text(), 220),
-                            List.of("turn"));
-                }
+                afterTurn(result.text(), source, System.currentTimeMillis());
                 future.complete(result.text());
             } else {
                 this.lastError = result.error() == null ? "unknown error" : result.error();
@@ -171,6 +316,170 @@ public final class AgentRuntime implements AutoCloseable {
             this.lastTurnMs = System.currentTimeMillis() - started;
             this.busy.set(false);
         }
+    }
+
+    /**
+     * One model/tool loop. Goals and the social context (identity, pending
+     * question, recent exchanges) travel with every turn, so the model never
+     * loses the thread even when the conversation window drops it.
+     */
+    private AgentLoop.Result runLoop(String text, String source) {
+        long now = System.currentTimeMillis();
+        this.context.setExtraContext(this.goals.summary());
+        this.context.setSocialContext(SocialPrompt.rules()
+                + SocialPrompt.block(this.social, this.identity, now));
+        this.conversation.add(AgentProvider.Message.user(text));
+        return this.loop.run(this.conversation, this.chatSink, this.cancelled::get);
+    }
+
+    /** Records what Cove just said and, if it asked, what it is waiting on. */
+    private void afterTurn(String answer, String source, long nowMs) {
+        if (answer == null || answer.isBlank()) {
+            return;
+        }
+        this.social.recordCove(answer, SocialState.Intent.CHARLA, false, nowMs);
+        this.memory.remember(AgentMemory.Kind.CONVERSATION,
+                "cove (" + source + "): " + shorten(answer, 200), List.of("cove", source));
+        if (looksLikeQuestion(answer)) {
+            this.social.ask(answer, "", source, snapshotBrief(), nowMs);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Own initiative
+    // ------------------------------------------------------------------
+
+    /** Latest world reading used by the next deliberation. */
+    public void updateSignals(SocialSignals latest) {
+        if (latest != null) {
+            this.signals = latest;
+        }
+    }
+
+    /** Asks the runtime to consider speaking or acting on its own. Cheap to call often. */
+    public void tickSocial() {
+        if (isClosed() || !this.socialSettings.enabled()) {
+            return;
+        }
+        if (!this.socialQueued.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            this.worker.execute(() -> {
+                try {
+                    socialCycle();
+                } finally {
+                    this.socialQueued.set(false);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            this.socialQueued.set(false);
+        }
+    }
+
+    private void socialCycle() {
+        if (isClosed()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (!providerReady()) {
+            this.lastSocialReason = "sin_proveedor";
+            return;
+        }
+        if (!this.authority.get()) {
+            this.lastSocialReason = "cerebro_inactivo";
+            return;
+        }
+        if (this.busy.get()) {
+            this.lastSocialReason = "ocupado";
+            return;
+        }
+        SocialSignals current = this.signals.withNow(now);
+        SocialPolicy.Verdict verdict = this.policy.evaluate(current, this.social, this.identity,
+                chattiness(), this.lastThinkAt);
+        this.lastSocialReason = verdict.reason();
+        if (!verdict.think()) {
+            return;
+        }
+        this.lastThinkAt = now;
+        this.socialCycles++;
+        this.busy.set(true);
+        this.state = "pensando";
+        try {
+            MindDecision decision = this.mind.think(this.settings,
+                    AgentPersonality.of(this.settings.personality()), this.context.snapshot(),
+                    this.social, this.identity, current, verdict.trigger(), chattiness());
+            if (!decision.learning().isBlank()) {
+                this.identity.opinion(decision.learning());
+                this.memory.remember(AgentMemory.Kind.SEMANTIC,
+                        "conclusion propia: " + decision.learning(), List.of("identidad"));
+            }
+            if (!decision.mood().isBlank()) {
+                this.identity.setMood(decision.mood(), decision.motive(), now, 180_000L);
+            }
+            switch (decision.action()) {
+                case SILENCIO -> this.lastSocialMessage = "";
+                case HABLAR -> speakOwn(decision, now);
+                case INICIATIVA -> {
+                    if (decision.saysSomething()) {
+                        speakOwn(decision, now);
+                    }
+                    if (this.socialSettings.initiativeActions() && !decision.activity().isBlank()) {
+                        String prompt = "[Propia iniciativa] " + decision.activity()
+                                + (decision.motive().isBlank() ? "" : " (motivo: " + decision.motive() + ")");
+                        AgentLoop.Result result = runLoop(prompt, "iniciativa");
+                        this.turns.incrementAndGet();
+                        if (result.ok()) {
+                            afterTurn(result.text(), "iniciativa", System.currentTimeMillis());
+                        } else {
+                            this.lastError = result.error();
+                        }
+                    }
+                }
+                default -> {
+                }
+            }
+            this.state = "idle";
+        } catch (RuntimeException e) {
+            this.lastError = String.valueOf(e);
+            this.state = "error";
+        } finally {
+            this.busy.set(false);
+        }
+    }
+
+    private void speakOwn(MindDecision decision, long nowMs) {
+        String line = decision.message() == null ? "" : decision.message().trim();
+        if (line.isBlank()) {
+            return;
+        }
+        this.lastSocialMessage = line;
+        this.conversation.add(AgentProvider.Message.assistant(line));
+        if (this.settings.replyInChat()) {
+            this.chatSink.accept(line);
+        }
+        this.social.recordCove(line, SocialState.Intent.CHARLA, true, nowMs);
+        this.memory.remember(AgentMemory.Kind.CONVERSATION,
+                "cove (iniciativa): " + shorten(line, 200), List.of("cove", "iniciativa"));
+        if (decision.asksQuestion() || looksLikeQuestion(line)) {
+            this.social.ask(line, "", decision.motive().isBlank() ? "iniciativa" : decision.motive(),
+                    snapshotBrief(), nowMs);
+        }
+    }
+
+    private String snapshotBrief() {
+        String snapshot = this.context.snapshot();
+        return snapshot.length() > 600 ? snapshot.substring(0, 600) : snapshot;
+    }
+
+    private double chattiness() {
+        double base = AgentPersonality.of(this.settings.personality()).chattiness();
+        return Math.max(0.05D, Math.min(1.0D, (base * 0.7D) + (this.identity.trait("iniciativa") * 0.5D)));
+    }
+
+    private static boolean looksLikeQuestion(String text) {
+        String trimmed = text.trim();
+        return trimmed.endsWith("?") || trimmed.endsWith("¿") || trimmed.contains("¿");
     }
 
     /**
@@ -279,6 +588,40 @@ public final class AgentRuntime implements AutoCloseable {
         map.put("tools", new ArrayList<Object>(this.tools.names()));
         map.put("memory", this.memory.counts());
         map.put("goals", this.goals.status());
+        map.put("social", socialStatus());
+        return map;
+    }
+
+    /** Everything the player needs to see why Cove spoke, asked or stayed quiet. */
+    public Map<String, Object> socialStatus() {
+        long now = System.currentTimeMillis();
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("enabled", this.socialSettings.enabled());
+        map.put("provider_ready", providerReady());
+        map.put("authority", this.authority.get());
+        map.put("last_reason", this.lastSocialReason);
+        map.put("last_message", shorten(this.lastSocialMessage, 200));
+        map.put("cycles", this.socialCycles);
+        map.put("since_human_chat_ms", this.social.lastHumanChatAt() == 0L
+                ? -1L : Math.max(0L, now - this.social.lastHumanChatAt()));
+        map.put("since_cove_spoke_ms", this.social.lastSpokeAt() == 0L
+                ? -1L : Math.max(0L, now - this.social.lastSpokeAt()));
+        SocialState.PendingQuestion pending = this.social.pending();
+        if (pending == null) {
+            map.put("pending_question", null);
+        } else {
+            Map<String, Object> question = new LinkedHashMap<>();
+            question.put("text", pending.text());
+            question.put("topic", pending.topic());
+            question.put("motive", pending.motive());
+            question.put("age_ms", Math.max(0L, now - pending.askedAt()));
+            question.put("conversation", pending.conversationId());
+            question.put("reminders", pending.reminders());
+            map.put("pending_question", question);
+        }
+        map.put("conversations", this.social.conversations());
+        map.put("identity", this.identity.status(now));
+        map.put("recent", this.social.exchanges().size());
         return map;
     }
 
@@ -304,6 +647,14 @@ public final class AgentRuntime implements AutoCloseable {
 
     public ConversationManager conversation() {
         return this.conversation;
+    }
+
+    public SocialState social() {
+        return this.social;
+    }
+
+    public Identity identity() {
+        return this.identity;
     }
 
     private static String shorten(String text, int max) {
