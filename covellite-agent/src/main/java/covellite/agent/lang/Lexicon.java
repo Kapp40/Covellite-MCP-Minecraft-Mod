@@ -23,7 +23,7 @@ import java.util.Set;
 public final class Lexicon {
 
     public enum Category {
-        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD
+        ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD, FEELING, ABSURD
     }
 
     /** One word with its synonyms and, for verbs, the action it refers to. */

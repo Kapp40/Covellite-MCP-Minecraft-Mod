@@ -69,6 +69,79 @@ public record WorldFacts(
         return this.humansNear <= 0;
     }
 
+    /**
+     * Reads whatever the runtime put in front of the brain: the JSON world
+     * snapshot when present and the plain-text situation line otherwise. The
+     * snapshot is looked up after its heading, so braces used earlier in the
+     * prompt cannot be mistaken for the world.
+     */
+    public static WorldFacts fromPrompt(String prompt, WorldFacts fallback) {
+        WorldFacts base = fallback == null ? empty() : fallback;
+        if (prompt == null || prompt.isBlank()) {
+            return base;
+        }
+        int marker = prompt.indexOf("## Estado del mundo");
+        WorldFacts fromJson = marker >= 0
+                ? fromSnapshot(prompt.substring(marker), base)
+                : base;
+        return applySituation(prompt, fromJson);
+    }
+
+    private static WorldFacts applySituation(String prompt, WorldFacts base) {
+        int marker = prompt.indexOf("## Situacion");
+        if (marker < 0) {
+            // Without the explicit situation block, numbers in chat or memory
+            // text must not be mistaken for health or food.
+            return base;
+        }
+        String situation = prompt.substring(marker);
+        int vida = integerAfter(situation, "vida ");
+        int comida = integerAfter(situation, "comida ");
+        int humanos = integerAfter(situation, "jugadores cerca: ");
+        double spawn = situation.contains("lejos del punto de inicio")
+                ? numberAfter(situation, "bloques") : base.spawnDistance();
+        String bioma = segment(situation, "bioma ");
+        String actividad = segment(situation, "actividad ");
+        return new WorldFacts(base.playerName(),
+                bioma.isBlank() ? base.biome() : bioma,
+                situation.contains("es de noche") || base.night(),
+                vida >= 0 ? vida : base.health(),
+                comida >= 0 ? comida : base.food(),
+                spawn, humanos >= 0 ? humanos : base.humansNear(),
+                actividad.isBlank() ? base.activity() : actividad,
+                base.knownPlaces(), base.inventory());
+    }
+
+    private static int integerAfter(String text, String marker) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile(java.util.regex.Pattern.quote(marker) + "(\\d+)")
+                .matcher(text);
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
+    }
+
+    private static double numberAfter(String text, String suffix) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(\\d+)\\s*" + java.util.regex.Pattern.quote(suffix))
+                .matcher(text);
+        return matcher.find() ? Double.parseDouble(matcher.group(1)) : 0.0D;
+    }
+
+    private static String segment(String text, String marker) {
+        int start = text.indexOf(marker);
+        if (start < 0) {
+            return "";
+        }
+        start += marker.length();
+        int end = text.length();
+        for (char stop : new char[]{';', '\n', '\r'}) {
+            int found = text.indexOf(stop, start);
+            if (found >= 0 && found < end) {
+                end = found;
+            }
+        }
+        return text.substring(start, end).trim();
+    }
+
     /** Best-effort read of the JSON snapshot the mod already produces. */
     public static WorldFacts fromSnapshot(String json, WorldFacts fallback) {
         WorldFacts base = fallback == null ? empty() : fallback;

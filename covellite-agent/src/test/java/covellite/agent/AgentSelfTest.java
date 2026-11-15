@@ -733,6 +733,42 @@ public final class AgentSelfTest {
         check("brain: night raises a question",
                 brain.decide(nightWorld, null, identity, null).asksQuestion());
 
+        Parser.Reading statement = parser.parse("me gusta comer pan", world, null);
+        check("parser: an infinitive inside a statement is not an order", !statement.order());
+        check("parser: a preference is recognised",
+                statement.act() == Parser.Act.PREFERENCIA);
+
+        Parser.Reading tired = parser.parse("estoy cansado", world, null);
+        check("parser: a feeling is recognised",
+                tired.act() == Parser.Act.SENTIMIENTO && "cansado".equals(tired.feeling()));
+
+        Parser.Reading aboutCove = parser.parse("¿cómo estás?", world, null);
+        check("parser: a question about Cove is not a world question",
+                aboutCove.act() == Parser.Act.PREGUNTA_SOBRE_COVE);
+
+        Parser.Reading praise = parser.parse("sos un genio", world, null);
+        check("parser: praise is recognised", praise.act() == Parser.Act.ELOGIO);
+
+        Parser.Reading negatedOrder = parser.parse("no cortes el árbol", world, null);
+        check("parser: a negative order is recognised and negated",
+                negatedOrder.order() && negatedOrder.negated());
+
+        List<AgentProvider.ToolCall> initiative = brain.toolsFor("comer algo del inventario",
+                world, "Lorex", tools);
+        check("brain: an initiative verb phrase resolves its tool",
+                initiative.size() == 1 && "eat".equals(initiative.get(0).name()));
+
+        WorldFacts promptFacts = WorldFacts.fromPrompt(
+                "ejemplo {} antes del mundo\n## Estado del mundo\n"
+                        + "{\"companion\":{\"health\":7},\"biome\":\"desert\"}",
+                WorldFacts.empty());
+        Parser.Reading unsure = parser.parse("no sé", world, pending);
+        check("parser: 'no se' answers without being a no",
+                unsure.act() == Parser.Act.RESPUESTA_DATO && unsure.answersPending());
+
+        check("world: reads the snapshot after its heading, not the first braces",
+                Math.round(promptFacts.health()) == 7 && "desert".equals(promptFacts.biome()));
+
         check("settings: the embedded brain is the default and needs no key",
                 AgentSettings.from(Map.of(), dir).provider().equals("cove")
                         && AgentSettings.from(Map.of(), dir).configured());
@@ -768,6 +804,43 @@ public final class AgentSelfTest {
         check("provider: turns an order into a tool call",
                 orderResponse.calls().size() == 1
                         && "chop_tree".equals(orderResponse.calls().get(0).name()));
+
+        AgentProvider.Request historyPrompt = new AgentProvider.Request("cove", "",
+                List.of(
+                        AgentProvider.Message.user("[Jugador] Lorex: cortá ese árbol"),
+                        AgentProvider.Message.assistant("", List.of(
+                                new AgentProvider.ToolCall("c1", "chop_tree", Map.of()))),
+                        AgentProvider.Message.tool("c1", "chop_tree", "ok"),
+                        AgentProvider.Message.assistant("listo"),
+                        AgentProvider.Message.user("[Jugador] Lorex: hola")),
+                List.of(new AgentProvider.ToolSpec("chop_tree", "tala", Map.of())), 300, 0.4D);
+        check("provider: an old tool result does not hijack chat",
+                !provider.complete(historyPrompt).text().isBlank()
+                        && provider.complete(historyPrompt).text().contains("Lorex"));
+
+        AgentProvider.Request pendingChat = new AgentProvider.Request("cove",
+                "## Pregunta pendiente\nPreguntaste: \"¿Dónde queda la base?\"\nTema: ubicacion",
+                List.of(AgentProvider.Message.user("[Jugador] Lorex: la base está en Marte")),
+                List.of(), 300, 0.4D);
+        check("provider: a joke in a normal turn is answered as a joke",
+                provider.complete(pendingChat).text().toLowerCase().contains("jaja"));
+
+        AgentProvider.Request negatedPrompt = new AgentProvider.Request("cove", "",
+                List.of(AgentProvider.Message.user("[Jugador] Lorex: no cortes el árbol")),
+                List.of(new AgentProvider.ToolSpec("chop_tree", "tala", Map.of())), 300, 0.4D);
+        AgentProvider.Response negatedResponse = provider.complete(negatedPrompt);
+        check("provider: a negative order is not executed", negatedResponse.calls().isEmpty());
+
+        AgentProvider.Request failedTool = new AgentProvider.Request("cove", "",
+                List.of(
+                        AgentProvider.Message.user("[Jugador] Lorex: cortá ese árbol"),
+                        AgentProvider.Message.assistant("", List.of(
+                                new AgentProvider.ToolCall("c1", "chop_tree", Map.of()))),
+                        AgentProvider.Message.tool("c1", "chop_tree", "{\"error\":\"sin arboles\"}")),
+                List.of(), 300, 0.4D);
+        String failureLine = provider.complete(failedTool).text();
+        check("provider: reports a failed tool instead of faking success",
+                !failureLine.isBlank() && !failureLine.toLowerCase().contains("ya voy"));
     }
 
     private static void check(String label, boolean condition) {

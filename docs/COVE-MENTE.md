@@ -83,8 +83,20 @@ Tamaño actual: **4 KB**, ~110 entradas y ~300 formas indexadas.
    mundo o usa un nombre que Cove no conoce (`la base está en Marte`) se marca como
    broma y no se toma como dato, pero sí cuenta como respuesta.
 
-Actos posibles: `ORDEN`, `PREGUNTA_A_COVE`, `RESPUESTA_SI`, `RESPUESTA_NO`,
-`RESPUESTA_DATO`, `BROMA`, `CORRECCION`, `SALUDO`, `CHARLA`, `AMBIGUA`.
+Actos posibles: `ORDEN`, `PREGUNTA_A_COVE`, `PREGUNTA_SOBRE_COVE`, `RESPUESTA_SI`,
+`RESPUESTA_NO`, `RESPUESTA_DATO`, `BROMA`, `CORRECCION`, `SALUDO`, `PREFERENCIA`,
+`SENTIMIENTO`, `ELOGIO`, `INSULTO`, `PLAN`, `CHARLA`, `AMBIGUA`.
+
+La clasificación es composicional, no por palabra suelta:
+
+- `PREFERENCIA` pide marca de preferencia (`gusta`, `prefiero`, `odio`) **y** primera persona.
+- `SENTIMIENTO` pide una palabra de ánimo del léxico **y** primera persona (`estoy`, `tengo`, `me`).
+- `ORDEN` pide imperativo real (voseo incluido), verbo solo, o infinitivo precedido por
+  `a`/`que`/`de`/`para`. Un infinitivo dentro de una frase (`me gusta comer pan`) no es orden.
+- Una negación sobre un verbo corto (`no cortes el árbol`) es orden negada: Cove acusa recibo y no
+  la ejecuta.
+- `PREGUNTA_SOBRE_COVE` (`¿cómo estás?`, `¿qué opinás?`) se responde sobre Cove, no sobre el mundo.
+- Respuestas a la pregunta pendiente: sí, no, dato, vaga, `no sé` (dato sin información) o broma.
 
 ## 5. Generación
 
@@ -174,7 +186,34 @@ reflejos. El cerebro externo por MCP sigue disponible, pero es opcional.
 - Un ciclo de decisión no hace E/S: lee el estado en memoria y como mucho persiste
   `social/state.json`, que son unos pocos KB.
 
-## 10. Límites honestos
+## 10. Correcciones de la revisión de código
+
+Errores encontrados al revisar el motor y cómo quedaron:
+
+1. **El historial secuestraba el chat.** El proveedor miraba si había *algún* mensaje de tool en
+   la ventana; después del primer tool contestaba "dale, ya voy" a todo. Ahora solo reacciona si el
+   **último** mensaje es el resultado de una tool.
+2. **La pregunta pendiente no se leía en el turno normal**, así que una broma se contestaba con
+   "entiendo". Ahora el turno normal también lee `Preguntaste:` / `Tema:`.
+3. **Cualquier infinitivo era una orden** (`me gusta comer pan` ejecutaba `eat`). Ahora se exige
+   imperativo o infinitivo introducido por preposición.
+4. **Una frase larga y ajena resolvía la pregunta pendiente.** Ahora solo la resuelven datos,
+   direcciones, números o una frase corta; si no, queda pendiente.
+5. **Cualquier palabra desconocida con un verbo locativo era "broma"**, incluso `centro`. Ahora se
+   exige nombre propio capitalizado o una palabra de la lista `ABSURD` (`marte`, `luna`, …).
+6. **Los números del chat se confundían con vida y comida.** La lectura de situación ahora exige el
+   bloque `## Situacion`, y el snapshot se busca después de su encabezado, no en el primer `{`.
+7. **Colisión de léxico:** `cansado` estaba como sinónimo de `sueño`, así que no se reconocía el
+   sentimiento. Se separaron las categorías.
+8. **Un tool fallido se reportaba como éxito.** El JSON del resultado se inspecciona: si trae
+   `error`, Cove dice que no le salió.
+9. **La identidad no llegaba al cerebro embebido.** Ahora se leen los rasgos del prompt y se adopta
+   el tono real (humor, curiosidad, iniciativa).
+10. **Las negaciones ejecutaban la acción.** `no cortes el árbol` ya no llama a `chop_tree`.
+11. **Un comentario después de preguntar** se tomaba como respuesta solo por ser corto; ahora la
+    regla quedó explícita y cubierta por tests.
+
+## 11. Límites honestos
 
 - El vocabulario está cerrado al léxico. Una palabra nueva que no esté en el archivo
   no se entiende (se trata como nombre propio desconocido, lo que sirve para detectar
@@ -186,11 +225,11 @@ reflejos. El cerebro externo por MCP sigue disponible, pero es opcional.
 - No recuerda hechos nuevos por sí sola salvo los que el runtime guarda (memoria,
   estado social, identidad).
 - Nada de esto está verificado todavía dentro de una partida: está compilado y
-  cubierto por 154 checks unitarios, no por juego real.
+  cubierto por 167 checks unitarios, no por juego real.
 
-## 11. Cómo probar y extender
+## 12. Cómo probar y extender
 
-- Pruebas: `./gradlew :covellite-agent:agentTest` (154 checks).
+- Pruebas: `./gradlew :covellite-agent:agentTest` (167 checks).
 - En juego: `/cove mind` muestra proveedor, autoridad, último motivo, pregunta
   pendiente, ánimo y rasgos.
 - Extender el vocabulario: editar `cove/lexicon.txt`.

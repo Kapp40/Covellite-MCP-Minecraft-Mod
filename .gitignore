@@ -20,3 +20,6 @@ crash-reports/
 # OS
 Thumbs.db
 .DS_Store
+
+# Volcados de JVM y artefactos locales
+*.hprof

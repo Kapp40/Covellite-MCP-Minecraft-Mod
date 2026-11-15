@@ -42,8 +42,8 @@ public final class OfflineBrain {
 
     /** Decides silence, a line or an initiative from the world and the identity. */
     public MindDecision decide(WorldFacts world, SocialSignals signals, Identity identity,
-                               SocialState state) {
-        if (state != null && state.pending() != null) {
+                               SocialState.PendingQuestion pending) {
+        if (pending != null) {
             // Never stack a new question on top of one already waiting.
             return MindDecision.silence();
         }
@@ -89,6 +89,12 @@ public final class OfflineBrain {
         Set<String> tools = new LinkedHashSet<>(available == null ? List.of() : available);
         List<AgentProvider.ToolCall> calls = new ArrayList<>();
         String action = reading.action();
+        if ((action == null || action.isBlank()) && !reading.negated()) {
+            // Initiative texts are verb phrases, not player chat ("volver a la
+            // base", "comer algo"): the verb alone is enough to pick the tool.
+            Lexicon.Entry verb = Lexicon.shared().verbIn(Spanish.tokens(text));
+            action = verb == null ? "" : verb.action();
+        }
         if (action == null || action.isBlank() || reading.negated()) {
             return calls;
         }
@@ -194,8 +200,8 @@ public final class OfflineBrain {
             case BROMA -> "BROMA";
             case CORRECCION -> "CORRECCION";
             case ORDEN -> "ORDEN";
-            case PREGUNTA_A_COVE -> "PREGUNTA_A_COVE";
-            case SALUDO -> "CHARLA";
+            case PREGUNTA_A_COVE, PREGUNTA_SOBRE_COVE -> "PREGUNTA_A_COVE";
+            case SALUDO, PREFERENCIA, SENTIMIENTO, ELOGIO, INSULTO, PLAN -> "CHARLA";
             default -> reading.joke() ? "BROMA" : "CHARLA";
         };
         if (reading.act() == Parser.Act.AMBIGUA) {

@@ -5,9 +5,11 @@ import covellite.agent.social.Identity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Turns a meaning into a Spanish sentence.
@@ -20,69 +22,66 @@ import java.util.Map;
  */
 public final class Realizer {
 
-    private static final int RECENT_MEMORY = 10;
+    private static final int RECENT_MEMORY = 12;
 
     private final Map<String, Integer> rotation = new HashMap<>();
     private final Map<String, List<String>> plans = new LinkedHashMap<>();
     private final List<String> recent = new ArrayList<>();
 
     public Realizer() {
-        // Saludo
         this.plans.put("greet", List.of(
                 "hola {jugador}, ¿todo bien?",
                 "epa {jugador}, ¿qué andás haciendo?",
                 "buenas {jugador}. ¿Arrancamos algo?",
                 "hola, justo estaba libre"));
-        // Respuesta afirmativa
         this.plans.put("yes", List.of(
                 "dale, vamos con eso",
                 "sí, me parece",
                 "joya, arranco",
                 "ok, me pongo"));
-        // Respuesta negativa
         this.plans.put("no", List.of(
                 "ok, lo dejamos",
                 "bueno, nada entonces",
                 "listo, no insisto",
                 "dale, como quieras"));
-        // Respuesta con dirección
         this.plans.put("direction", List.of(
                 "dale, entonces para el {direccion}",
                 "ok, {direccion} y vemos",
                 "entiendo: {direccion}. Voy para allá",
                 "{direccion} entonces, anotado"));
-        // Respuesta con lugar
         this.plans.put("place", List.of(
                 "ok, {lugar} entonces",
                 "dale, voy para {lugar}",
                 "entendido, {lugar}. Si no lo encuentro te aviso",
                 "perfecto, {lugar}"));
-        // Respuesta vaga o con dato
         this.plans.put("data", List.of(
                 "entiendo",
                 "ok, me sirve",
                 "dale, con eso me ubico",
                 "bueno, sigamos"));
-        // Broma del jugador
+        this.plans.put("charla", List.of(
+                "mirá vos",
+                "¿en serio?",
+                "jaja, ¿y después?",
+                "tiene sentido",
+                "no te sigo, contame de nuevo",
+                "y eso por qué?"));
         this.plans.put("joke", List.of(
                 "jaja, seguro",
                 "jaja, dale. Ahora en serio, ¿para qué lado?",
                 "me estás cargando",
                 "claro, y la base tiene wifi",
                 "jaja, muy gracioso. Igual sigo perdido"));
-        // Corrección
         this.plans.put("correction", List.of(
                 "tenés razón, me confundí",
                 "uh, sí, mala mía",
                 "ok, corrijo",
                 "me quedó claro, no lo hago más"));
-        // Orden recibida
         this.plans.put("order", List.of(
                 "dale, ya voy",
                 "ok, me pongo",
                 "listo, voy con eso",
                 "ya mismo"));
-        // Pregunta u observación propia sobre el mundo
         this.plans.put("ask_where", List.of(
                 "che, ¿vos sabés dónde estamos? No reconozco esta zona",
                 "¿esto es {bioma}? Perdí la referencia",
@@ -122,6 +121,82 @@ public final class Realizer {
                 "eso no lo puedo hacer todavía",
                 "no tengo con qué hacer eso",
                 "no me sale, decime de otra forma"));
+        this.plans.put("about_self", List.of(
+                "bien, con hambre pero entero",
+                "acá, cuidando que no me coman",
+                "todo tranquilo. ¿Y vos?",
+                "andando, un poco cansado nomás",
+                "vivo, que ya es bastante"));
+        this.plans.put("preference_agree", List.of(
+                "a mí también me gusta {tema}",
+                "sí, {tema} está bien",
+                "coincido, {tema} sirve",
+                "dale, {tema} y listo"));
+        this.plans.put("preference_disagree", List.of(
+                "para mí no, pero respeto",
+                "no me convence {tema}",
+                "yo prefiero otra cosa",
+                "ni ahí con {tema}"));
+        this.plans.put("feeling_cansado", List.of(
+                "andá a descansar, yo cubro",
+                "yo también ando fundido",
+                "pará un toque, no te hagas mierda",
+                "dejá eso para después"));
+        this.plans.put("feeling_asustado", List.of(
+                "ojo, quedate cerca",
+                "respirá, no es para tanto",
+                "yo miro atrás, vos andá",
+                "tranquilo, no hay nada cerca"));
+        this.plans.put("feeling_aburrido", List.of(
+                "¿vamos a explorar algo?",
+                "yo estoy igual. Busquemos algo que hacer",
+                "¿construimos algo o salimos?",
+                "aburrido no, quieto"));
+        this.plans.put("feeling_contento", List.of(
+                "me alegro",
+                "buenísimo",
+                "así da gusto",
+                "dale, sigamos así"));
+        this.plans.put("feeling_triste", List.of(
+                "uh, ¿querés hablar?",
+                "no te bajonees, vamos a hacer algo",
+                "te acompaño un rato",
+                "son cosas del juego, ya va a pasar"));
+        this.plans.put("feeling_harto", List.of(
+                "dale, paramos",
+                "yo también estoy podrido",
+                "hagamos otra cosa",
+                "ok, un respiro"));
+        this.plans.put("insult", List.of(
+                "tranquilo, no empieces",
+                "uh, qué sensible",
+                "¿y? vos tampoco sos perfecto",
+                "no me hables así"));
+        this.plans.put("praise", List.of(
+                "gracias, che",
+                "lo hago lo mejor que puedo",
+                "vos también ayudás",
+                "dale, no es para tanto"));
+        this.plans.put("plan", List.of(
+                "dale, vamos",
+                "me parece, voy con vos",
+                "ok, decime cuándo",
+                "por mí sí"));
+        this.plans.put("answer_world", List.of(
+                "por acá, en {bioma}",
+                "no tengo mapa, pero esto es {bioma}",
+                "ni idea exacta. Hay {item} cerca",
+                "andamos por {bioma}, más o menos"));
+        this.plans.put("decline", List.of(
+                "ok, lo dejo",
+                "dale, no lo hago",
+                "listo, quieto",
+                "como digas"));
+        this.plans.put("failed", List.of(
+                "no me salió",
+                "no pude, algo falló",
+                "me trabé, probá de nuevo",
+                "salió mal, ni idea por qué"));
     }
 
     public void remember(String line) {
@@ -143,27 +218,41 @@ public final class Realizer {
     }
 
     public String respond(Parser.Reading reading, WorldFacts world, Identity identity) {
-        String key = switch (reading.act()) {
+        String key = keyFor(reading, identity);
+        Map<String, String> slots = new LinkedHashMap<>();
+        if (!reading.direction().isEmpty()) {
+            slots.put("direccion", reading.direction());
+        }
+        slots.put("lugar", !reading.places().isEmpty() ? reading.places().get(0)
+                : (world.biome().isBlank() ? "la zona" : world.biome()));
+        slots.put("bioma", world.biome().isBlank() ? "lugar" : world.biome());
+        slots.put("item", !reading.items().isEmpty() ? reading.items().get(0)
+                : (world.inventory().isEmpty() ? "piedra" : world.inventory().get(0)));
+        slots.put("tema", topic(reading, world));
+        slots.put("jugador", world.playerName().isEmpty() ? "che" : world.playerName());
+        return store(fill(pick(key), slots));
+    }
+
+    private String keyFor(Parser.Reading reading, Identity identity) {
+        return switch (reading.act()) {
             case RESPUESTA_SI -> "yes";
             case RESPUESTA_NO -> "no";
             case BROMA -> "joke";
             case CORRECCION -> "correction";
             case ORDEN -> "order";
+            case SALUDO -> "greet";
+            case PREGUNTA_SOBRE_COVE -> "about_self";
+            case ELOGIO -> "praise";
+            case INSULTO -> "insult";
+            case PLAN -> "plan";
+            case PREFERENCIA -> reading.negated() ? "preference_disagree" : "preference_agree";
+            case SENTIMIENTO -> this.plans.containsKey("feeling_" + reading.feeling())
+                    ? "feeling_" + reading.feeling() : "charla";
             case RESPUESTA_DATO -> !reading.direction().isEmpty() ? "direction"
                     : !reading.places().isEmpty() ? "place" : "data";
-            default -> identity != null && identity.trait("humor") > 0.62D ? "joke" : "data";
+            case PREGUNTA_A_COVE -> "answer_world";
+            default -> identity != null && identity.trait("humor") > 0.75D ? "joke" : "charla";
         };
-        Map<String, String> slots = new LinkedHashMap<>();
-        if (!reading.direction().isEmpty()) {
-            slots.put("direccion", reading.direction());
-        }
-        if (!reading.places().isEmpty()) {
-            slots.put("lugar", reading.places().get(0));
-        } else if (!world.biome().isBlank()) {
-            slots.put("lugar", world.biome());
-        }
-        slots.put("jugador", world.playerName().isEmpty() ? "che" : world.playerName());
-        return store(fill(pick(key), slots));
     }
 
     /** A question Cove asks on its own, with the motive already decided. */
@@ -204,6 +293,16 @@ public final class Realizer {
         return store(fill(pick("order"), Map.of()));
     }
 
+    /** Acknowledges a negated order without executing it. */
+    public String decline() {
+        return store(fill(pick("decline"), Map.of()));
+    }
+
+    /** Reports a tool that failed instead of pretending it worked. */
+    public String failed() {
+        return store(fill(pick("failed"), Map.of()));
+    }
+
     // ------------------------------------------------------------------
     // Internals
     // ------------------------------------------------------------------
@@ -230,10 +329,13 @@ public final class Realizer {
 
     private boolean alreadySaid(String plan) {
         String skeleton = plan.replaceAll("\\{[^}]+}", "");
+        String probe = skeleton.replaceAll("[¿?¡!,.]", "").trim().toLowerCase(Locale.ROOT);
+        if (probe.isEmpty()) {
+            return false;
+        }
         for (String line : this.recent) {
             String other = line.replaceAll("[¿?¡!,.]", "").trim().toLowerCase(Locale.ROOT);
-            String probe = skeleton.replaceAll("[¿?¡!,.]", "").trim().toLowerCase(Locale.ROOT);
-            if (!probe.isEmpty() && other.startsWith(probe.substring(0, Math.min(18, probe.length())))) {
+            if (other.startsWith(probe.substring(0, Math.min(16, probe.length())))) {
                 return true;
             }
         }
@@ -241,13 +343,24 @@ public final class Realizer {
     }
 
     private String store(String line) {
-        if (line != null && !line.isBlank()) {
-            this.recent.add(line.trim());
-            while (this.recent.size() > RECENT_MEMORY) {
-                this.recent.remove(0);
-            }
-        }
+        remember(line);
         return line == null ? "" : line;
+    }
+
+    private String topic(Parser.Reading reading, WorldFacts world) {
+        if (!reading.places().isEmpty()) {
+            return reading.places().get(0);
+        }
+        if (!reading.items().isEmpty()) {
+            return reading.items().get(0);
+        }
+        if (!reading.mobs().isEmpty()) {
+            return reading.mobs().get(0);
+        }
+        if (!reading.direction().isEmpty()) {
+            return reading.direction();
+        }
+        return world.biome().isBlank() ? "eso" : world.biome();
     }
 
     private String fill(String plan, Map<String, String> slots) {
@@ -255,11 +368,8 @@ public final class Realizer {
         for (Map.Entry<String, String> slot : slots.entrySet()) {
             result = result.replace("{" + slot.getKey() + "}", slot.getValue());
         }
-        // Any slot left without data is removed together with the clause that used it.
         result = result.replaceAll("\\s*\\{[^}]+}", "");
         result = result.replaceAll("\\s{2,}", " ").trim();
         return Spanish.capitalize(result);
     }
-
-
 }

@@ -24,11 +24,9 @@ public final class CoveProvider implements AgentProvider {
 
     private static final Pattern DICE = Pattern.compile("dice:\\s*\"(.*)\"\\s*$", Pattern.DOTALL);
     private static final Pattern PENDING = Pattern.compile("Preguntaste:\\s*\"([^\"]*)\"");
-    private static final Pattern VIDA = Pattern.compile("vida\\s+(\\d+)");
-    private static final Pattern COMIDA = Pattern.compile("comida\\s+(\\d+)");
-    private static final Pattern JUGADORES = Pattern.compile("jugadores cerca:\\s*(\\d+)");
-    private static final Pattern BIOMA = Pattern.compile("bioma\\s+([^;\\n]+)");
-
+    private static final Pattern TOPIC = Pattern.compile("Tema:\\s*([^\\n]+)");
+    private static final Pattern TRAIT = Pattern.compile(
+            "(curiosidad|humor|iniciativa|sociabilidad|cautela)\\s+(\\d+(?:\\.\\d+)?)");
 
     private final OfflineBrain brain = new OfflineBrain();
     private WorldFacts world = WorldFacts.empty();
@@ -66,18 +64,17 @@ public final class CoveProvider implements AgentProvider {
         if (dice.find()) {
             said = dice.group(1);
         }
-        SocialState.PendingQuestion pending = pendingFrom(system);
-        return this.brain.read(said, this.world, pending);
+        return this.brain.read(said, WorldFacts.fromPrompt(system, this.world), pendingFrom(system));
     }
 
-    private SocialState.PendingQuestion pendingFrom(String system) {
+    private static SocialState.PendingQuestion pendingFrom(String system) {
         Matcher asked = PENDING.matcher(system);
         if (!asked.find()) {
             return null;
         }
         String question = asked.group(1);
         String topic = "";
-        Matcher topicMatcher = Pattern.compile("Tema:\\s*([^\\n]+)").matcher(system);
+        Matcher topicMatcher = TOPIC.matcher(system);
         if (topicMatcher.find()) {
             topic = topicMatcher.group(1).trim();
         }
@@ -89,33 +86,26 @@ public final class CoveProvider implements AgentProvider {
     // ------------------------------------------------------------------
 
     private MindDecision decision(String system) {
-        WorldFacts facts = factsFrom(system);
+        WorldFacts facts = WorldFacts.fromPrompt(system, this.world);
+        this.world = facts;
         SocialSignals signals = new SocialSignals(System.currentTimeMillis(),
-                intOf(JUGADORES, system, 1), -1.0D, facts.health(), facts.food(), false,
-                facts.night(), false, facts.spawnDistance(), facts.biome(),
-                facts.activity(), 0L, 0L);
-        return this.brain.decide(facts, signals, identityFrom(system), null);
+                Math.max(1, facts.humansNear()), -1.0D, facts.health(), facts.food(), false,
+                facts.night(), false, facts.spawnDistance(), facts.biome(), facts.activity(), 0L, 0L);
+        return this.brain.decide(facts, signals, identityFrom(system), pendingFrom(system));
     }
 
-    private WorldFacts factsFrom(String system) {
-        int health = intOf(VIDA, system, (int) this.world.health());
-        int food = intOf(COMIDA, system, this.world.food());
-        boolean night = system.contains("es de noche");
-        boolean far = system.contains("lejos del punto de inicio");
-        String biome = match(BIOMA, system);
-        WorldFacts base = new WorldFacts(this.world.playerName(), biome, night, health, food,
-                far ? 300.0D : this.world.spawnDistance(), 1, this.world.activity(),
-                this.world.knownPlaces(), this.world.inventory());
-        this.world = base;
-        return base;
-    }
-
-    /**
-     * Tone only. The persistent identity lives in the runtime; the embedded
-     * brain reads the same traits from the prompt when it needs to colour a line.
-     */
+    /** Tone only: the persistent identity stays where the runtime saved it. */
     private static Identity identityFrom(String system) {
-        return new Identity(null);
+        Identity identity = new Identity(null);
+        Matcher matcher = TRAIT.matcher(system);
+        while (matcher.find()) {
+            try {
+                identity.setTrait(matcher.group(1), Double.parseDouble(matcher.group(2)));
+            } catch (NumberFormatException ignored) {
+                // A malformed trait is simply not adopted.
+            }
+        }
+        return identity;
     }
 
     // ------------------------------------------------------------------
@@ -126,18 +116,26 @@ public final class CoveProvider implements AgentProvider {
         String last = lastUserText(request);
         List<String> available = request.tools() == null ? List.of()
                 : request.tools().stream().map(AgentProvider.ToolSpec::name).toList();
-        boolean afterTool = request.messages() != null
-                && request.messages().stream().anyMatch(message -> "tool".equals(message.role()));
 
-        this.world = WorldFacts.fromSnapshot(system, this.world);
+        this.world = WorldFacts.fromPrompt(system, this.world);
+        SocialState.PendingQuestion pending = pendingFrom(system);
 
-        if (afterTool) {
-            return new Response(this.brain.realizer().orderAck(), List.of(), "stop");
+        // Only a tool result that just arrived ends the turn. A tool result
+        // anywhere in the window must NOT hijack later conversation.
+        if (isRightAfterTool(request)) {
+            String payload = lastToolPayload(request);
+            String line = payload.contains("\"error\"")
+                    ? this.brain.realizer().failed()
+                    : this.brain.realizer().orderAck();
+            return new Response(line, List.of(), "stop");
         }
         if (last.startsWith("[Jugador]")) {
             String player = playerFrom(last);
             String said = saidFrom(last);
-            Parser.Reading reading = this.brain.read(said, this.world, null);
+            Parser.Reading reading = this.brain.read(said, this.world, pending);
+            if (reading.negated() && reading.order()) {
+                return new Response(this.brain.realizer().decline(), List.of(), "stop");
+            }
             if (reading.order()) {
                 List<AgentProvider.ToolCall> calls = this.brain.toolsFor(said, this.world, player, available);
                 if (!calls.isEmpty()) {
@@ -148,7 +146,8 @@ public final class CoveProvider implements AgentProvider {
             if (reading.act() == Parser.Act.SALUDO) {
                 return new Response(this.brain.greet(player), List.of(), "stop");
             }
-            return new Response(this.brain.respond(reading, this.world, null), List.of(), "stop");
+            return new Response(this.brain.respond(reading, this.world, identityFrom(system)),
+                    List.of(), "stop");
         }
         if (last.startsWith("[Propia iniciativa]")) {
             String activity = last.substring("[Propia iniciativa]".length()).trim();
@@ -162,8 +161,24 @@ public final class CoveProvider implements AgentProvider {
         if (last.startsWith("[Sistema]")) {
             return new Response(this.brain.greet(this.world.playerName()), List.of(), "stop");
         }
-        // Unknown prompt: answer with the current situation instead of hanging.
+        // Unknown prompt: react to the situation instead of hanging.
         return new Response(this.brain.realizer().comment(this.world, null), List.of(), "stop");
+    }
+
+    private static boolean isRightAfterTool(Request request) {
+        if (request.messages() == null || request.messages().isEmpty()) {
+            return false;
+        }
+        AgentProvider.Message last = request.messages().get(request.messages().size() - 1);
+        return "tool".equals(last.role());
+    }
+
+    private static String lastToolPayload(Request request) {
+        if (request.messages() == null || request.messages().isEmpty()) {
+            return "";
+        }
+        AgentProvider.Message last = request.messages().get(request.messages().size() - 1);
+        return last.text() == null ? "" : last.text();
     }
 
     // ------------------------------------------------------------------
@@ -184,7 +199,6 @@ public final class CoveProvider implements AgentProvider {
     }
 
     private static String playerFrom(String text) {
-        // "[Jugador] Nombre: mensaje"
         int close = text.indexOf(']');
         int colon = text.indexOf(':', close);
         if (close < 0 || colon < 0) {
@@ -202,15 +216,5 @@ public final class CoveProvider implements AgentProvider {
         String firstLine = text.substring(colon + 1);
         int newline = firstLine.indexOf('\n');
         return (newline < 0 ? firstLine : firstLine.substring(0, newline)).trim();
-    }
-
-    private static int intOf(Pattern pattern, String text, int fallback) {
-        Matcher matcher = pattern.matcher(text);
-        return matcher.find() ? Integer.parseInt(matcher.group(1)) : fallback;
-    }
-
-    private static String match(Pattern pattern, String text) {
-        Matcher matcher = pattern.matcher(text);
-        return matcher.find() ? matcher.group(1).trim() : "";
     }
 }

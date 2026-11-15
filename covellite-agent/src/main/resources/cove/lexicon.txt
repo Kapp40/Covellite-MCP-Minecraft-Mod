@@ -80,7 +80,7 @@ MOB|monstruo|bicho,criatura,enemigo
 
 # --- Estados ------------------------------------------------------------
 STATE|hambre|hambriento,comida baja,sin comida
-STATE|sueño|sueno,cansancio,cansado
+STATE|sueño|sueno,cansancio,somnolencia
 STATE|peligro|riesgo,amenaza
 STATE|noche|oscuridad
 STATE|dia|dia claro,amanecer
@@ -90,7 +90,7 @@ STATE|inventario|mochila,equipaje
 # --- Saludos y muletillas ----------------------------------------------
 GREET|hola|buenas,buen dia,epa,hey,que onda,que tal,hola hola
 GREET|chau|adios,nos vemos,hasta luego
-WORD|che|boludo,chabon,flaco,maestro,crack
+WORD|che|chabon,flaco,pibe
 WORD|gracias|te agradezco,genial
 WORD|si|sisi,dale,claro,obvio,ok,oka,perfecto,bueno,joya,sip
 WORD|no|nop,nope,nah,nel,para nada,ni ahi
@@ -102,6 +102,25 @@ WORD|como|de que manera
 WORD|quien|quienes
 WORD|cual|cuales
 WORD|cuanto|cuanta,cuantos,cuantas
+
+# --- Conversacion: preferencias, tono y estados de animo ---------------
+WORD|preferencia|gusta,gustan,encanta,encantan,prefiero,prefiere,odio,odia,amo
+WORD|elogio|genio,crack,capo,idolo,maquina,groso
+WORD|insulto|boludo,pelotudo,tonto,idiota,inutil,forro,imbecil
+WORD|plan|vamos,vayamos,deberiamos,tenemos,planeemos
+FEELING|contento|feliz,alegre,contenta
+FEELING|cansado|agotado,fatigado,fundido,cansada
+FEELING|aburrido|aburrida,embolado
+FEELING|asustado|asustada,cagado
+FEELING|triste|bajon,depre
+FEELING|harto|harta,podrido
+
+# --- Cosas que no existen en este mundo: evidencia de broma ------------
+ABSURD|marte|
+ABSURD|luna|
+ABSURD|narnia|
+ABSURD|mordor|
+ABSURD|wifi|internet
 
 # --- Verbos utiles (accion del mod que los implementa) ------------------
 VERB|cortar|talar,derribar,hachear|chop_tree|madera
@@ -126,3 +145,10 @@ VERB|ayudar|asistir,ayudame|follow|
 VERB|saber|conocer,tenes idea|scan|
 VERB|estar|quedar,ubicarse|scan|
 VERB|ver|encontrar,divisar|scan|
+VERB|esperar|aguantar,espera,esperame|stay|
+VERB|abrir|abri,abrime|container_list|cofre
+VERB|guardar|depositar,guarda|deposit_items|
+PLACE|nieve|tundra,taiga
+PLACE|jungla|selva tropical
+MOB|slime|slimes
+MOB|fantasma|ghast,espectro

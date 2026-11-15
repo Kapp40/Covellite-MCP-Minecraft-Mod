@@ -60,6 +60,18 @@ public final class Identity {
         return this.traits.getOrDefault(name, 0.5D);
     }
 
+    /**
+     * Adopts a trait value read from a prompt. Only used for the ephemeral
+     * copy the embedded brain builds when it needs the current tone; the
+     * persistent identity is still the one saved in {@code identity.json}.
+     */
+    public synchronized void setTrait(String name, double value) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        this.traits.put(name, Math.max(0.0D, Math.min(1.0D, value)));
+    }
+
     public synchronized String mood(long nowMs) {
         return nowMs > this.moodUntil ? "neutro" : this.mood;
     }
