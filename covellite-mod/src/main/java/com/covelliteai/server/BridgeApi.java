@@ -17,6 +17,7 @@ import com.covelliteai.CovelliteAI;
 
 import covellite.agent.FishingSignal;
 import covellite.agent.brain.BrainArbiter;
+import covellite.agent.reflex.Reflex;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
@@ -98,6 +99,21 @@ public final class BridgeApi {
     private final Map<String, Map<String, Object>> actions = new LinkedHashMap<>();
     private long nextActionId = 1L;
     private Task activeTask;
+
+    /**
+     * A job that was pushed aside (reflex, damage, enemy, night) but is NOT
+     * finished. It keeps its own progress and is put back on the body as soon
+     * as the reason is gone. This is what stops missions from dying "de la
+     * nada": nothing but an explicit order or a real failure ends work.
+     */
+    private Task suspendedTask;
+    private String suspendedReason;
+    private long suspendedAtTick;
+    private int suspendedCount;
+    /** Brain epoch the suspended job belongs to: a brain switch drops it. */
+    private long suspendedEpoch = 1L;
+    /** Set while resumeSuspended() is putting a task back, to keep it suspended-safe. */
+    private boolean restoringTask;
     private boolean emergency;
 
     // Smart interrupts (hito 4): armed per task by goto / gather / mine / chop_tree.
@@ -218,6 +234,8 @@ public final class BridgeApi {
     private double stuckLastZ;
     private long stuckSinceTick = -1L;
     private int stuckRecoveries;
+    /** Failed re-plans of the current job; only several in a row end it. */
+    private int stuckStrikes;
     private long lastStuckNotice = -10000L;
 
     // Preventive durability: warn once per tool, swap to a compatible spare.
@@ -444,7 +462,10 @@ public final class BridgeApi {
             return;
         }
         if (this.activeTask == null) {
-            return;
+            resumeSuspended(player);
+            if (this.activeTask == null) {
+                return;
+            }
         }
         // Execution-time authority: a task started before a switch cannot
         // continue under the new brain, no matter what it already queued.
@@ -458,7 +479,12 @@ public final class BridgeApi {
         }
         String interruptReason = checkInterrupt(player);
         if (interruptReason != null) {
-            finishTask("interrupted", interruptReason);
+            // Danger pauses the job; it does not delete it.
+            suspendTask(interruptReason);
+            return;
+        }
+        // While a reflex owns the body, the job waits instead of fighting it.
+        if (this.autopilotTicks < this.reflexLockUntil) {
             return;
         }
         try {
@@ -1572,7 +1598,10 @@ public final class BridgeApi {
     }
 
     private void choreKeeperTick(CompanionPlayer player) {
-        if (this.choreTool == null || this.activeTask != null || this.emergency) {
+        // A paused job is still the player's job: do not start a second one on
+        // top and lose the progress that was already made.
+        if (this.choreTool == null || this.activeTask != null
+                || this.suspendedTask != null || this.emergency) {
             return;
         }
         if (this.staying || this.guardAnchor != null) {
@@ -2698,6 +2727,19 @@ public final class BridgeApi {
         public String signature() {
             return "gather:" + this.what + (this.focus == null ? "" : "@" + this.focus.toShortString());
         }
+
+        @Override
+        public void replan() {
+            // Forget the stale route and the block we were hitting, then look
+            // again from wherever we are now.
+            this.walker = null;
+            this.walkerTarget = null;
+            this.target = null;
+            this.pathFailures = 0;
+            this.replans++;
+            this.watch.reset(Double.MAX_VALUE);
+        }
+
         private final String id;
         private final String what;
         private final Predicate<BlockState> matcher;
@@ -2722,6 +2764,8 @@ public final class BridgeApi {
         private int lastStage = -1;
         private int swings;
         private int ticks;
+        private int lastProgressTick;
+        private int lastBrokenSeen = -1;
         private int broken;
         private int cleared;
         private int unreachable;
@@ -2756,11 +2800,20 @@ public final class BridgeApi {
                     this.treeCluster = logCluster(level, this.focus);
                 }
             }
-            if (++this.ticks > this.timeoutTicks) {
-                throw new IllegalStateException("timeout after " + this.timeoutTicks + " ticks");
+            this.ticks++;
+            // The budget is about NOT making progress, not about total time: a
+            // long but productive trip must never be cut by a clock.
+            if (this.broken != this.lastBrokenSeen) {
+                this.lastBrokenSeen = this.broken;
+                this.lastProgressTick = this.ticks;
             }
+            if (this.ticks - this.lastProgressTick > this.timeoutTicks) {
+                throw new IllegalStateException("no progress for " + this.timeoutTicks
+                        + " ticks; broken " + this.broken + "/" + this.goal);
+            }
+            // Low health is handled by pausing the job, never by killing it.
             if (player.getHealth() <= 4.0F) {
-                throw new IllegalStateException("low_health");
+                return false;
             }
             if (this.mining != null) {
                 mine(player, level);
@@ -2863,7 +2916,7 @@ public final class BridgeApi {
 
         /** Nearest matching block that is allowed, safe and doable with the tools at hand. */
         private boolean pickTarget(CompanionPlayer player, ServerLevel level) {
-            for (int attempt = 0; attempt < 12; attempt++) {
+            for (int attempt = 0; attempt < 4; attempt++) {
                 BlockPos best = scanBest(player, level);
                 if (best == null) {
                     return false;
@@ -2881,12 +2934,18 @@ public final class BridgeApi {
 
         private BlockPos scanBest(CompanionPlayer player, ServerLevel level) {
             BlockPos origin = player.blockPosition();
-            int r = (int) Math.ceil(this.radius);
+            // A cube of radius 32 is 274k block reads PER SCAN and this used to
+            // be called up to 12 times per target pick, on the server thread.
+            // That is what made the body stutter and wander. A player only
+            // works with what is a few blocks away and roughly level, so the
+            // scan is capped and stops at the first block that is close enough.
+            int r = (int) Math.ceil(Math.min(this.radius, 24.0D));
+            int dy = 10;
             Vec3 here = player.position();
             BlockPos best = null;
             double bestScore = Double.MAX_VALUE;
             for (BlockPos pos : BlockPos.betweenClosed(
-                    origin.offset(-r, -r, -r), origin.offset(r, r, r))) {
+                    origin.offset(-r, -dy, -r), origin.offset(r, dy, r))) {
                 if (!level.isLoaded(pos) || this.rejected.contains(pos) || this.rejectedTrees.contains(pos)) {
                     continue;
                 }
@@ -2902,6 +2961,10 @@ public final class BridgeApi {
                 if (score < bestScore) {
                     bestScore = score;
                     best = pos.immutable();
+                    if (bestScore <= 9.0D) {
+                        // Already within three blocks: nothing closer matters.
+                        return best;
+                    }
                 }
             }
             return best;
@@ -3256,6 +3319,12 @@ public final class BridgeApi {
         @Override
         public boolean stationary() {
             return this.mining != null;
+        }
+
+        @Override
+        public void replan() {
+            this.walker = null;
+            this.replans++;
         }
 
         @Override
@@ -6363,13 +6432,21 @@ public final class BridgeApi {
             this.companion.controller().move(0.6D, 0.0D, false, 6);
             return;
         }
-        cancelActive("stuck");
         this.stuckRecoveries = 0;
         this.stuckSinceTick = -1L;
-        if (this.autopilotTicks - this.lastStuckNotice > 600L) {
-            this.lastStuckNotice = this.autopilotTicks;
-            reply("me quede trabado aca, no encuentro la salida");
+        this.stuckStrikes++;
+        if (this.stuckStrikes <= 3) {
+            // Re-plan instead of deleting the job: the mission keeps counting.
+            this.activeTask.replan();
+            this.companion.controller().stop();
+            if (this.autopilotTicks - this.lastStuckNotice > 200L) {
+                this.lastStuckNotice = this.autopilotTicks;
+                reply("me trabé, busco otro camino");
+            }
+            return;
         }
+        this.stuckStrikes = 0;
+        suspendTask("stuck");
     }
 
     /**
@@ -7635,6 +7712,13 @@ public final class BridgeApi {
         boolean tick(CompanionPlayer player, MinecraftServer server);
 
         /**
+         * Called when the job was interrupted and is about to be retried: the
+         * task drops whatever path or target it had and looks again.
+         */
+        default void replan() {
+        }
+
+        /**
          * True while the task deliberately stands still (digging a block,
          * sleeping, crafting). The stuck watchdog ignores these tasks.
          */
@@ -7674,6 +7758,12 @@ public final class BridgeApi {
     private boolean startTask(Task task, CompanionPlayer player) {
         int incoming = task.priority();
         boolean locked = this.autopilotTicks < this.reflexLockUntil;
+        if (!this.restoringTask && this.suspendedTask != null) {
+            // A real new order replaces the one that was waiting, not both.
+            this.suspendedTask.cleanup(player);
+            this.suspendedTask = null;
+            this.suspendedReason = null;
+        }
         if (this.activeTask != null) {
             // The very same order again is not a new order: keep the running
             // task untouched instead of cancelling and restarting from scratch.
@@ -7697,6 +7787,9 @@ public final class BridgeApi {
         this.activeTaskEpoch = this.brains.epoch();
         this.interruptOn = false;
         this.interruptExtra = null;
+        this.stuckStrikes = 0;
+        this.stuckRecoveries = 0;
+        this.stuckSinceTick = -1L;
         return true;
     }
 
@@ -7746,10 +7839,12 @@ public final class BridgeApi {
     }
 
     private void applyReflex(ReflexEngine.Shot shot, CompanionPlayer player) {
-        // Reflexes own the body for a moment: queued work resumes after this.
+        // Reflexes borrow the body for a moment. The job is SUSPENDED, never
+        // finished: a creeper, a ledge or a bit of lava must not delete the
+        // mining trip the player asked for.
         this.reflexLockUntil = this.autopilotTicks + 40L;
         if (this.activeTask != null) {
-            finishTask("interrupted", "reflex:" + shot.id());
+            suspendTask("reflex:" + shot.id());
         }
         CompanionController controller = this.companion.controller();
         switch (shot.action()) {
@@ -7856,6 +7951,9 @@ public final class BridgeApi {
         lines.add("Ultima interrupcion: "
                 + (this.lastInterruptReason == null || this.lastInterruptReason.isBlank()
                         ? "ninguna" : this.lastInterruptReason));
+        lines.add("Suspendida: " + (this.suspendedTask == null ? "ninguna"
+                : this.suspendedTask.getClass().getSimpleName() + " por " + this.suspendedReason
+                        + " (hace " + (this.autopilotTicks - this.suspendedAtTick) + " ticks)"));
         java.util.List<ReflexEngine.Shot> history = this.reflexes.history();
         if (history.isEmpty()) {
             lines.add("Ultimo reflejo: ninguno");
@@ -8458,6 +8556,12 @@ public final class BridgeApi {
             return "follow:" + this.playerName + ":" + this.finite;
         }
 
+        @Override
+        public void replan() {
+            this.walker = null;
+            this.cooldown = 0;
+        }
+
         private final String id;
         private final String playerName;
         private final double distance;
@@ -8677,7 +8781,133 @@ public final class BridgeApi {
         }
     }
 
+    /**
+     * Takes the running job off the body WITHOUT ending it. The task object
+     * keeps its walker, its counters and its progress, so putting it back is a
+     * continuation and not a fresh start.
+     */
+    private void suspendTask(String reason) {
+        Task task = this.activeTask;
+        if (task == null) {
+            return;
+        }
+        this.activeTask = null;
+        this.stuckRecoveries = 0;
+        this.stuckSinceTick = -1L;
+        if (this.suspendedTask != null) {
+            // Two jobs cannot wait on the same body: the older one really ends.
+            this.suspendedTask.cleanup(this.companion.player());
+        }
+        this.suspendedTask = task;
+        this.suspendedReason = reason;
+        this.suspendedAtTick = this.autopilotTicks;
+        this.suspendedEpoch = this.brains.epoch();
+        this.suspendedCount++;
+        CovelliteAI.LOGGER.info("[cove] tarea {} suspendida por {} (reanudable)",
+                task.getClass().getSimpleName(), reason);
+    }
+
+    /** True while the reason that paused the job is still there. */
+    private boolean stillBlocked(CompanionPlayer player, long waited) {
+        String reason = this.suspendedReason == null ? "" : this.suspendedReason;
+        if (reason.startsWith("reflex:")) {
+            if (this.autopilotTicks < this.reflexLockUntil) {
+                return true;
+            }
+            ReflexInputs inputs = ReflexSensor.sense(player);
+            for (Reflex reflex : this.reflexes.reflexes()) {
+                if (reflex.condition().test(inputs)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        switch (reason) {
+            case "low_health":
+                return player.getHealth() <= this.stance.lowHp() + 4.0F && waited < 200L;
+            case "taking_damage":
+                return waited < 40L;
+            case "enemy_near":
+                return nearestMonster(player, this.stance.enemyRange()) != null && waited < 600L;
+            case "night_fell":
+                return this.stance.nightInterrupt() && isNight(player.serverLevel()) && waited < 12000L;
+            case "inventory_full": {
+                int empty = 0;
+                for (int slot = 0; slot < 36; slot++) {
+                    if (player.getInventory().getItem(slot).isEmpty()) {
+                        empty++;
+                    }
+                }
+                return empty <= 2;
+            }
+            case "stuck":
+                return waited < 60L;
+            default:
+                return waited < 40L;
+        }
+    }
+
+    /** Puts the suspended job back on the body as soon as it is safe again. */
+    private void resumeSuspended(CompanionPlayer player) {
+        if (this.suspendedTask == null || this.emergency || !player.isAlive()) {
+            return;
+        }
+        if (this.activeTask != null || !this.pendingTasks.isEmpty()) {
+            return;
+        }
+        if (this.brains.paused() || this.brains.epoch() != this.suspendedEpoch) {
+            this.suspendedTask = null;
+            this.suspendedReason = null;
+            return;
+        }
+        long waited = this.autopilotTicks - this.suspendedAtTick;
+        if (stillBlocked(player, waited)) {
+            if (waited > 6000L) {
+                // Ten minutes of being blocked is a real end, not a pause.
+                CovelliteAI.LOGGER.info("[cove] tarea abandonada tras {}: {}",
+                        this.suspendedReason, this.suspendedTask.getClass().getSimpleName());
+                this.suspendedTask.cleanup(player);
+                this.suspendedTask = null;
+                this.suspendedReason = null;
+            }
+            return;
+        }
+        Task task = this.suspendedTask;
+        this.suspendedTask = null;
+        this.suspendedReason = null;
+        this.restoringTask = true;
+        try {
+            task.replan();
+        } finally {
+            this.restoringTask = false;
+        }
+        this.activeTask = task;
+        this.activeTaskEpoch = this.brains.epoch();
+        this.suspendedEpoch = this.brains.epoch();
+        // Re-baseline the safety watch: old damage or an old line must not
+        // fire again the instant the job comes back.
+        if (this.interruptOn) {
+            this.interruptHp = player.getHealth();
+            this.interruptChatBase = this.chatLog.latestSequence();
+            this.interruptStartNight = isNight(player.serverLevel());
+        }
+        this.stuckRecoveries = 0;
+        this.stuckStrikes = 0;
+        this.stuckSinceTick = -1L;
+        CovelliteAI.LOGGER.info("[cove] tarea {} reanudada", task.getClass().getSimpleName());
+    }
+
     private boolean cancelActive(String reason) {
+        // An explicit stop (or a new order) also drops whatever was waiting:
+        // the player said what they want, not two things at once.
+        if (this.suspendedTask != null) {
+            CompanionPlayer player = this.companion.player();
+            if (player != null) {
+                this.suspendedTask.cleanup(player);
+            }
+            this.suspendedTask = null;
+            this.suspendedReason = null;
+        }
         if (this.activeTask == null) {
             return false;
         }
