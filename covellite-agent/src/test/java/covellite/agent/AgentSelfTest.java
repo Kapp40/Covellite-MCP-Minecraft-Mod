@@ -18,6 +18,13 @@ import covellite.agent.social.SocialPrompt;
 import covellite.agent.social.SocialSettings;
 import covellite.agent.social.SocialSignals;
 import covellite.agent.social.SocialState;
+import covellite.agent.lang.CoveProvider;
+import covellite.agent.lang.Lexicon;
+import covellite.agent.lang.OfflineBrain;
+import covellite.agent.lang.Parser;
+import covellite.agent.lang.Realizer;
+import covellite.agent.lang.Spanish;
+import covellite.agent.lang.WorldFacts;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.agent.reflex.ReflexInputs;
 import covellite.agent.reflex.SurvivalReflexes;
@@ -49,6 +56,7 @@ public final class AgentSelfTest {
         plannerParseTest();
         loopTest(dir.resolve("runtime"));
         socialTest(dir.resolve("social"));
+        languageTest(dir.resolve("lang"));
 
         System.out.println("== agent self-test: " + passed + " passed, " + failed + " failed ==");
         if (failed > 0) {
@@ -619,6 +627,147 @@ public final class AgentSelfTest {
                     + "\"dirigido_a_cove\":true,\"tema\":\"perdidos\","
                     + "\"entendido\":\"se rie de estar perdidos\"}", List.of(), "stop");
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Embedded language engine: lexicon, morphology, parser, realizer, brain
+    // ------------------------------------------------------------------
+
+    private static void languageTest(Path dir) {
+        Lexicon lexicon = Lexicon.shared();
+        check("lexicon: loads the text knowledge base", lexicon.size() >= 80);
+        check("lexicon: resolves a plural synonym",
+                lexicon.lookup("troncos") != null
+                        && "madera".equals(lexicon.lookup("troncos").canonical()));
+        check("lexicon: resolves a synonym",
+                "cueva".equals(lexicon.lookup("caverna").canonical()));
+
+        check("morphology: voseo imperative of cortar",
+                "corta".equals(Spanish.conjugate("cortar", Spanish.Tense.IMPERATIVO,
+                        Spanish.Person.TU)));
+        check("morphology: irregular imperative of ir",
+                "anda".equals(Spanish.conjugate("ir", Spanish.Tense.IMPERATIVO,
+                        Spanish.Person.TU)));
+        check("morphology: voseo present of tener",
+                "tenes".equals(Spanish.conjugate("tener", Spanish.Tense.PRESENTE,
+                        Spanish.Person.TU)));
+        check("morphology: plural of arbol", "arboles".equals(Spanish.plural("arbol")));
+        check("morphology: strips accents for matching",
+                "donde esta la base".equals(Spanish.normalize("¿Dónde está la base?")));
+
+        Parser parser = new Parser();
+        WorldFacts world = new WorldFacts("Lorex", "plains", false, 20.0F, 20, 10.0D, 1,
+                "disponible", List.of(), List.of());
+
+        Parser.Reading chop = parser.parse("cortá ese árbol", world, null);
+        check("parser: imperative is an order", chop.act() == Parser.Act.ORDEN);
+        check("parser: order resolves the existing tool", "chop_tree".equals(chop.action()));
+
+        Parser.Reading goHome = parser.parse("andá a la base", world, null);
+        check("parser: named place maps to return_home",
+                goHome.act() == Parser.Act.ORDEN && "return_home".equals(goHome.action())
+                        && goHome.places().contains("base"));
+
+        Parser.Reading follow = parser.parse("seguime", world, null);
+        check("parser: reflexive imperative is understood",
+                follow.act() == Parser.Act.ORDEN && "follow".equals(follow.action()));
+
+        Parser.Reading mine = parser.parse("miná hierro", world, null);
+        check("parser: verb wins over the homonym place",
+                mine.act() == Parser.Act.ORDEN && "mine".equals(mine.action())
+                        && mine.items().contains("hierro"));
+
+        Parser.Reading where = parser.parse("¿dónde estamos?", world, null);
+        check("parser: a question is for Cove",
+                where.act() == Parser.Act.PREGUNTA_A_COVE && where.addressed());
+
+        SocialState.PendingQuestion pending = new SocialState.PendingQuestion(
+                "¿Dónde queda la base?", "ubicacion", "me perdi", "montaña", 0L, 1L, 0);
+        Parser.Reading joke = parser.parse("la base está en Marte, boludo", world, pending);
+        check("parser: a joke that contradicts the world is not taken literally",
+                joke.act() == Parser.Act.BROMA && joke.incongruent());
+        check("parser: the joke still answers the pending question", joke.answersPending());
+
+        Parser.Reading yes = parser.parse("sí, dale", world, pending);
+        check("parser: a plain yes answers the question",
+                yes.act() == Parser.Act.RESPUESTA_SI && yes.answersPending());
+
+        Parser.Reading correction = parser.parse("no, te dije que fuéramos al otro lado", world, pending);
+        check("parser: a correction is recognised", correction.act() == Parser.Act.CORRECCION);
+
+        Parser.Reading laughing = parser.parse("jajaja nos perdimos", world, pending);
+        check("parser: laughter answers without being an order",
+                laughing.act() == Parser.Act.BROMA && laughing.answersPending());
+
+        Realizer realizer = new Realizer();
+        check("realizer: greets by name", realizer.greet("Lorex").contains("Lorex"));
+        check("realizer: hunger question mentions food",
+                realizer.ask("hambre", world, "Lorex").toLowerCase().contains("com"));
+        String first = realizer.comment(world, null);
+        String second = realizer.comment(world, null);
+        check("realizer: does not repeat the same line", !first.equals(second));
+
+        OfflineBrain brain = new OfflineBrain();
+        List<String> tools = List.of("chop_tree", "mine", "follow", "return_home", "eat");
+        List<AgentProvider.ToolCall> calls = brain.toolsFor("cortá el árbol", world, "Lorex", tools);
+        check("brain: maps an order to an existing tool",
+                calls.size() == 1 && "chop_tree".equals(calls.get(0).name()));
+        List<AgentProvider.ToolCall> iron = brain.toolsFor("miná hierro", world, "Lorex", tools);
+        check("brain: passes the material to mine",
+                iron.size() == 1 && "iron".equals(iron.get(0).arguments().get("what")));
+        List<AgentProvider.ToolCall> followCalls = brain.toolsFor("seguime", world, "Lorex", tools);
+        check("brain: passes the player to follow",
+                followCalls.size() == 1 && "Lorex".equals(followCalls.get(0).arguments().get("player")));
+
+        WorldFacts hungryWorld = new WorldFacts("Lorex", "plains", false, 20.0F, 4, 10.0D, 1,
+                "disponible", List.of(), List.of());
+        Identity identity = new Identity(null);
+        MindDecision hungry = brain.decide(hungryWorld, null, identity, null);
+        check("brain: hunger becomes an initiative",
+                hungry.action() == MindDecision.Action.INICIATIVA
+                        && hungry.activity().contains("comer"));
+        check("brain: a calm situation stays silent",
+                brain.decide(world, null, identity, null).action() == MindDecision.Action.SILENCIO);
+        WorldFacts nightWorld = new WorldFacts("Lorex", "plains", true, 20.0F, 20, 10.0D, 1,
+                "disponible", List.of(), List.of());
+        check("brain: night raises a question",
+                brain.decide(nightWorld, null, identity, null).asksQuestion());
+
+        check("settings: the embedded brain is the default and needs no key",
+                AgentSettings.from(Map.of(), dir).provider().equals("cove")
+                        && AgentSettings.from(Map.of(), dir).configured());
+
+        CoveProvider provider = new CoveProvider();
+        AgentProvider.Request interpreterPrompt = new AgentProvider.Request("cove",
+                "Responde SOLO con un objeto JSON: \"intencion\"\n"
+                        + "Preguntaste: \"¿Dónde queda la base?\"\nTema: ubicacion",
+                List.of(AgentProvider.Message.user("Jugador Lorex dice: \"la base está en Marte, boludo\"")),
+                List.of(), 300, 0.1D);
+        Interpretation reading = Interpretation.parse(provider.complete(interpreterPrompt).text(), "x");
+        check("provider: interprets a joke offline",
+                reading.intent() == SocialState.Intent.BROMA && reading.answersPending());
+
+        AgentProvider.Request mindPrompt = new AgentProvider.Request("cove",
+                "Responde SOLO con un objeto JSON: {\"accion\":\"silencio|hablar|iniciativa\"}\n"
+                        + "## Situacion\njugadores cerca: 1; vida 20; comida 3",
+                List.of(AgentProvider.Message.user("Momento de decidir por tu cuenta. Devolve el JSON.")),
+                List.of(), 300, 0.8D);
+        check("provider: decides offline",
+                MindDecision.parse(provider.complete(mindPrompt).text()).action()
+                        == MindDecision.Action.INICIATIVA);
+
+        AgentProvider.Request chatPrompt = new AgentProvider.Request("cove", "",
+                List.of(AgentProvider.Message.user("[Jugador] Lorex: hola")), List.of(), 300, 0.4D);
+        check("provider: answers a greeting offline",
+                !provider.complete(chatPrompt).text().isBlank());
+
+        AgentProvider.Request orderPrompt = new AgentProvider.Request("cove", "",
+                List.of(AgentProvider.Message.user("[Jugador] Lorex: cortá ese árbol")),
+                List.of(new AgentProvider.ToolSpec("chop_tree", "tala", Map.of())), 300, 0.4D);
+        AgentProvider.Response orderResponse = provider.complete(orderPrompt);
+        check("provider: turns an order into a tool call",
+                orderResponse.calls().size() == 1
+                        && "chop_tree".equals(orderResponse.calls().get(0).name()));
     }
 
     private static void check(String label, boolean condition) {

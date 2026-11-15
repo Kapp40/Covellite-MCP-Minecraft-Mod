@@ -764,14 +764,14 @@ Cove puede jugar **sin OpenCode, Codex, Claude Code ni ningún agente externo**.
 
 ### Hilos
 
-Las llamadas al modelo y los round-trips de tools corren en el hilo `CoveMCP-agent`. Cada tool que toca el mundo se encola y la ejecuta `AgentBridge.tick()` **dentro del tick del servidor**, así que nunca se accede al nivel fuera de su hilo. Si el proveedor no responde o está apagado, el servidor sigue funcionando: los reflejos Java y el bridge MCP no dependen del agente.
+La comprensión, la generación y la decisión corren en el hilo `CoveMCP-agent` (microsegundos, sin red). Cada tool que toca el mundo se encola y la ejecuta `AgentBridge.tick()` **dentro del tick del servidor**, así que nunca se accede al nivel fuera de su hilo. Si alguien configura un proveedor externo y ese proveedor no responde, el servidor sigue funcionando: los reflejos Java y el bridge MCP no dependen del agente.
 
 ### Configuración (`config/covemcp.properties`)
 
 ```properties
-agentEnabled=false
-agentProvider=ollama
-agentModel=llama3.1:8b
+agentEnabled=true
+agentProvider=cove
+agentModel=
 agentBaseUrl=
 agentApiKeyFile=
 agentMaxSteps=8
@@ -785,10 +785,11 @@ agentWakeOnJoin=true
 agentHistoryLimit=24
 ```
 
-- `agentProvider`: `ollama`, `lmstudio`, `llamacpp`, `openai`, `anthropic`, `gemini` o `openai-compatible`.
-- `agentBaseUrl` vacío usa la URL por defecto del proveedor: Ollama `http://127.0.0.1:11434/v1`, LM Studio `http://127.0.0.1:1234/v1`, llama.cpp `http://127.0.0.1:8080/v1`.
+- `agentProvider=cove` (por defecto): cerebro embebido, sin red, sin clave y sin modelo externo. Es el modo normal.
+- Proveedores externos opcionales: `ollama`, `lmstudio`, `llamacpp`, `openai`, `anthropic`, `gemini` u `openai-compatible`, solo si se prefiere un modelo grande.
+- `agentBaseUrl` vacío usa la URL por defecto del proveedor externo: Ollama `http://127.0.0.1:11434/v1`, LM Studio `http://127.0.0.1:1234/v1`, llama.cpp `http://127.0.0.1:8080/v1`.
 - La clave de API **nunca** va en el repositorio: se lee de `agentApiKeyFile` o de las variables `COVEMCP_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`.
-- `agentEnabled=false` no rompe nada: el agente queda apagado y todo lo anterior sigue igual.
+- `agentEnabled=false` apaga la mente local (silencio y sin iniciativa); los reflejos y el cuerpo siguen igual.
 
 ### Comandos en el juego
 
@@ -876,7 +877,7 @@ Cove tiene **una sola identidad** (memoria, mapa, experiencias, estado del mundo
 
 | Cerebro | Qué es |
 |---|---|
-| `local` | runtime integrado (`covellite-agent`) con proveedores propios: Ollama, LM Studio, llama.cpp, OpenAI, Anthropic, Gemini y compatibles |
+| `local` | runtime integrado (`covellite-agent`) con el cerebro embebido `cove` (léxico, parser, realizador y decisor en Java, sin red) y proveedores HTTP opcionales |
 | `mcp` | inteligencia externa (DeepSeek, OpenCode, Freebuff, cualquier cliente MCP) que usa el cuerpo de Cove a través de las tools |
 
 **Cambio en caliente y atómico:** `/cove brain local` / `/cove brain mcp` (o `brain=local|mcp` en `covemcp.properties`; si la clave falta, el cerebro por defecto es `local`: la IA vive en el mod y el MCP es un invitado opcional).
@@ -902,7 +903,7 @@ El traspaso respeta este orden estricto:
 
 ### La mente propia de Cove (cerebro `local`)
 
-Cove no es "un cliente MCP conectado": es un agente que vive dentro del mod. Cuando el cerebro activo es `local`, el JAR contiene la mente completa: estado conversacional, identidad, memoria y ciclo autónomo. El modelo de lenguaje es su facultad de hablar, no su cerebro entero, y puede ser cualquier proveedor configurado (`ollama`, `lmstudio`, `llamacpp`, OpenAI, Anthropic, Gemini).
+Cove no es "un cliente MCP conectado": es un agente que vive dentro del mod. Cuando el cerebro activo es `local`, el JAR contiene la mente completa: léxico, comprensión, generación, estado conversacional, identidad, memoria y ciclo autónomo. **No hay proveedor externo, ni servidor de modelos, ni API key, ni red**: el cerebro por defecto es `cove`, Java puro embebido en el JAR. Los proveedores HTTP siguen existiendo como opción, pero no son necesarios para que Cove hable ni decida. El detalle técnico está en [`docs/COVE-MENTE.md`](docs/COVE-MENTE.md).
 
 Componentes nuevos (`covellite-agent/src/main/java/covellite/agent/social/`):
 
@@ -919,7 +920,7 @@ Flujo de un mensaje: `chat` → interpretación por modelo → se resuelve o se 
 
 Flujo de la iniciativa: cada segundo el mod entrega una lectura del mundo (`SocialSignals`: jugadores, distancia, vida, comida, noche, distancia al spawn, ocupación). `SocialPolicy` filtra; si hay motivo concreto (`hambre`, `lejos_de_casa`, `separado_del_jugador`, `tarea_terminada`, `silencio_prolongado`, `pregunta_sin_responder`...), `Mind` decide. `silencio` es la respuesta normal.
 
-Mientras el cerebro `local` tiene proveedor listo, los reflejos del chat por palabra clave quedan **suprimidos** (`setChatReflexSuppressed`) y con el backlog drenado, para que Cove no conteste dos veces. Los reflejos de capa 0 y el autopilot siguen activos.
+Mientras la mente local está al mando (siempre, no necesita proveedor), los reflejos del chat por palabra clave quedan **suprimidos** (`setChatReflexSuppressed`) y con el backlog drenado, para que Cove no conteste dos veces. Los reflejos de capa 0 y el autopilot siguen activos.
 
 Ajustes en `covemcp.properties` (todos opcionales):
 
@@ -934,7 +935,7 @@ Ajustes en `covemcp.properties` (todos opcionales):
 
 Observabilidad: `/cove mind` (proveedor, autoridad, último motivo, pregunta pendiente con antigüedad, ánimo, rasgos, última opinión, conversaciones y ciclos), `/cove why` y `/cove panel` (el estado del runtime incluye el bloque `social`).
 
-Límites conocidos: sin proveedor configurado no hay lenguaje ni interpretación (el resto sigue funcionando); la memoria sigue siendo recuperación por palabras clave; no hay visión; la política evita el spam pero no juzga relevancia (eso lo hace el modelo); nada de esto reemplaza la verificación en partida.
+Límites conocidos: el vocabulario está cerrado al léxico (una palabra nueva no se entiende); la generación recombina planes con ranuras, no es discurso libre; la comprensión es morfológica y estructural, no semántica profunda; la memoria sigue siendo recuperación por palabras clave; no hay visión; y nada de esto reemplaza la verificación en partida.
 
 ### Sin voz: sólo texto y acciones
 
@@ -1027,7 +1028,7 @@ Paquetes incluidos:
 
 ### Alcance implementado y pendiente
 
-Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos y autoprueba de 15 casos (`./gradlew :covellite-agent:agentTest`).
+Implementado y compilado en esta etapa: runtime, tres protocolos de proveedor, loop con límites y cancelación, memoria persistente por mundo, registro de tools enganchado al `Dispatcher`, planificador, personalidad, integración con chat/ingreso/comandos, cerebro embebido de lenguaje y autoprueba de 154 casos (`./gradlew :covellite-agent:agentTest`).
 
 Fase 2 implementada: navegación con pasajes y escalada, memoria de obstáculos, movimiento suavizado con rotación interpolada y objetivos persistentes con pasos.
 

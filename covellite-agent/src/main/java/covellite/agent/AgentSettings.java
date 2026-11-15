@@ -29,7 +29,11 @@ public record AgentSettings(
         int historyLimit,
         Path dataDir) {
 
-    public static final String DEFAULT_PROVIDER = "ollama";
+    /**
+     * Cove's own embedded brain. It needs no model server, no network and no
+     * API key, which is why it is the default.
+     */
+    public static final String DEFAULT_PROVIDER = "cove";
 
     /**
      * Builds settings from the mod's property map. Unknown keys are ignored and
@@ -42,7 +46,9 @@ public record AgentSettings(
         String keyFile = text(values, "agentApiKeyFile", "");
         Path apiKeyFile = keyFile.isEmpty() ? null : Path.of(keyFile);
         return new AgentSettings(
-                bool(values, "agentEnabled", false),
+                // The embedded brain ships on: it needs no key and no server, so
+                // a missing key means "use Cove" instead of "stay silent".
+                bool(values, "agentEnabled", true),
                 provider,
                 model,
                 baseUrl,
@@ -101,7 +107,8 @@ public record AgentSettings(
 
     public boolean isLocal() {
         switch (this.provider) {
-            case "ollama", "lmstudio", "llamacpp", "local" -> {
+            case "cove", "local", "embedded", "offline",
+                    "ollama", "lmstudio", "llamacpp" -> {
                 return true;
             }
             default -> {
@@ -115,6 +122,7 @@ public record AgentSettings(
             return this.baseUrl;
         }
         return switch (this.provider) {
+            case "cove", "local", "embedded", "offline" -> "";
             case "ollama" -> "http://127.0.0.1:11434/v1";
             case "lmstudio", "lm-studio" -> "http://127.0.0.1:1234/v1";
             case "llamacpp", "llama.cpp" -> "http://127.0.0.1:8080/v1";

@@ -22,6 +22,9 @@ public final class ProviderFactory {
         String provider = settings.provider() == null ? "" : settings.provider().toLowerCase(Locale.ROOT);
         String baseUrl = settings.effectiveBaseUrl();
         return switch (provider) {
+            // The embedded brain: pure Java, no HTTP and no credentials.
+            case "cove", "local", "embedded", "offline" ->
+                    new covellite.agent.lang.CoveProvider();
             case "anthropic", "claude" ->
                     new AnthropicProvider(baseUrl, settings.model(), key, settings.timeoutMs());
             case "gemini", "google" ->

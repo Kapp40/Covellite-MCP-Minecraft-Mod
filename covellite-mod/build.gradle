@@ -30,6 +30,9 @@ sourceSets.main.java.srcDir project(':covellite-core').file('src/main/java')
 // The AI runtime is plain Java as well; it is compiled into the mod jar so the
 // companion can run locally without an external agent or a separate process.
 sourceSets.main.java.srcDir project(':covellite-agent').file('src/main/java')
+// The embedded brain reads its knowledge base from the classpath, so the agent
+// resources (cove/lexicon.txt) must ship inside the mod jar too.
+sourceSets.main.resources.srcDir project(':covellite-agent').file('src/main/resources')
 
 tasks.named('jar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

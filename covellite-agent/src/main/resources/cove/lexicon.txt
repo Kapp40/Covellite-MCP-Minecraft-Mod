@@ -1,0 +1,128 @@
+# Base de conocimiento de Cove. Texto plano, editable, sin dependencias.
+# Formato: CATEGORIA|canonico|sinonimos separados por coma|accion (solo VERB)|pista (solo VERB)
+# CATEGORIA: ITEM, PLACE, MOB, ADJ, DIR, VERB, GREET, STATE, WORD
+# Un archivo mas de ~200 lineas ya cubre el vocabulario util de una partida.
+
+# --- Materiales e items -------------------------------------------------
+ITEM|madera|tronco,troncos,lena,tabla,tablas,madero
+ITEM|piedra|roca,rocas,adoquin,adoquines,piedras
+ITEM|hierro|mineral de hierro,hierros
+ITEM|diamante|diamantes
+ITEM|carbon|carboncillo
+ITEM|oro|mineral de oro
+ITEM|comida|comer,alimento,viveres
+ITEM|pan|panes
+ITEM|manzana|manzanas
+ITEM|carne|filete
+ITEM|trigo|trigos
+ITEM|zanahoria|zanahorias
+ITEM|papa|papas
+ITEM|huevo|huevos
+ITEM|antorcha|antorchas
+ITEM|pico|picota
+ITEM|espada|filos
+ITEM|hacha|hachas
+ITEM|pala|palas
+ITEM|arco|arcos
+ITEM|flecha|flechas
+ITEM|cofre|cofres,baul,baules
+ITEM|mesa|mesa de trabajo,mesita
+ITEM|vidrio|cristal
+ITEM|arena|sand
+ITEM|tierra|barro
+ITEM|cama|camas
+ITEM|pocion|pociones
+ITEM|lana|hilo
+ITEM|palo|palos
+ITEM|bloque|bloques
+
+# --- Lugares ------------------------------------------------------------
+PLACE|base|casa,refugio,campamento,rancho,hogar
+PLACE|cueva|caverna,grieta,socavon,cuevas
+PLACE|montaña|montana,cerro,sierra,monte
+PLACE|aldea|pueblo,villa,caserio
+PLACE|rio|arroyo,riachuelo
+PLACE|lago|laguna
+PLACE|bosque|selva,arboleda,monte bajo
+PLACE|desierto|dunas
+PLACE|mina|cantera,excavacion
+PLACE|playa|costa
+PLACE|granja|cultivo,huerta
+PLACE|torre|torreon
+PLACE|templo|ruinas
+PLACE|spawn|inicio,punto de inicio,aparicion
+
+# --- Direcciones --------------------------------------------------------
+DIR|norte|
+DIR|sur|
+DIR|este|
+DIR|oeste|
+DIR|arriba|alto
+DIR|abajo|bajo
+DIR|cerca|cercano
+DIR|lejos|lejano
+
+# --- Criaturas ----------------------------------------------------------
+MOB|zombi|zombie,zombis
+MOB|esqueleto|esqueletos,arquero
+MOB|creeper|creepers
+MOB|araña|arana,aranas
+MOB|enderman|endermans
+MOB|vaca|vacas
+MOB|cerdo|cerdos,chancho
+MOB|oveja|ovejas
+MOB|pollo|pollos,gallina
+MOB|aldeano|aldeanos,villano
+MOB|lobo|perro,lobos
+MOB|gato|gatos
+MOB|caballo|caballos
+MOB|monstruo|bicho,criatura,enemigo
+
+# --- Estados ------------------------------------------------------------
+STATE|hambre|hambriento,comida baja,sin comida
+STATE|sueño|sueno,cansancio,cansado
+STATE|peligro|riesgo,amenaza
+STATE|noche|oscuridad
+STATE|dia|dia claro,amanecer
+STATE|salud|vida,hp
+STATE|inventario|mochila,equipaje
+
+# --- Saludos y muletillas ----------------------------------------------
+GREET|hola|buenas,buen dia,epa,hey,que onda,que tal,hola hola
+GREET|chau|adios,nos vemos,hasta luego
+WORD|che|boludo,chabon,flaco,maestro,crack
+WORD|gracias|te agradezco,genial
+WORD|si|sisi,dale,claro,obvio,ok,oka,perfecto,bueno,joya,sip
+WORD|no|nop,nope,nah,nel,para nada,ni ahi
+WORD|jaja|jeje,jajaja,jsjs,lol
+WORD|porque|por que,porqué
+WORD|donde|en donde,adonde,a donde
+WORD|cuando|a que hora
+WORD|como|de que manera
+WORD|quien|quienes
+WORD|cual|cuales
+WORD|cuanto|cuanta,cuantos,cuantas
+
+# --- Verbos utiles (accion del mod que los implementa) ------------------
+VERB|cortar|talar,derribar,hachear|chop_tree|madera
+VERB|minar|picar,excavar,cavar|mine|piedra
+VERB|ir|andar,caminar,dirigirse,ir a|return_home|base
+VERB|venir|acercarse,acercate,veni|follow|
+VERB|seguir|acompanar,seguime,sígueme|follow|
+VERB|quedarse|quedate,esperar,esperame,quedate ahi|stay|
+VERB|parar|detenerse,parate,frenar|stop|
+VERB|cuidar|proteger,vigilar,custodiar|guard_position|
+VERB|comer|alimentarse,come,manducar|eat|comida
+VERB|dormir|descansar,dormi,acostarse|sleep|
+VERB|atacar|matar,pelear,golpear,ataca|attack|monstruo
+VERB|pescar|pesca,pescame|fish|
+VERB|plantar|sembrar,sembra|plant|trigo
+VERB|explorar|investigar,reconocer,explora|explore_scan|
+VERB|volver|regresar,volve,volvamos|return_home|base
+VERB|fabricar|craftear,craftea,hacer|craft_item|mesa
+VERB|traer|buscar,conseguir,juntar|gather|madera
+VERB|mirar|observar,fijate,mira|scan|
+VERB|ayudar|asistir,ayudame|follow|
+VERB|saber|conocer,tenes idea|scan|
+VERB|estar|quedar,ubicarse|scan|
+VERB|ver|encontrar,divisar|scan|

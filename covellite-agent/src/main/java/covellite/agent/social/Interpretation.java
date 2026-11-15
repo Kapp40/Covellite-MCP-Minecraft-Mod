@@ -58,7 +58,7 @@ public record Interpretation(
     }
 
     /** Finds the first balanced {@code {...}} block, ignoring braces inside quotes. */
-    static String extractObject(String raw) {
+    public static String extractObject(String raw) {
         int start = raw.indexOf('{');
         if (start < 0) {
             return null;
