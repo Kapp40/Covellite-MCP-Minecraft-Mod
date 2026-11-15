@@ -2714,7 +2714,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 60;
+            return Priorities.WORK;
         }
 
         /** Breaking a block is standing still on purpose, not being stuck. */
@@ -3329,7 +3329,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 58;
+            return Priorities.EXPEDITION;
         }
 
         @Override
@@ -3866,7 +3866,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 60;
+            return Priorities.WORK;
         }
 
         @Override
@@ -4812,7 +4812,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 50;
+            return Priorities.CRAFT;
         }
         @Override
         public boolean stationary() {
@@ -6099,14 +6099,15 @@ public final class BridgeApi {
         choreKeeperTick(player);
         woodThresholdTick(player);
         if (this.expeditionResumeAt > 0L && this.autopilotTicks >= this.expeditionResumeAt
-                && this.activeTask == null && !this.staying && this.guardAnchor == null
+                && this.activeTask == null && this.suspendedTask == null
+                && !this.staying && this.guardAnchor == null
                 && this.expeditionAttempts < 6) {
             this.expeditionResumeAt = 0L;
             this.expeditionAttempts++;
             startTask(new ExpeditionTask(newAction("mine_expedition", "running"),
                     Map.of("resume", true)), player);
         }
-        if (this.returnTo != null && this.activeTask == null) {
+        if (this.returnTo != null && this.activeTask == null && this.suspendedTask == null) {
             BlockPos home = this.returnTo;
             this.returnTo = null;
             if (!this.staying && this.guardAnchor == null
@@ -6116,7 +6117,7 @@ public final class BridgeApi {
                         home.getZ() + 0.5D, 2.0D), player);
             }
         }
-        if (this.followResume && this.activeTask == null
+        if (this.followResume && this.activeTask == null && this.suspendedTask == null
                 && this.autopilotTicks >= this.followResumeAt) {
             ServerPlayer target = this.followTarget == null ? null
                     : player.server.getPlayerList().getPlayerByName(this.followTarget);
@@ -6570,8 +6571,9 @@ public final class BridgeApi {
             return;
         }
         this.inventoryFullWarned = true;
-        cancelActive("inventory_full");
         reply("tengo el inventario lleno, no puedo recoger mas");
+        // Paused, not deleted: once there is room again the job continues.
+        suspendTask("inventory_full");
     }
 
     /** One greeting per spawn / respawn, never on every mod rebuild. */
@@ -7455,7 +7457,12 @@ public final class BridgeApi {
         int count = this.pendingGiveCount;
         clearGive();
         this.lastGiveAt = this.autopilotTicks;
-        cancelActive("give");
+        // Handing something over pauses the job instead of deleting it.
+        if (this.activeTask instanceof GotoTask) {
+            cancelActive("give");
+        } else {
+            suspendTask("give");
+        }
         this.companion.controller().stop();
         lookAtPoint(player, target.getEyePosition());
         try {
@@ -7484,7 +7491,8 @@ public final class BridgeApi {
         }
         if (player.distanceToSqr(target) <= 3.5D * 3.5D) {
             performGive(player, target);
-        } else if (this.activeTask == null && this.autopilotTicks % 20L == 0L) {
+        } else if (this.activeTask == null && this.suspendedTask == null
+                && this.autopilotTicks % 20L == 0L) {
             startTask(new GotoTask(newAction("goto", "running"),
                     target.getX(), target.getY(), target.getZ(), 2.0D), player);
         }
@@ -7698,15 +7706,44 @@ public final class BridgeApi {
     // Task implementations
     // ------------------------------------------------------------------
 
+    /**
+     * Every priority in one place. Higher wins; on a tie the newer order wins;
+     * a task that arrives below the running one waits in {@link #pendingTasks}.
+     *
+     * <pre>
+     * 100-91  reflexes      survival borrows the body for 40 ticks
+     *     70  ranged        shooting beats a pickaxe
+     *     60  work          gather, tunnel, walk to a target
+     *     58  expedition    the long structured trip
+     *     55  follow/sleep  "seguime", "anda a dormir"
+     *     50  craft         short work at a table
+     *     40  default       anything without a band (fishing)
+     *     30  idle move     walking somewhere nobody asked for
+     * </pre>
+     */
+    private static final class Priorities {
+        static final int REFLEX_FLOOR = 91;
+        static final int RANGED = 70;
+        static final int WORK = 60;
+        static final int EXPEDITION = 58;
+        static final int FOLLOW = 55;
+        static final int CRAFT = 50;
+        static final int DEFAULT = 40;
+        static final int IDLE_MOVE = 30;
+
+        private Priorities() {
+        }
+    }
+
     private interface Task {
         /**
-         * Urgency of the task. Higher wins: a reflex (91-100) always preempts,
-         * navigation (60) beats a glance (10) and chores (55-60) beat nothing.
-         * A task that arrives with less priority than the running one waits in
-         * {@link #pendingTasks} instead of interrupting it.
+         * Urgency of the task, from {@link Priorities}. A task that arrives
+         * with less priority than the running one waits in {@link #pendingTasks}
+         * instead of interrupting it; while a reflex holds the body nothing
+         * below {@link Priorities#REFLEX_FLOOR} may start at all.
          */
         default int priority() {
-            return 40;
+            return Priorities.DEFAULT;
         }
 
         boolean tick(CompanionPlayer player, MinecraftServer server);
@@ -7772,7 +7809,7 @@ public final class BridgeApi {
                 return true;
             }
             boolean outranked = incoming < this.activeTask.priority();
-            boolean reflexBlocked = locked && incoming < 91;
+            boolean reflexBlocked = locked && incoming < Priorities.REFLEX_FLOOR;
             if (outranked || reflexBlocked) {
                 if (this.pendingTasks.size() < 8) {
                     this.pendingTasks.addLast(new QueuedTask(task, incoming));
@@ -8146,7 +8183,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 70;
+            return Priorities.RANGED;
         }
         private final java.util.UUID targetId;
         private final int chargeTicks;
@@ -8191,7 +8228,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 30;
+            return Priorities.IDLE_MOVE;
         }
         private final String id;
         private final double forward;
@@ -8354,7 +8391,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 55;
+            return Priorities.FOLLOW;
         }
         private final String id;
         private final double radius;
@@ -8463,7 +8500,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 60;
+            return Priorities.WORK;
         }
         private final String id;
         private final double x;
@@ -8549,7 +8586,7 @@ public final class BridgeApi {
 
         @Override
         public int priority() {
-            return 55;
+            return Priorities.FOLLOW;
         }
         @Override
         public String signature() {
@@ -8794,9 +8831,13 @@ public final class BridgeApi {
         this.activeTask = null;
         this.stuckRecoveries = 0;
         this.stuckSinceTick = -1L;
+        CompanionPlayer body = this.companion.player();
         if (this.suspendedTask != null) {
             // Two jobs cannot wait on the same body: the older one really ends.
-            this.suspendedTask.cleanup(this.companion.player());
+            if (body != null) {
+                this.suspendedTask.cleanup(body);
+            }
+            this.suspendedTask = null;
         }
         this.suspendedTask = task;
         this.suspendedReason = reason;
@@ -8828,7 +8869,11 @@ public final class BridgeApi {
             case "taking_damage":
                 return waited < 40L;
             case "enemy_near":
-                return nearestMonster(player, this.stance.enemyRange()) != null && waited < 600L;
+                // Only a monster that is actually close is worth pausing for. At
+                // 16 blocks the old rule stopped everything for ten minutes and
+                // then dropped the job; four seconds is enough for the reflex
+                // layer to take over if it turns dangerous.
+                return nearestMonster(player, 8.0D) != null && waited < 200L;
             case "night_fell":
                 return this.stance.nightInterrupt() && isNight(player.serverLevel()) && waited < 12000L;
             case "inventory_full": {
@@ -8838,8 +8883,10 @@ public final class BridgeApi {
                         empty++;
                     }
                 }
-                return empty <= 2;
+                return empty <= 2 && waited < 2400L;
             }
+            case "give":
+                return this.pendingGiveItem != null && waited < 600L;
             case "stuck":
                 return waited < 60L;
             default:
@@ -8856,6 +8903,7 @@ public final class BridgeApi {
             return;
         }
         if (this.brains.paused() || this.brains.epoch() != this.suspendedEpoch) {
+            this.suspendedTask.cleanup(player);
             this.suspendedTask = null;
             this.suspendedReason = null;
             return;
