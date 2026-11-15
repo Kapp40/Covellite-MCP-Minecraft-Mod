@@ -143,6 +143,12 @@ public final class CoveProvider implements AgentProvider {
             if (taught.isPresent()) {
                 return new Response(taught.get(), List.of(), "stop");
             }
+            // Questions about Cove itself are answered from its real state, not
+            // by guessing what the player meant.
+            String state = this.brain.realizer().stateTalk().reply(said, this.world);
+            if (state != null) {
+                return new Response(state, List.of(), "stop");
+            }
             Parser.Reading reading = this.brain.read(said, this.world, pending);
             if (reading.negated() && reading.order()) {
                 return new Response(this.brain.realizer().decline(), List.of(), "stop");
@@ -172,8 +178,10 @@ public final class CoveProvider implements AgentProvider {
         if (last.startsWith("[Sistema]")) {
             return new Response(this.brain.greet(this.world.playerName()), List.of(), "stop");
         }
-        // Unknown prompt: react to the situation instead of hanging.
-        return new Response(this.brain.realizer().comment(this.world, null), List.of(), "stop");
+        // Unknown prompt: say something true about the situation, with a verb,
+        // instead of drawing a random line from a list.
+        return new Response(this.brain.realizer().stateTalk().smallTalk(this.world),
+                List.of(), "stop");
     }
 
     private static boolean isRightAfterTool(Request request) {

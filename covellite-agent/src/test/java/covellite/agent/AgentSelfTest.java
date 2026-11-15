@@ -24,9 +24,11 @@ import covellite.agent.lang.OfflineBrain;
 import covellite.agent.lang.Parser;
 import covellite.agent.lang.Realizer;
 import covellite.agent.lang.Spanish;
+import covellite.agent.lang.StateTalk;
 import covellite.agent.lang.WorldFacts;
 import covellite.agent.reflex.ReflexEngine;
 import covellite.core.ExpeditionPlan;
+import covellite.core.Grammar;
 import covellite.core.TunnelPlan;
 import covellite.core.WoodDecision;
 import covellite.agent.reflex.ReflexInputs;
@@ -1031,6 +1033,50 @@ public final class AgentSelfTest {
                         == WoodDecision.decide("si querés", 42L).continueChopping());
         check("wood: an unrelated line is not an answer",
                 WoodDecision.classify("che, ¿cómo andás?") == WoodDecision.Answer.IGNORED);
+
+        // ---- real grammar: verbs, not stored lines -------------------
+        check("grammar: regular gerunds", "minando".equals(Grammar.gerund("minar"))
+                && "talando".equals(Grammar.gerund("talar"))
+                && "comiendo".equals(Grammar.gerund("comer")));
+        check("grammar: irregular gerunds",
+                "durmiendo".equals(Grammar.gerund("dormir"))
+                        && "siguiendo".equals(Grammar.gerund("seguir"))
+                        && "yendo".equals(Grammar.gerund("ir")));
+        check("grammar: o to ue and e to ie",
+                "encuentro".equals(Grammar.firstPerson("encontrar"))
+                        && "pienso".equals(Grammar.firstPerson("pensar"))
+                        && "vuelvo".equals(Grammar.firstPerson("volver")));
+        check("grammar: -ir verbs change e to i",
+                "sigo".equals(Grammar.firstPerson("seguir"))
+                        && "pido".equals(Grammar.firstPerson("pedir")));
+        check("grammar: regular first person",
+                "talo".equals(Grammar.firstPerson("talar"))
+                        && "como".equals(Grammar.firstPerson("comer"))
+                        && "mino".equals(Grammar.firstPerson("minar")));
+        check("grammar: third person reports on somebody else",
+                "tala".equals(Grammar.thirdPerson("talar"))
+                        && "duerme".equals(Grammar.thirdPerson("dormir")));
+
+        StateTalk talk = new StateTalk();
+        WorldFacts mining = new WorldFacts("Lorex", "plains", false, 18.0F, 15, 0.0D, 1,
+                "mining:iron", List.of(), List.of("iron"));
+        check("talk: says what it is doing with a verb",
+                "estoy minando hierro".equals(talk.doing(mining)));
+        String answer = talk.reply("che, ¿qué estás haciendo?", mining);
+        check("talk: answers the doing question", answer != null && answer.contains("minando"));
+        WorldFacts hurt = new WorldFacts("Lorex", "plains", false, 6.0F, 4, 0.0D, 1,
+                "mining:stone", List.of(), List.of());
+        check("talk: the status reports bad health",
+                talk.status(hurt).contains("herido") && talk.status(hurt).contains("hambre"));
+        check("talk: the doing answer warns about health",
+                talk.answerDoing(hurt).contains("poca vida"));
+        check("talk: small talk carries a real verb", talk.smallTalk(mining).contains("estoy"));
+        check("talk: asks nothing about mining when it is following",
+                talk.doing(new WorldFacts("Lorex", "", false, 20.0F, 20, 0.0D, 1,
+                        "following:Lorex", List.of(), List.of())).equals("estoy siguiendo a Lorex"));
+        check("talk: known ids become Spanish words",
+                "hierro".equals(StateTalk.itemName("minecraft:iron_ore"))
+                        && "piedra".equals(StateTalk.itemName("cobblestone")));
     }
 
     private static void check(String label, boolean condition) {

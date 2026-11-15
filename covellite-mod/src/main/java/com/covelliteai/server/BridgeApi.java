@@ -1002,9 +1002,33 @@ public final class BridgeApi {
         if (this.autopilotTicks < this.recoveringUntil) {
             return "recovering";
         }
-        if (this.activeTask != null) {
-            if (this.defendPlayer != null && this.activeTask instanceof FollowTask) {
-                return "guarding";
+        Task task = this.activeTask;
+        if (task != null) {
+            // A concrete token per task, so the companion can say what it is
+            // really doing instead of a generic "working".
+            if (task instanceof FollowTask follow) {
+                return this.defendPlayer != null ? "guarding" : "following:" + follow.playerName;
+            }
+            if (task instanceof GatherTask gather) {
+                return gather.treeMode ? "chopping" : "mining:" + gather.what;
+            }
+            if (task instanceof DigMineTask dig) {
+                return "mining:" + dig.what;
+            }
+            if (task instanceof ExpeditionTask) {
+                return "expedition";
+            }
+            if (task instanceof SleepTask) {
+                return "sleeping";
+            }
+            if (task instanceof CraftTask) {
+                return "crafting";
+            }
+            if (task instanceof FishingTask) {
+                return "fishing";
+            }
+            if (task instanceof GotoTask || task instanceof MoveTask) {
+                return "walking";
             }
             return "working";
         }

@@ -27,6 +27,7 @@ public final class Realizer {
     private final Map<String, Integer> rotation = new HashMap<>();
     private final Map<String, List<String>> plans = new LinkedHashMap<>();
     private final List<String> recent = new ArrayList<>();
+    private final StateTalk stateTalk = new StateTalk();
 
     public Realizer() {
         this.plans.put("greet", List.of(
@@ -260,7 +261,17 @@ public final class Realizer {
                 : (world.inventory().isEmpty() ? "piedra" : world.inventory().get(0)));
         slots.put("tema", topic(reading, world));
         slots.put("jugador", world.playerName().isEmpty() ? "che" : world.playerName());
+        if ("charla".equals(key) || "about_self".equals(key)) {
+            // Small talk says something true about the body and the place
+            // instead of picking a line at random.
+            return this.stateTalk.smallTalk(world);
+        }
         return store(fill(pick(key, slots.keySet()), slots));
+    }
+
+    /** Realisation of what Cove is doing, with conjugated verbs. */
+    public StateTalk stateTalk() {
+        return this.stateTalk;
     }
 
     private String keyFor(Parser.Reading reading, Identity identity) {
